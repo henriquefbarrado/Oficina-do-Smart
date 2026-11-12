@@ -109,7 +109,7 @@ async function start() {
   const nav = NAV.filter((n) => n[2].includes(me.role));
   root.innerHTML = `<aside class="sidebar"><div class="brand">ERP Estoque</div><nav id="menu">${nav.map((n) => `<a href="#/${n[0]}" data-k="${n[0]}">${n[1]}</a>`).join('')}</nav>
     <div class="user"><strong>${esc(me.full_name)}</strong><span class="muted small">${esc(ROLES[me.role])}</span><button id="out" class="btn ghost">Sair</button></div></aside>
-    <div class="main"><header class="topbar"><button id="bg" class="btn ghost">☰</button><h1 id="ttl"></h1></header><main id="view" class="content"></main></div>`;
+    <div class="main"><header class="topbar"><button id="bg" class="btn ghost"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><h1 id="ttl"></h1></header><main id="view" class="content"></main></div>`;
   $('#out').onclick = async () => { await api.auth.signOut(); loginScreen(); };
   $('#bg').onclick = () => document.body.classList.toggle('menu-open');
   const route = async () => {
