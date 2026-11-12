@@ -1,4 +1,6 @@
-{
-  "buildCommand": "node scripts/generate-env.mjs",
-  "outputDirectory": "web"
-}
+   {
+     "framework": null,
+     "installCommand": "echo sem-instalacao",
+     "buildCommand": "echo sem-build",
+     "outputDirectory": "."
+   }
