@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GestPeças · Gestão de peças e estoque</title>
+<style>
+/* GestPeças — tema grafite + azul */
+:root{--bg:#14171c;--p:#1b1f26;--p2:#222730;--b:#2c323d;--t:#e6e9ef;--m:#8b93a3;--a:#3b82f6;--g:#22c55e;--w:#f59e0b;--r:#ef4444}
+*{box-sizing:border-box;margin:0}
+body{font:14px/1.5 "Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--t)}
+#app{display:flex;min-height:100vh}
+aside{width:232px;background:var(--p);border-right:1px solid var(--b);padding:18px 12px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:3px;overflow:auto}
+aside h2{font-size:18px;padding:0 10px 12px}aside h2 span{color:var(--a)}
+aside a{padding:9px 12px;border-radius:8px;color:var(--m);cursor:pointer;transition:.2s}
+aside a:hover{background:var(--p2);color:var(--t)}
+aside a.on{background:rgba(59,130,246,.16);color:#8fb8ff}
+.me{margin-top:auto;padding:12px;border-top:1px solid var(--b);font-size:12px;color:var(--m)}
+.me b{display:block;color:var(--t);font-size:13px}
+main{flex:1;padding:26px;min-width:0;animation:fi .35s}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}}
+h1{font-size:22px;margin-bottom:4px}.mu{color:var(--m)}
+.sub{margin-bottom:20px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+.card,.box{background:var(--p);border:1px solid var(--b);border-radius:12px;padding:16px}
+.card{transition:.2s}.card:hover{border-color:var(--a);transform:translateY(-2px)}
+.card small{color:var(--m)}.card strong{display:block;font-size:24px;margin-top:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:18px}
+.box h3{font-size:14px;margin-bottom:12px}
+.br{display:grid;grid-template-columns:120px 1fr 34px;gap:8px;align-items:center;margin:7px 0;font-size:12px}
+.br span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--m)}
+.br i{height:9px;background:var(--p2);border-radius:9px;overflow:hidden}
+.br b{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:9px;animation:gw .8s}
+@keyframes gw{from{width:0!important}}
+.br em{font-style:normal;text-align:right}
+.tw{overflow-x:auto;background:var(--p);border:1px solid var(--b);border-radius:12px;margin-bottom:18px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--b);white-space:nowrap}
+th{color:var(--m);font-weight:600;background:var(--p2)}tr:hover td{background:rgba(255,255,255,.02)}
+.tg{padding:2px 9px;border-radius:20px;font-size:12px;background:rgba(59,130,246,.18);color:#8fb8ff}
+.tg.g{background:rgba(34,197,94,.16);color:#6ee7a0}.tg.w{background:rgba(245,158,11,.16);color:#fbbf24}.tg.r{background:rgba(239,68,68,.16);color:#f87171}
+button,.bt button{font:inherit;border:1px solid var(--b);background:var(--p2);color:var(--t);padding:6px 12px;border-radius:8px;cursor:pointer;transition:.2s;margin:0 3px 3px 0}
+button:hover{border-color:var(--a)}button.pr{background:var(--a);border-color:var(--a);color:#fff}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+input,select{font:inherit;background:var(--bg);color:var(--t);border:1px solid var(--b);border-radius:8px;padding:8px 10px;width:100%}
+.bar input,.bar select{width:auto}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--a)}
+label{display:block;margin-bottom:10px;color:var(--m);font-size:12px}label input,label select{margin-top:4px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9;padding:16px}
+.ov.on{display:flex}.md{background:var(--p);border:1px solid var(--b);border-radius:14px;padding:22px;width:100%;max-width:440px;max-height:90vh;overflow:auto;animation:fi .25s}
+.md h3{margin-bottom:14px}.bt{display:flex;justify-content:flex-end;gap:6px;margin-top:8px}
+#t{position:fixed;bottom:20px;right:20px;background:var(--r);color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.3s;pointer-events:none;z-index:99;max-width:80vw}#t.on{opacity:1}
+.lg{margin:auto;width:100%;max-width:380px;padding:16px}
+.lg form{background:var(--p);border:1px solid var(--b);border-radius:16px;padding:28px}
+.lg h1{margin-bottom:2px}.lg p{margin-bottom:18px}.lg button{width:100%;padding:10px}
+.trail{border-left:2px solid var(--a);padding-left:12px;margin:8px 0;font-size:13px}
+@media(max-width:800px){#app{flex-direction:column}aside{width:100%;height:auto;position:static;flex-direction:row;flex-wrap:wrap}aside h2{width:100%}.me{width:100%;margin:0}main{padding:16px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="m" class="ov" onclick="if(event.target===this)cl()"></div>
+<div id="t"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* ===== GestPeças — demo ERP de peças (Vanilla JS + LocalStorage) ===== */
+'use strict';
+/* >>> PREENCHA com Project Settings > API do seu Supabase <<< */
+const SB_URL='COLE_AQUI_A_URL_DO_PROJETO',SB_KEY='COLE_AQUI_A_ANON_KEY';
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+const KEY='gestpecas_v1',LOJAS=['Buritis','Centro','Savassi','Belvedere','Castelo'];
+let S,me=null,tab='dash',H={q:'',s:'',a:'',b:''},ctx={u:'',t:0};
+const $=q=>document.querySelector(q),now=()=>ctx.t||Date.now();
+const brl=v=>(+v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const dt=t=>new Date(t).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+const sn=l=>l==='c'?'Estoque Central':S.stores[l];
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* ===== Camada Supabase: carrega o que a RLS permite ver e grava só o que mudou ===== */
+const TB=[['fornecedores','sup'],['catalogo','cat'],['pedidos','orders'],['pecas','units'],['historico','hist'],['transferencias','tr']];
+let SNAP={},CFG='',Q=Promise.resolve();const jn=r=>JSON.stringify(r),rid=()=>(Math.random().toString(36)+'0000').slice(2,6).toUpperCase();
+const k5=v=>v==='c'?v:+v;
+const out=(t,r)=>{const x={...r};if(t==='pedidos')x.store=String(x.store);if(t==='pecas')x.loc=String(x.loc);if(x.id==null)delete x.id;return x};
+const inn=(t,r)=>{if(t==='pedidos')r.store=k5(r.store);if(t==='pecas')r.loc=k5(r.loc);return r};
+async function all(t){let r=[],i=0;for(;;){const{data,error}=await sb.from(t).select('*').range(i,i+999);if(error)throw error;r=r.concat(data);if(data.length<1000)return r;i+=1000}}
+async function load(){const R=await Promise.all([...TB.map(x=>all(x[0])),all('profiles'),sb.from('config').select('lojas').single()]);
+ TB.forEach((x,i)=>{S[x[1]]=R[i].map(r=>inn(x[0],r))});['orders','hist','tr'].forEach(k=>S[k].sort((a,b)=>b.t-a.t));
+ S.users=R[6].map(p=>({id:p.id,n:p.n,store:p.store,adm:p.adm,on:p.ativo}));S.stores=R[7].data.lojas;CFG=jn(S.stores);
+ SNAP={};TB.forEach(x=>S[x[1]].forEach(r=>SNAP[x[0]+r.id]=jn(r)))}
+async function doSave(){for(const[t,k]of TB){const nw=[],up=[];
+  S[k].forEach(r=>{if(r.id==null||!((t+r.id)in SNAP))nw.push(r);else if(SNAP[t+r.id]!==jn(r))up.push(r)});
+  if(nw.length){const{error}=await sb.from(t).insert(nw.map(r=>out(t,r)));if(error)throw new Error(error.code==='23505'?'Código duplicado, tente de novo.':error.message)}
+  await Promise.all(up.map(async r=>{const{data,error}=await sb.from(t).update(out(t,r)).eq('id',r.id).select('id');if(error)throw error;if(!data.length)throw new Error('Sem permissão para alterar '+r.id)}))}
+ if(me&&me.admin&&jn(S.stores)!==CFG){const{error}=await sb.from('config').update({lojas:S.stores}).eq('id',1);if(error)throw error}
+ await load()}
+const save=()=>(Q=Q.then(doSave,doSave));
+/* go: executa uma operação, grava no banco e redesenha; em erro, mostra e recarrega o estado real */
+const go=f=>Promise.resolve().then(f).then(save).then(render).catch(async e=>{toast(e.message);try{await load()}catch(x){}render()});
+const refresh=()=>load().then(render).catch(e=>toast(e.message));
+const toast=m=>{const t=$('#t');t.textContent=m;t.className='on';setTimeout(()=>t.className='',3200)};
+const nm=x=>x.prod+' '+x.model,sum=(a,f)=>a.reduce((t,x)=>t+f(x),0);
+
+/* ---------- DOMÍNIO: regras de integridade ---------- */
+const unit=id=>S.units.find(u=>u.id===id),ord=id=>S.orders.find(o=>o.id===id);
+const inStock=u=>u.status==='Em estoque da unidade';
+const cAv=u=>u.loc==='c'&&['Recebida','Devolvida','Disponível'].includes(u.status);
+const inM=u=>['Aguardando manutenção','Em manutenção'].includes(u.status);
+const need=(c,m)=>{if(!c)throw new Error(m||'Operação não permitida para o status atual da peça.')};
+/* Histórico é só de inclusão: nada é apagado ou sobrescrito */
+function log(tipo,o){S.hist.unshift({t:now(),u:ctx.u,unid:o.unid||'',prod:o.prod,qtd:o.qtd||1,tipo,de:o.de||'—',para:o.para||'—',ref:o.ref||'',forn:o.forn||''})}
+function setU(u,to,m,loc,tipo,quiet){const de=u.status;if(me&&!me.admin)need(u.loc===me.store,'Sem permissão: esta peça pertence a outra unidade.');if(to==='Utilizada')need(inStock(u),'Peça indisponível nesta unidade ou já utilizada.');u.trail.push({t:now(),u:ctx.u,de,para:to,m:m||''});u.status=to;if(loc!==undefined)u.loc=loc;
+ if(!quiet)log(tipo,{unid:sn(u.loc),prod:nm(u),de,para:to,ref:u.id+(m?' · '+m:'')})}
+function newOrder(f){const o={id:'PED-'+rid(),store:f.store,prod:f.prod,model:f.model,qty:+f.qty,sup:f.sup||'',obs:f.obs||'',user:ctx.u,t:now(),status:'Aguardando atendimento',price:0,est:+f.est||0,units:[]};
+ need(o.qty>0,'Quantidade inválida');S.orders.unshift(o);log('Solicitação',{unid:sn(o.store),prod:nm(o),qtd:o.qty,para:o.status,ref:o.id,forn:o.sup});return o}
+function decide(o,ok,q){need(o.status==='Aguardando atendimento');if(ok){need(q>0,'Quantidade inválida');o.qty=q;o.status='Aprovado'}else o.status='Rejeitado';
+ log('Aprovação',{unid:sn(o.store),prod:nm(o),qtd:o.qty,de:'Aguardando atendimento',para:o.status,ref:o.id})}
+function buy(o,sup,price){need(o.status==='Aprovado','Aprove o pedido antes de comprar.');need(price>0,'Valor unitário inválido');
+ o.sup=sup;o.price=price;o.buyT=now();o.buyer=ctx.u;o.status='Comprado';
+ for(let i=1;i<=o.qty;i++){const id=o.id+'-'+String(i).padStart(2,'0');o.units.push(id);
+  S.units.push({id,order:o.id,prod:o.prod,model:o.model,status:'Solicitada',loc:'c',cost:price,trail:[{t:now(),u:ctx.u,de:'—',para:'Solicitada',m:'Compra registrada'}]})}
+ log('Compra',{unid:sn(o.store),prod:nm(o),qtd:o.qty,de:'Aprovado',para:'Comprado',ref:o.id+' · '+brl(o.qty*price),forn:sup});catAdd(o.prod,o.model,sup,price)}
+function receive(o){need(o.status==='Comprado','Registre a compra antes do recebimento.');
+ o.units.forEach(id=>setU(unit(id),'Recebida','Recebido do fornecedor','c','',true));o.status='Recebido';
+ log('Recebimento',{unid:'Estoque Central',prod:nm(o),qtd:o.qty,de:'Solicitada',para:'Recebida',ref:o.id,forn:o.sup})}
+function deliver(o){need(o.status==='Recebido','Registre o recebimento antes da entrega.');
+ o.units.forEach(id=>{const u=unit(id);if(u.status==='Recebida')setU(u,'Em estoque da unidade','Entrega à loja',o.store,'',true)});o.status='Entregue';
+ log('Transferência',{unid:sn(o.store),prod:nm(o),qtd:o.qty,de:'Recebida',para:'Em estoque da unidade',ref:o.id})}
+
+/* ---------- TRANSFERÊNCIA ENTRE LOJAS: OK da loja de origem + aprovação do admin ---------- */
+const TS=['Aguardando OK da loja de origem','Aguardando aprovação do admin','Concluída','Rejeitada'];
+const trLog=(t,de,para,un,q)=>log('Transferência',{unid:sn(un),prod:t.pn,qtd:q||t.qty,de,para,ref:t.id});
+const trAvail=t=>S.units.filter(u=>inStock(u)&&u.loc===t.from&&nm(u)===t.pn);
+function trNew(d){const adm=me.admin,from=+d.f,to=adm?+d.t:me.store,qty=+d.qty;need(from!==to,'Origem e destino devem ser diferentes.');need(qty>0,'Quantidade inválida');
+ const t={id:'TRF-'+rid(),from,to,pn:d.p,qty,by:ctx.u,t:now(),status:TS[0],obs:d.m||''};
+ if(adm)need(trAvail(t).length>=qty,'A loja de origem só tem '+trAvail(t).length+' disponível.');S.tr.unshift(t);trLog(t,'—',TS[0],to)}
+function trStep(t,k){const st=t.status,orig=!me.admin&&me.store===t.from;
+ if(k==='ok'){need(st===TS[0]&&orig,'Somente a loja de origem ('+sn(t.from)+') pode dar o OK.');need(trAvail(t).length>=t.qty,'Saldo insuficiente na origem.');t.okBy=ctx.u;t.okT=now();t.status=TS[1];trLog(t,TS[0],TS[1],t.from)}
+ else if(k==='rj'){need((st===TS[0]&&orig)||(st===TS[1]&&me.admin),'Sem permissão para rejeitar.');t.status=TS[3];trLog(t,st,TS[3],st===TS[0]?t.from:t.to)}
+ else{need(me.admin&&st===TS[1],'Somente o administrador aprova (após o OK da origem).');const us=trAvail(t);need(us.length>=t.qty,'Saldo insuficiente na origem.');
+  us.slice(0,t.qty).forEach(u=>setU(u,'Em estoque da unidade','Transferência '+t.id,t.to,'',true));t.admBy=ctx.u;t.status=TS[2];
+  trLog(t,'Em estoque da unidade','Saída para '+sn(t.to),t.from);trLog(t,'Saída de '+sn(t.from),'Em estoque da unidade',t.to)}}
+
+S={stores:[...LOJAS],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[]};
+/* Catálogo: cadastra/atualiza peça (fornecedor padrão e valor) automaticamente */
+function catAdd(n,m,sp,p){const c=S.cat.find(x=>x.n===n&&x.m===m);if(c){if(sp)c.s=sp;if(p)c.p=p}else S.cat.push({n,m,s:sp,p})}
+
+/* ---------- UI utilitários ---------- */
+function cl(){$('#m').className='ov'}
+function modal(title,fields,ok,ch){
+ $('#m').innerHTML=`<div class=md><h3>${title}</h3><form>${fields.map(f=>`<label>${f.l}${f.o?`<select name=${f.n}>${f.o.map(o=>`<option value="${esc(o[0])}" ${String(o[0])===String(f.v)?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`:`<input name=${f.n} type=${f.t||'text'} value="${esc(f.v)}" ${f.r?'required':''} ${f.min!=null?'min='+f.min:''} step=any>`}</label>`).join('')}<div class=bt><button type=button onclick=cl()>Cancelar</button><button class=pr>Confirmar</button></div></form></div>`;
+ $('#m').className='ov on';
+ {const fm=$('#m form');if(ch){fm.elements[fields[0].n].onchange=()=>ch(fm.elements);ch(fm.elements)}}
+ $('#m form').onsubmit=e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));Promise.resolve().then(()=>ok(d)).then(save).then(()=>{cl();render()}).catch(async x=>{toast(x.message);try{await load()}catch(y){}render()})}}
+const badge=s=>`<span class="tg ${/Aguard|Solic/.test(s)?'w':/Rejeit|Descart|Sem /.test(s)?'r':/Utiliz|Entreg|Receb|estoque|Dispon|Conclu/.test(s)?'g':''}">${esc(s)}</span>`;
+const tbl=(h,r)=>`<div class=tw><table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${r.length?r.map(x=>`<tr>${x.map(c=>`<td>${c}</td>`).join('')}</tr>`).join(''):`<tr><td colspan=${h.length} class=mu>Nenhum registro.</td></tr>`}</table></div>`;
+const cnt=(a,f,w=()=>1)=>{const m={};a.forEach(x=>{const k=f(x);m[k]=(m[k]||0)+w(x)});return m};
+const bars=(m,keep)=>{let e=Object.entries(m);e=keep?e.sort():e.sort((a,b)=>b[1]-a[1]);e=e.slice(keep?-6:0,keep?undefined:6);const mx=Math.max(1,...e.map(x=>x[1]));
+ return e.length?e.map(([k,v])=>`<div class=br><span title="${esc(k)}">${esc(k)}</span><i><b style="width:${v/mx*100}%"></b></i><em>${v}</em></div>`).join(''):'<p class=mu>Sem dados</p>'};
+const hs=h=>{const o=ord((h.ref||'').slice(0,8));return o?o.store:null};
+const vis=()=>{const a=me.admin,v=me.view,all=a&&v==null,t=a?v:me.store;return{o:S.orders.filter(o=>all||o.store===t),u:S.units.filter(u=>all||(a?ord(u.order).store===t||u.loc===t:u.loc===t)),h:S.hist.filter(h=>all||hs(h)===t||h.unid===S.stores[t])}};
+function csv(name,rows){if(!rows.length)return toast('Nada para exportar.');const k=Object.keys(rows[0]);
+ const t='\ufeff'+[k,...rows.map(r=>k.map(c=>r[c]))].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download=name+'.csv';a.click()}
+
+/* ---------- Login ---------- */
+function login(){return `<div class=lg><form onsubmit="lgin(event)"><h1>⚙️ GestPeças</h1><p class=mu>Gestão de peças, estoque e rastreabilidade</p><label>E-mail<input id=le type=email autocapitalize=off required></label><label>Senha<input id=lp type=password required></label><button class=pr>Entrar</button></form></div>`}
+async function enter(){const{data:{session}}=await sb.auth.getSession();if(!session)return false;
+ const{data:p}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();
+ if(!p||!p.ativo){await sb.auth.signOut();throw new Error('Usuário inativo ou sem perfil. Fale com o administrador.')}
+ me={id:p.id,name:p.n,admin:p.adm,store:p.store,view:null};ctx={u:p.n,t:0};tab='dash';await load();return true}
+async function lgin(e){e.preventDefault();try{const{error}=await sb.auth.signInWithPassword({email:$('#le').value.trim(),password:$('#lp').value});if(error)throw new Error('E-mail ou senha incorretos.');await enter();render()}catch(x){toast(x.message);me=null;render()}}
+async function logout(){await sb.auth.signOut();me=null;render()}
+
+/* ---------- Páginas ---------- */
+function pDash(){const{o,u,h}=vis(),p=v=>u.filter(x=>x.status===v).length;
+ const av=u.filter(x=>inStock(x)||cAv(x)||x.status==='Recebida').length,bought=o.reduce((s,x)=>s+x.qty*x.price,0),dist=u.filter(x=>x.loc!=='c').reduce((s,x)=>s+x.cost,0);
+ const C=[['📦','Peças cadastradas',u.length],['✅','Quantidade disponível',av],['🧾','Pedidos realizados',o.length],['⏳','Aguardando atendimento',o.filter(x=>x.status==='Aguardando atendimento').length],['🔧','Peças utilizadas',p('Utilizada')],['↩️','Peças devolvidas',p('Devolvida')],['🛠️','Em manutenção',u.filter(inM).length],['💰','Total comprado',brl(bought)],['🚚','Valor distribuído',brl(dist)]];
+ return `<h1>Dashboard</h1><p class="mu sub">${me.admin?(me.view==null?'Visão consolidada das 5 lojas':esc(S.stores[me.view])):esc(S.stores[me.store])}</p>
+<div class=cards>${C.map(c=>`<div class=card><small>${c[0]} ${c[1]}</small><strong>${c[2]}</strong></div>`).join('')}</div>
+<div class=grid><div class=box><h3>Pedidos por unidade</h3>${bars(cnt(o,x=>sn(x.store)))}</div><div class=box><h3>Peças mais solicitadas</h3>${bars(cnt(o,nm,x=>x.qty))}</div>
+<div class=box><h3>Peças mais utilizadas</h3>${bars(cnt(u.filter(x=>x.status==='Utilizada'),nm))}</div><div class=box><h3>Peças devolvidas</h3>${bars(cnt(u.filter(x=>x.status==='Devolvida'),nm))}</div>
+<div class=box><h3>Movimentação mensal</h3>${bars(cnt(h,x=>new Date(x.t).toISOString().slice(0,7)),1)}</div></div>
+<h3 style="margin-bottom:10px">Movimentações recentes</h3>${tbl(['Data','Funcionário','Unidade','Produto','Qtd','Tipo','Novo status'],h.slice(0,8).map(x=>[dt(x.t),esc(x.u),esc(x.unid),esc(x.prod),x.qtd,x.tipo,badge(x.para)]))}`}
+
+function pOrd(){const{o}=vis();
+ const form=me.admin?'':`<div class=bar><button class=pr onclick="orderForm()">+ Nova solicitação</button></div>`;
+ const act=x=>me.admin?({'Aguardando atendimento':`<button class=pr onclick="oa('${x.id}','ap')">Aprovar</button><button onclick="oa('${x.id}','rj')">Rejeitar</button>`,Aprovado:`<button class=pr onclick="oa('${x.id}','bu')">Registrar compra</button>`,Comprado:`<button class=pr onclick="oa('${x.id}','rc')">Marcar recebido</button>`,Recebido:`<button class=pr onclick="oa('${x.id}','en')">Entregar à loja</button>`}[x.status]||''):'';
+ return `<h1>${me.admin?'Pedidos das lojas':'Solicitar Peças'}</h1><p class="mu sub">Fluxo: solicitação → aprovação → compra → recebimento → entrega</p>${form}<div class=cards><div class=card><small>🧾 Pedidos</small><strong>${o.length}</strong></div><div class=card><small>💰 Valor comprado</small><strong>${brl(sum(o,x=>x.qty*x.price))}</strong></div></div>
+${tbl(['Pedido','Data','Loja','Peça','Qtd','Fornecedor','Total','Responsável','Status','Ações'],o.map(x=>[x.id,dt(x.t),esc(sn(x.store)),esc(nm(x)),x.qty,esc(x.sup||'—'),x.price?brl(x.qty*x.price):'—',esc(x.user),badge(x.status),act(x)]))}`}
+function orderForm(){modal('Nova solicitação de peças',[{n:'c',l:'Peça do catálogo (fornecedor e valor entram sozinhos)',o:[...S.cat.map((c,i)=>[i,c.n+' '+c.m+' · '+(c.s||'sem fornecedor')]),['x','Outra peça (digitar abaixo)']]},{n:'prod',l:'Se outra: nome da peça'},{n:'model',l:'Se outra: modelo'},{n:'qty',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'obs',l:'Observação'}],d=>{let c=S.cat[d.c],novo=!c;if(novo){need(d.prod&&d.model,'Informe peça e modelo.');c={n:d.prod,m:d.model,s:'',p:0}}
+ newOrder({store:me.store,prod:c.n,model:c.m,qty:d.qty,sup:c.s,est:c.p,obs:d.obs});if(novo)catAdd(c.n,c.m,'',0)})}
+function oa(id,k){const o=ord(id);
+ if(k==='ap')return modal('Aprovar pedido '+id,[{n:'q',l:'Quantidade aprovada',t:'number',v:o.qty,min:1,r:1}],d=>decide(o,true,+d.q));
+ if(k==='bu')return modal('Registrar compra — '+id,[{n:'s',l:'Fornecedor',v:o.sup,o:S.sup.map(s=>[s.n,s.n+' ('+s.c+')'])},{n:'p',l:'Valor unitário (R$)',t:'number',v:o.est||'',min:0.01,r:1}],d=>buy(o,d.s,+d.p));
+ go(()=>{if(k==='rj')decide(o,false);if(k==='rc')receive(o);if(k==='en')deliver(o)})}
+
+const AC={use:['Utilizar',inStock],ret:['Devolver',inStock],tr:['Enviar à loja',cAv],mnt:['Manutenção',u=>inStock(u)||cAv(u)],mn2:['Atualizar manut.',inM],ds:['Descartar',u=>cAv(u)||inM(u)]};
+function pUnits(){const T={pcs:['Controle de Peças',()=>1],ret:['Devoluções',u=>u.status==='Devolvida'],use:['Peças Utilizadas',u=>u.status==='Utilizada'],mnt:['Manutenção',inM]}[tab];
+ const us=vis().u.filter(T[1]);
+ return `<h1>${T[0]}</h1><p class="mu sub">Cada peça tem identificação própria, ligada ao pedido de origem. Clique no código para ver o rastro completo.</p>
+<div class=cards><div class=card><small>📦 Peças</small><strong>${us.length}</strong></div><div class=card><small>💰 Valor total</small><strong>${brl(sum(us,u=>u.cost))}</strong></div></div>
+${tbl(['Código','Peça','Pedido','Local','Status','Valor','Ações'],us.map(u=>[`<a style="color:var(--a);cursor:pointer" onclick="trail('${u.id}')">${u.id}</a>`,esc(nm(u)),u.order,esc(sn(u.loc)),badge(u.status),brl(u.cost),Object.entries(AC).filter(([k,a])=>a[1](u)).map(([k,a])=>`<button onclick="ua('${u.id}','${k}')">${a[0]}</button>`).join('')]))}`}
+function trail(id){const u=unit(id);$('#m').innerHTML=`<div class=md><h3>Rastro de ${u.id} — ${esc(nm(u))}</h3>${u.trail.map(t=>`<div class=trail><b>${esc(t.de)} → ${esc(t.para)}</b><br><span class=mu>${dt(t.t)} · ${esc(t.u)}${t.m?' · '+esc(t.m):''}</span></div>`).join('')}<div class=bt><button onclick=cl()>Fechar</button></div></div>`;$('#m').className='ov on'}
+function ua(id,k){const u=unit(id);const M={
+ use:['Utilizar peça '+id,[{n:'m',l:'Observações'}],d=>{need(inStock(u),'Só é possível utilizar peça disponível no estoque da unidade.');setU(u,'Utilizada',d.m,undefined,'Utilização')}],
+ ret:['Devolver peça '+id,[{n:'m',l:'Motivo da devolução',r:1},{n:'e',l:'Estado da peça',o:[['Boa','Boa'],['Defeituosa','Defeituosa'],['Danificada','Danificada']]}],d=>{need(inStock(u),'Só é possível devolver peça que está no estoque da unidade.');setU(u,'Devolvida',d.m+' ('+d.e+')','c','Devolução')}],
+ tr:['Transferir '+id,[{n:'d',l:'Loja de destino',o:S.stores.map((s,i)=>[i,s]).filter(x=>x[0]!==u.loc)},{n:'m',l:'Motivo'}],d=>{need(cAv(u),'Entre lojas: use o menu Transferências.');setU(u,'Em estoque da unidade','De '+sn(u.loc)+' · '+d.m,+d.d,'Transferência')}],
+ mnt:['Enviar para manutenção',[{n:'t',l:'Técnico responsável',r:1},{n:'m',l:'Motivo',r:1}],d=>{need(inStock(u)||cAv(u));setU(u,'Aguardando manutenção','Téc.: '+d.t+' · '+d.m,undefined,'Manutenção')}],
+ mn2:['Atualizar manutenção',[{n:'r',l:'Resultado',o:[['em','Em manutenção'],['c','Concluída — voltou ao estoque central'],['l','Concluída — devolver à loja de origem'],['x','Sem possibilidade de reparo — descartar']]},{n:'m',l:'Observações'}],d=>{need(inM(u));
+  if(d.r==='em')setU(u,'Em manutenção',d.m,undefined,'Manutenção');else if(d.r==='c')setU(u,'Disponível',d.m,'c','Manutenção');
+  else if(d.r==='l'){need(u.loc!=='c','Peça sem loja de origem: use estoque central.');setU(u,'Em estoque da unidade',d.m,undefined,'Manutenção')}else setU(u,'Descartada',d.m,undefined,'Descarte')}],
+ ds:['Descartar peça',[{n:'m',l:'Motivo',r:1}],d=>{need(cAv(u)||inM(u));setU(u,'Descartada',d.m,undefined,'Descarte')}]}[k];
+ modal(M[0],M[1],M[2])}
+
+function pSup(){const P=S.orders.filter(o=>o.price);
+ return `<h1>Fornecedores</h1><p class="mu sub">Cadastro e histórico de compras</p><div class=bar><button class=pr onclick="supForm()">+ Novo fornecedor</button></div>
+${tbl(['Fornecedor','Empresa','Telefone','E-mail','Observações','Compras','Total comprado'],S.sup.map(s=>{const c=P.filter(o=>o.sup===s.n);return[esc(s.n),esc(s.c),esc(s.tel),esc(s.em),esc(s.obs),c.length,brl(c.reduce((a,o)=>a+o.qty*o.price,0))]}))}
+<h3 style="margin-bottom:10px">Histórico de compras</h3>${tbl(['Pedido','Data','Fornecedor','Loja','Produto','Qtd','Unitário','Total','Responsável'],P.map(o=>[o.id,dt(o.buyT),esc(o.sup),esc(sn(o.store)),esc(nm(o)),o.qty,brl(o.price),brl(o.qty*o.price),esc(o.buyer)]))}`}
+function supForm(){modal('Novo fornecedor',[{n:'n',l:'Nome',r:1},{n:'c',l:'Empresa'},{n:'tel',l:'Telefone'},{n:'em',l:'E-mail',t:'email'},{n:'obs',l:'Observações'}],d=>{S.sup.push(d)})}
+
+function pStk(){const locs=['c',0,1,2,3,4],sel=(l,p)=>S.units.filter(u=>u.loc===l&&(l==='c'?['Recebida','Disponível','Devolvida'].includes(u.status):inStock(u))&&(!p||nm(u)===p)),P=[...new Set(S.units.map(nm))].sort();
+ return `<h1>Estoques</h1><p class="mu sub">Saldo e valor por local. Entradas e saídas ficam registradas no Histórico.</p><div class=bar><button class=pr onclick="entForm()">+ Entrada de peças</button><button onclick="saiForm()">− Saída para loja</button></div>
+${tbl(['Produto',...locs.map(sn)],[...P.map(p=>[esc(p),...locs.map(l=>sel(l,p).length)]),['<b>Total (peças)</b>',...locs.map(l=>'<b>'+sel(l).length+'</b>')],['<b>Valor total</b>',...locs.map(l=>'<b>'+brl(sum(sel(l),u=>u.cost))+'</b>')]])}`}
+const supOpt=()=>S.sup.map(s=>[s.n,s.n+' ('+s.c+')']),catOpt=f=>S.cat.map((c,i)=>[i,c.n+' '+c.m+(f?f(c):'')]);
+function entForm(){if(!S.cat.length)return toast('Cadastre uma peça no catálogo.');
+ modal('Entrada de peças (estoque central)',[{n:'p',l:'Peça',o:catOpt()},{n:'q',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'s',l:'Fornecedor',o:supOpt()},{n:'v',l:'Valor unitário (R$)',t:'number',min:0.01,r:1}],
+ d=>{const c=S.cat[d.p],o=newOrder({store:'c',prod:c.n,model:c.m,qty:d.q,sup:d.s,obs:'Entrada avulsa'});decide(o,true,+d.q);buy(o,d.s,+d.v);receive(o)},
+ f=>{const c=S.cat[f.p.value];if(c){f.s.value=c.s;f.v.value=c.p||''}})}
+const avC=c=>S.units.filter(u=>cAv(u)&&u.prod===c.n&&u.model===c.m);
+function saiForm(){if(!S.cat.length)return toast('Cadastre uma peça no catálogo.');
+ modal('Saída do estoque central para loja',[{n:'p',l:'Peça',o:catOpt(c=>' (disp. '+avC(c).length+')')},{n:'q',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'d',l:'Loja de destino',o:S.stores.map((s,i)=>[i,s])},{n:'m',l:'Motivo'}],
+ d=>{const us=avC(S.cat[d.p]),q=+d.q;need(q>0&&q<=us.length,'Saída maior que o estoque central disponível ('+us.length+').');us.slice(0,q).forEach(u=>setU(u,'Em estoque da unidade',d.m||'Saída do estoque central',+d.d,'Transferência'))})}
+function pCat(){const q=c=>S.units.filter(u=>u.prod===c.n&&u.model===c.m&&(cAv(u)||inStock(u)));
+ return `<h1>Catálogo de Peças</h1><p class="mu sub">Cadastre uma vez. Depois é só escolher a peça: fornecedor e valor entram sozinhos.</p><div class=bar><button class=pr onclick="catForm()">+ Nova peça</button><button onclick="supForm()">+ Novo fornecedor</button></div>
+${tbl(['Peça','Modelo','Fornecedor padrão','Valor unitário','Em estoque','Valor em estoque',''],S.cat.map((c,i)=>[esc(c.n),esc(c.m),esc(c.s||'—'),c.p?brl(c.p):'—',q(c).length,brl(sum(q(c),u=>u.cost)),`<button onclick="catForm(${i})">Editar</button>`]))}`}
+function catForm(i){const c=S.cat[i]||{n:'',m:'',s:S.sup[0]?S.sup[0].n:'',p:''},N=i==null;
+ modal(N?'Nova peça':'Editar '+c.n+' '+c.m,[...(N?[{n:'n',l:'Nome da peça',r:1},{n:'m',l:'Modelo do aparelho',r:1}]:[]),{n:'s',l:'Fornecedor padrão',v:c.s,o:supOpt()},{n:'p',l:'Valor unitário (R$)',t:'number',v:c.p,min:0,r:1}],
+ d=>{const x={...d,p:+d.p};if(N)S.cat.push(x);else Object.assign(c,x)})}
+const hf=()=>vis().h.filter(h=>(!H.s||h.unid===H.s)&&(!H.q||Object.values(h).join(' ').toLowerCase().includes(H.q.toLowerCase()))&&(!H.a||h.t>=new Date(H.a).getTime())&&(!H.b||h.t<=new Date(H.b).getTime()+864e5));
+const hrows=()=>tbl(['Data','Funcionário','Unidade','Produto','Qtd','Tipo','Status anterior','Novo status','Ref. / motivo'],hf().map(x=>[dt(x.t),esc(x.u),esc(x.unid),esc(x.prod),x.qtd,x.tipo,esc(x.de),esc(x.para),esc(x.ref)]));
+function pHis(){return `<h1>Histórico</h1><p class="mu sub">Registro permanente de todas as movimentações (busque por loja, funcionário, produto ou fornecedor)</p>
+<div class=bar><input placeholder="Buscar funcionário, produto, fornecedor…" value="${esc(H.q)}" oninput="H.q=this.value;$('#hb').innerHTML=hrows()"><select onchange="H.s=this.value;$('#hb').innerHTML=hrows()"><option value="">Todas as unidades</option>${['Estoque Central',...S.stores].map(s=>`<option ${H.s===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
+<input type=date value="${H.a}" onchange="H.a=this.value;$('#hb').innerHTML=hrows()"><input type=date value="${H.b}" onchange="H.b=this.value;$('#hb').innerHTML=hrows()"><button onclick="exp('his')">⬇ CSV</button></div><div id=hb>${hrows()}</div>`}
+
+function exp(k){const U=S.units,f=(l,o)=>o;const R={
+ ped:()=>S.orders.map(o=>({Pedido:o.id,Data:dt(o.t),Loja:sn(o.store),Peca:nm(o),Qtd:o.qty,Fornecedor:o.sup,Total:o.qty*o.price,Responsavel:o.user,Status:o.status})),
+ com:()=>S.orders.filter(o=>o.price).map(o=>({Pedido:o.id,Data:dt(o.buyT),Fornecedor:o.sup,Loja:sn(o.store),Produto:nm(o),Qtd:o.qty,Unitario:o.price,Total:o.qty*o.price,Funcionario:o.buyer})),
+ pec:()=>U.map(u=>({Codigo:u.id,Pedido:u.order,Peca:nm(u),Local:sn(u.loc),Status:u.status,Valor:u.cost})),
+ dev:()=>U.filter(u=>u.status==='Devolvida').map(u=>({Codigo:u.id,Peca:nm(u),Pedido:u.order})),
+ man:()=>U.filter(inM).map(u=>({Codigo:u.id,Peca:nm(u),Loja:sn(u.loc),Status:u.status})),
+ uti:()=>U.filter(u=>u.status==='Utilizada').map(u=>({Codigo:u.id,Peca:nm(u),Loja:sn(u.loc),Pedido:u.order})),
+ his:()=>hf().map(h=>({Data:dt(h.t),Funcionario:h.u,Unidade:h.unid,Produto:h.prod,Qtd:h.qtd,Tipo:h.tipo,Anterior:h.de,Novo:h.para,Ref:h.ref,Fornecedor:h.forn}))};csv('gestpecas_'+k,R[k]())}
+function pRep(){const P=S.orders.filter(o=>o.price),sup=cnt(P,o=>o.sup,o=>o.qty),sv=cnt(P,o=>o.sup,o=>o.qty*o.price);
+ return `<h1>Relatórios</h1><p class="mu sub">Exporte em CSV (abre no Excel)</p><div class=bar>${[['ped','Pedidos'],['com','Compras'],['pec','Peças'],['uti','Utilizadas'],['dev','Devolvidas'],['man','Em manutenção'],['his','Histórico']].map(x=>`<button onclick="exp('${x[0]}')">⬇ ${x[1]}</button>`).join('')}</div>
+<h3 style="margin-bottom:10px">Compras por fornecedor</h3>${tbl(['Fornecedor','Peças','Valor'],Object.keys(sup).map(k=>[esc(k),sup[k],brl(sv[k])]))}
+<h3 style="margin-bottom:10px">Resumo por unidade</h3>${tbl(['Unidade','Utilizadas','Devolvidas','Em manutenção','Pedidos pendentes','Valor investido'],S.stores.map((n,i)=>{const u=S.units.filter(x=>x.loc===i);return[esc(n),u.filter(x=>x.status==='Utilizada').length,S.hist.filter(h=>h.tipo==='Devolução'&&h.unid===n).length,u.filter(inM).length,S.orders.filter(o=>o.store===i&&o.status==='Aguardando atendimento').length,brl(u.reduce((a,x)=>a+x.cost,0))]}))}`}
+function pTra(){const t=me.admin?S.tr.filter(x=>me.view==null||x.from===me.view||x.to===me.view):S.tr.filter(x=>x.from===me.store||x.to===me.store);
+ const act=x=>(x.status===TS[0]&&!me.admin&&me.store===x.from?`<button class=pr onclick="ts('${x.id}','ok')">Dar OK</button><button onclick="ts('${x.id}','rj')">Recusar</button>`:'')+(x.status===TS[1]&&me.admin?`<button class=pr onclick="ts('${x.id}','ad')">Aprovar e transferir</button><button onclick="ts('${x.id}','rj')">Rejeitar</button>`:'');
+ return `<h1>Transferências</h1><p class="mu sub">Loja solicita → OK da loja de origem (somente ela) → aprovação do admin → peças transferidas</p><div class=bar><button class=pr onclick="trForm()">+ Solicitar transferência</button></div>
+${tbl(['Código','Data','Origem','Destino','Peça','Qtd','Solicitante','OK da origem','Status','Ações'],t.map(x=>[x.id,dt(x.t),esc(sn(x.from)),esc(sn(x.to)),esc(x.pn),x.qty,esc(x.by),x.okBy?esc(x.okBy):'—',badge(x.status),act(x)]))}`}
+function ts(id,k){go(()=>trStep(S.tr.find(x=>x.id===id),k))}
+function trForm(){const P=S.cat.map(c=>c.n+' '+c.m),L=S.stores.map((s,i)=>[i,s]);if(!P.length)return toast('Nenhuma peça em estoque nas lojas.');
+ modal('Solicitar transferência',[...(me.admin?[{n:'t',l:'Loja de destino (quem recebe)',o:L}]:[]),{n:'f',l:'Loja de origem (quem envia)',o:L.filter(x=>me.admin||x[0]!==me.store)},{n:'p',l:'Peça',o:P.map(p=>[p,p])},{n:'qty',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'m',l:'Motivo'}],trNew)}
+function pUsr(){return `<h1>Usuários</h1><p class="mu sub">Crie o acesso dos funcionários. Cada um entra só na própria loja e só movimenta o que é dela. Somente o administrador vê todas as unidades.</p><div class=bar><button class=pr onclick="usrForm()">+ Novo usuário</button></div>
+${tbl(['Nome','Acesso','Unidade','Status','Ações'],S.users.map(u=>[esc(u.n),u.adm?'Administrador':'Funcionário',u.adm?'Todas':esc(S.stores[u.store]),`<span class="tg ${u.on?'g':'r'}">${u.on?'Ativo':'Inativo'}</span>`,`<button onclick="usrPass('${u.id}')">Redefinir senha</button>`+(u.adm?'':`<button onclick="usrTog('${u.id}')">${u.on?'Desativar':'Ativar'}</button>`)]))}`}
+const fn=async b=>{const{data,error}=await sb.functions.invoke('usuarios',{body:b});if(error){let m=error.message;try{m=(await error.context.json()).erro||m}catch(e){}throw new Error(m)}return data};
+function usrForm(){modal('Novo usuário',[{n:'n',l:'Nome do funcionário',r:1},{n:'e',l:'E-mail de acesso',t:'email',r:1},{n:'s',l:'Unidade (loja)',o:S.stores.map((s,i)=>[i,s])},{n:'p',l:'Senha (mín. 6 caracteres)',t:'password',r:1}],d=>fn({acao:'criar',nome:d.n.trim(),email:d.e.trim(),store:+d.s,senha:d.p}))}
+function usrPass(id){const u=S.users.find(x=>x.id===id);modal('Nova senha de '+u.n,[{n:'p',l:'Nova senha (mín. 6 caracteres)',t:'password',r:1}],d=>fn({acao:'senha',id,senha:d.p}))}
+function usrTog(id){go(()=>fn({acao:'ativo',id}))}
+function cfg(){modal('Nomes das lojas',S.stores.map((s,i)=>({n:'s'+i,l:'Loja '+(i+1),v:s,r:1})),d=>{S.stores=S.stores.map((_,i)=>d['s'+i])})}
+
+
+/* ---------- Shell ---------- */
+function render(){
+ if(!me){$('#app').innerHTML=login();return}
+ if(!me.admin&&['cat','sup','stk','rep','usr'].includes(tab))tab='dash';
+ const pn=S.tr.filter(x=>me.admin?x.status===TS[1]:x.status===TS[0]&&x.from===me.store).length;
+ const N=[['dash','📊','Dashboard',1],['ord','📝',me.admin?'Pedidos':'Solicitar Peças',1],['pcs','🧩','Controle de Peças',1],['ret','↩️','Devoluções',1],['use','✔️','Peças Utilizadas',1],['mnt','🛠️','Manutenção',1],['cat','🧰','Catálogo de Peças',2],['sup','🏭','Fornecedores',2],['stk','🏬','Estoques',2],['tra','🔁','Transferências'+(pn?' ('+pn+')':''),1],['his','🕘','Histórico',1],['rep','📑','Relatórios',2],['usr','👥','Usuários',2]].filter(n=>n[3]===1||me.admin);
+ const P={dash:pDash,ord:pOrd,pcs:pUnits,ret:pUnits,use:pUnits,mnt:pUnits,cat:pCat,tra:pTra,usr:pUsr,sup:pSup,stk:pStk,his:pHis,rep:pRep};
+ $('#app').innerHTML=`<aside><h2>⚙️ Gest<span>Peças</span></h2>${N.map(n=>`<a class="${n[0]===tab?'on':''}" onclick="tab='${n[0]}';render()">${n[1]} ${n[2]}</a>`).join('')}
+ ${me.admin?`<label style="padding:8px 12px;margin:6px 0">👁 Ver unidade<select onchange="me.view=this.value===''?null:+this.value;render()"><option value="">Todas as unidades</option>${S.stores.map((s,i)=>`<option value=${i} ${me.view===i?'selected':''}>${esc(s)}</option>`).join('')}</select></label><a onclick="cfg()">⚙️ Configurações</a>`:''}
+ <a onclick="refresh()">↻ Atualizar dados</a><div class=me><b>${esc(me.name)}</b>${me.admin?'Administrador · todas as lojas':esc(S.stores[me.store])}<br><a style="padding:4px 0;display:inline-block;color:var(--a)" onclick="logout()">Sair</a></div></aside><main>${me.admin&&me.view!=null?`<p class=tg style="display:inline-block;margin-bottom:12px">👁 Visualizando: ${esc(S.stores[me.view])}</p>`:''}${P[tab]()}</main>`}
+render();enter().then(ok=>ok&&render()).catch(x=>toast(x.message));
+
+</script>
+</body>
+</html>
