@@ -92,27 +92,19 @@ const VIEWS = {
     };
   },
   async employees(el, me) {
-    const [users, stores] = await Promise.all([api.admin.listUsers(), api.admin.listStores()]);
-    const so = (kind, sel) => stores.filter((x) => x.kind === kind && x.active).map((x) => `<option value="${esc(x.id)}"${x.id === sel ? ' selected' : ''}>${esc(x.name)}</option>`).join('');
-    const roleSel = (id, r) => `<select data-r="${esc(id)}"><option value="employee"${r === 'employee' ? ' selected' : ''}>Funcionário (loja)</option><option value="stock_manager"${r === 'stock_manager' ? ' selected' : ''}>Resp. estoque central</option><option value="admin"${r === 'admin' ? ' selected' : ''}>Administrador</option></select>`;
-    const storeSel = (id, sid) => `<select data-s="${esc(id)}"><option value="">—</option>${so('central', sid)}${so('branch', sid)}</select>`;
-    el.innerHTML = `<form id="nf" class="panel"><h2>Novo funcionário</h2>
+    const users = await api.admin.listUsers();
+    el.innerHTML = `<form id="nf" class="panel"><h2>Novo administrador</h2>
       <label>Nome completo<input name="name" required></label><label>E-mail<input name="email" type="email" required></label>
       <label>Senha provisória (mín. 10 caracteres)<input name="pw" type="password" minlength="10" required></label>
-      <label>Função<select name="role"><option value="employee">Funcionário (loja)</option><option value="stock_manager">Resp. estoque central</option><option value="admin">Administrador</option></select></label>
-      <label>Unidade<select name="store"><option value="">—</option>${so('central')}${so('branch')}</select></label>
-      <div id="nm"></div><button class="btn">Criar funcionário</button></form>
-      <div id="um"></div><div class="tw"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Função</th><th>Unidade</th><th>Status</th><th></th></tr></thead><tbody>${users.map((u) => u.id === me.id
-        ? `<tr><td>${esc(u.full_name)} (você)</td><td>${esc(u.email)}</td><td>${esc(ROLES[u.role])}</td><td>—</td><td><span class="bd ok">Ativo</span></td><td></td></tr>`
-        : `<tr><td>${esc(u.full_name)}</td><td>${esc(u.email)}</td><td>${roleSel(u.id, u.role)}</td><td>${storeSel(u.id, u.store_id)}</td><td><span class="bd ${u.active ? 'ok' : 'bad'}">${u.active ? 'Ativo' : 'Inativo'}</span></td><td><button class="btn ghost" data-save="${esc(u.id)}" data-act="${u.active ? 0 : 1}">${u.active ? 'Desativar' : 'Ativar'}</button></td></tr>`).join('')}</tbody></table></div>`;
+      <div id="nm"></div><button class="btn">Cadastrar administrador</button></form>
+      <div id="um"></div><div class="tw"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Status</th><th></th></tr></thead><tbody>${users.map((u) => `<tr><td>${esc(u.full_name)}${u.id === me.id ? ' (você)' : ''}</td><td>${esc(u.email)}</td><td><span class="bd ${u.active ? 'ok' : 'bad'}">${u.active ? 'Ativo' : 'Inativo'}</span></td><td>${u.id === me.id ? '' : `<button class="btn ghost" data-save="${esc(u.id)}" data-act="${u.active ? 0 : 1}">${u.active ? 'Desativar' : 'Ativar'}</button>`}</td></tr>`).join('')}</tbody></table></div>`;
     $('#nf').onsubmit = async (e) => {
       e.preventDefault(); const f = e.target; const b = f.querySelector('button'); b.disabled = true;
-      try { await api.admin.createUser({ email: f.email.value, password: f.pw.value, fullName: f.name.value, role: f.role.value, storeId: f.role.value === 'admin' ? null : f.store.value || null }); await VIEWS.employees(el, me); }
+      try { await api.admin.createUser({ email: f.email.value, password: f.pw.value, fullName: f.name.value, role: 'admin', storeId: null }); await VIEWS.employees(el, me); }
       catch (err) { $('#nm').innerHTML = alertBox(err.message); b.disabled = false; }
     };
     el.querySelectorAll('[data-save]').forEach((btn) => (btn.onclick = async () => {
-      const id = btn.dataset.save; const role = el.querySelector(`[data-r="${id}"]`).value; const store = el.querySelector(`[data-s="${id}"]`).value || null;
-      try { await api.admin.updateUser(id, { role, storeId: role === 'admin' ? null : store, active: btn.dataset.act === '1' }); await VIEWS.employees(el, me); }
+      try { await api.admin.updateUser(btn.dataset.save, { role: 'admin', storeId: null, active: btn.dataset.act === '1' }); await VIEWS.employees(el, me); }
       catch (err) { $('#um').innerHTML = alertBox(err.message); }
     }));
   },
@@ -122,7 +114,7 @@ const NAV = [
   ['stock', 'Estoque', ['admin', 'stock_manager', 'employee']],
   ['products', 'Produtos', ['admin', 'stock_manager', 'employee']],
   ['entry', 'Registrar entrada', ['admin', 'stock_manager']],
-  ['employees', 'Funcionários', ['admin']],
+  ['employees', 'Administradores', ['admin']],
   ['history', 'Movimentações', ['admin', 'stock_manager', 'employee']],
 ];
 
@@ -131,6 +123,7 @@ async function start() {
   if (!session) return loginScreen();
   let me;
   try { me = await api.auth.currentProfile(); } catch { me = null; }
+  if (me && me.active && me.role !== 'admin') { await api.auth.signOut(); return loginScreen('Este painel é exclusivo para administradores.'); }
   if (!me || !me.active) { await api.auth.signOut(); return loginScreen('Seu acesso não está ativo. Fale com o administrador.'); }
   const nav = NAV.filter((n) => n[2].includes(me.role));
   root.innerHTML = `<aside class="sidebar"><div class="brand">ERP Estoque</div><nav id="menu">${nav.map((n) => `<a href="#/${n[0]}" data-k="${n[0]}">${n[1]}</a>`).join('')}</nav>
