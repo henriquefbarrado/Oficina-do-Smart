@@ -1,188 +1,149 @@
-/* ===== GestPeças — demo ERP de peças (Vanilla JS + LocalStorage) ===== */
+/* ===== GestPeças — Vanilla JS + Supabase (Auth + Postgres + RLS) ===== */
 'use strict';
-const KEY='gestpecas_v1',LOJAS=['Buritis','Centro','Savassi','Belvedere','Castelo'];
-let S,me=null,tab='dash',H={q:'',s:'',a:'',b:''},ctx={u:'',t:0};
-const $=q=>document.querySelector(q),now=()=>ctx.t||Date.now();
-const brl=v=>(+v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const $=q=>document.querySelector(q);
+const brl=v=>(+v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const dt=t=>new Date(t).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
-const sn=l=>l==='c'?'Estoque Central':S.stores[l];
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}; /* sem LocalStorage (ex.: visualizador do celular) roda só em memória */
-const toast=m=>{const t=$('#t');t.textContent=m;t.className='on';setTimeout(()=>t.className='',3200)};
+const toast=m=>{const t=$('#t');t.textContent=m;t.className='on';setTimeout(()=>t.className='',3600)};
 const nm=x=>x.prod+' '+x.model,sum=(a,f)=>a.reduce((t,x)=>t+f(x),0);
-
-/* ---------- DOMÍNIO: regras de integridade ---------- */
-const unit=id=>S.units.find(u=>u.id===id),ord=id=>S.orders.find(o=>o.id===id);
+const CE=0,TS=['Aguardando OK da loja de origem','Aguardando aprovação do admin','Concluída','Rejeitada'];
+let sb,me=null,tab='dash',H={q:'',s:'',a:'',b:''};
+let S={st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[]};
+const sn=id=>(S.st.find(s=>s.id===id)||{}).name||'—';
+const LJ=()=>S.st.filter(s=>s.kind==='loja'),lopt=()=>LJ().map(s=>[s.id,s.name]);
+const supOpt=()=>S.sup.map(s=>[s.id,s.name+(s.company?' ('+s.company+')':'')]);
 const inStock=u=>u.status==='Em estoque da unidade';
-const cAv=u=>u.loc==='c'&&['Recebida','Devolvida','Disponível'].includes(u.status);
+const cAv=u=>u.loc===CE&&['Recebida','Devolvida','Disponível'].includes(u.status);
 const inM=u=>['Aguardando manutenção','Em manutenção'].includes(u.status);
-const need=(c,m)=>{if(!c)throw new Error(m||'Operação não permitida para o status atual da peça.')};
-/* Histórico é só de inclusão: nada é apagado ou sobrescrito */
-function log(tipo,o){S.hist.unshift({t:now(),u:ctx.u,unid:o.unid||'',prod:o.prod,qtd:o.qtd||1,tipo,de:o.de||'—',para:o.para||'—',ref:o.ref||'',forn:o.forn||''})}
-function setU(u,to,m,loc,tipo,quiet){const de=u.status;if(me&&!me.admin)need(u.loc===me.store,'Sem permissão: esta peça pertence a outra unidade.');if(to==='Utilizada')need(inStock(u),'Peça indisponível nesta unidade ou já utilizada.');u.trail.push({t:now(),u:ctx.u,de,para:to,m:m||''});u.status=to;if(loc!==undefined)u.loc=loc;
- if(!quiet)log(tipo,{unid:sn(u.loc),prod:nm(u),de,para:to,ref:u.id+(m?' · '+m:'')})}
-function newOrder(f){const o={id:'PED-'+String(++S.seq).padStart(4,'0'),store:f.store,prod:f.prod,model:f.model,qty:+f.qty,sup:f.sup||'',obs:f.obs||'',user:ctx.u,t:now(),status:'Aguardando atendimento',price:0,est:+f.est||0,units:[]};
- need(o.qty>0,'Quantidade inválida');S.orders.unshift(o);log('Solicitação',{unid:sn(o.store),prod:nm(o),qtd:o.qty,para:o.status,ref:o.id,forn:o.sup});return o}
-function decide(o,ok,q){need(o.status==='Aguardando atendimento');if(ok){need(q>0,'Quantidade inválida');o.qty=q;o.status='Aprovado'}else o.status='Rejeitado';
- log('Aprovação',{unid:sn(o.store),prod:nm(o),qtd:o.qty,de:'Aguardando atendimento',para:o.status,ref:o.id})}
-function buy(o,sup,price){need(o.status==='Aprovado','Aprove o pedido antes de comprar.');need(price>0,'Valor unitário inválido');
- o.sup=sup;o.price=price;o.buyT=now();o.buyer=ctx.u;o.status='Comprado';
- for(let i=1;i<=o.qty;i++){const id=o.id+'-'+String(i).padStart(2,'0');o.units.push(id);
-  S.units.push({id,order:o.id,prod:o.prod,model:o.model,status:'Solicitada',loc:'c',cost:price,trail:[{t:now(),u:ctx.u,de:'—',para:'Solicitada',m:'Compra registrada'}]})}
- log('Compra',{unid:sn(o.store),prod:nm(o),qtd:o.qty,de:'Aprovado',para:'Comprado',ref:o.id+' · '+brl(o.qty*price),forn:sup});catAdd(o.prod,o.model,sup,price)}
-function receive(o){need(o.status==='Comprado','Registre a compra antes do recebimento.');
- o.units.forEach(id=>setU(unit(id),'Recebida','Recebido do fornecedor','c','',true));o.status='Recebido';
- log('Recebimento',{unid:'Estoque Central',prod:nm(o),qtd:o.qty,de:'Solicitada',para:'Recebida',ref:o.id,forn:o.sup})}
-function deliver(o){need(o.status==='Recebido','Registre o recebimento antes da entrega.');
- o.units.forEach(id=>{const u=unit(id);if(u.status==='Recebida')setU(u,'Em estoque da unidade','Entrega à loja',o.store,'',true)});o.status='Entregue';
- log('Transferência',{unid:sn(o.store),prod:nm(o),qtd:o.qty,de:'Recebida',para:'Em estoque da unidade',ref:o.id})}
 
-/* ---------- TRANSFERÊNCIA ENTRE LOJAS: OK da loja de origem + aprovação do admin ---------- */
-const TS=['Aguardando OK da loja de origem','Aguardando aprovação do admin','Concluída','Rejeitada'];
-const trLog=(t,de,para,un,q)=>log('Transferência',{unid:sn(un),prod:t.pn,qtd:q||t.qty,de,para,ref:t.id});
-const trAvail=t=>S.units.filter(u=>inStock(u)&&u.loc===t.from&&nm(u)===t.pn);
-function trNew(d){const adm=me.admin,from=+d.f,to=adm?+d.t:me.store,qty=+d.qty;need(from!==to,'Origem e destino devem ser diferentes.');need(qty>0,'Quantidade inválida');
- const t={id:'TRF-'+String(S.tr.length+1).padStart(4,'0'),from,to,pn:d.p,qty,by:ctx.u,t:now(),status:TS[0],obs:d.m||''};
- need(trAvail(t).length>=qty,'A loja de origem só tem '+trAvail(t).length+' disponível.');S.tr.unshift(t);trLog(t,'—',TS[0],to)}
-function trStep(t,k){const st=t.status,orig=!me.admin&&me.store===t.from;
- if(k==='ok'){need(st===TS[0]&&orig,'Somente a loja de origem ('+sn(t.from)+') pode dar o OK.');need(trAvail(t).length>=t.qty,'Saldo insuficiente na origem.');t.okBy=ctx.u;t.okT=now();t.status=TS[1];trLog(t,TS[0],TS[1],t.from)}
- else if(k==='rj'){need((st===TS[0]&&orig)||(st===TS[1]&&me.admin),'Sem permissão para rejeitar.');t.status=TS[3];trLog(t,st,TS[3],st===TS[0]?t.from:t.to)}
- else{need(me.admin&&st===TS[1],'Somente o administrador aprova (após o OK da origem).');const us=trAvail(t);need(us.length>=t.qty,'Saldo insuficiente na origem.');
-  us.slice(0,t.qty).forEach(u=>setU(u,'Em estoque da unidade','Transferência '+t.id,t.to,'',true));t.admBy=ctx.u;t.status=TS[2];
-  trLog(t,'Em estoque da unidade','Saída para '+sn(t.to),t.from);trLog(t,'Saída de '+sn(t.from),'Em estoque da unidade',t.to)}}
-
-/* ---------- DADOS FICTÍCIOS (gerados pelas mesmas regras do sistema) ---------- */
-function seed(){
- S={ver:2,stores:LOJAS,staff:['Carlos Mendes','Ana Paula','Rafael Souza','Juliana Lima','Marcos Silva'],seq:0,
- sup:[{n:'Henrique',c:'HS Peças',tel:'(31) 99999-1111',em:'henrique@hspecas.com',obs:'Telas Apple'},{n:'Patrícia',c:'MobiParts',tel:'(31) 98888-2222',em:'vendas@mobiparts.com',obs:'Baterias e conectores'},{n:'Roberto',c:'TecnoImport',tel:'(11) 97777-3333',em:'rob@tecnoimport.com',obs:'Linha Samsung'}],orders:[],units:[],hist:[],cat:[],tr:[]};S.users=mkUsers();
- const A='Administrador',D=n=>Date.now()-n*864e5;
- const flow=(st,prod,model,q,sup,price,d,use,ret,mnt)=>{
-  ctx={u:S.staff[st],t:D(d)};const o=newOrder({store:st,prod,model,qty:q,sup});
-  ctx={u:A,t:D(d-.2)};decide(o,true,q);ctx.t=D(d-1);buy(o,sup,price);ctx.t=D(d-1.5);receive(o);ctx.t=D(d-2);deliver(o);
-  const us=o.units.map(unit);ctx={u:S.staff[st],t:D(d-3)};
-  us.slice(0,ret).forEach(u=>setU(u,'Devolvida','Defeito de fábrica','c','Devolução'));
-  us.slice(ret,ret+use).forEach(u=>setU(u,'Utilizada','Serviço de cliente',undefined,'Utilização'));
-  us.slice(ret+use,ret+use+mnt).forEach(u=>setU(u,'Em manutenção','Não carrega · Téc.: Bruno',undefined,'Manutenção'))};
- flow(0,'Tela','iPhone 11',5,'Henrique',200,40,3,2,0); /* cenário do briefing */
- flow(1,'Bateria','iPhone 12',8,'Patrícia',90,62,6,1,1);
- flow(2,'Tela','Galaxy A32',4,'Roberto',150,33,3,0,1);
- flow(3,'Conector de carga','Moto G9',10,'Patrícia',25,21,7,1,0);
- flow(4,'Tela','iPhone 11',3,'Henrique',210,15,1,0,0);
- flow(1,'Tela','iPhone 13',2,'Henrique',480,8,1,0,0);
- ctx={u:S.staff[0],t:D(1)};newOrder({store:0,prod:'Bateria',model:'iPhone 11',qty:4,obs:'Urgente'});
- ctx={u:S.staff[2],t:D(.3)};newOrder({store:2,prod:'Tela',model:'Galaxy A32',qty:2});
- ctx={u:S.staff[3],t:D(.5)};const o=newOrder({store:3,prod:'Câmera',model:'iPhone 12',qty:3});ctx={u:A,t:D(.2)};decide(o,true,3);
- S.tr.push({id:'TRF-0001',from:4,to:0,pn:'Tela iPhone 11',qty:1,by:S.staff[0],t:D(.1),status:TS[0],obs:'Reposição'});catAdd('Bateria','iPhone 11','Patrícia',85);catAdd('Tela','iPhone 12','Henrique',260);ctx={u:'',t:0};return S}
-(function(){try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}if(!S){seed();save()}
- if(S.ver!==2){S.stores=[...LOJAS];S.ver=2;save()} /* migra dados antigos para as lojas reais */
- if(!S.users)S.users=mkUsers();if(!S.tr)S.tr=[];
- if(!S.cat){S.cat=[];S.orders.slice().reverse().forEach(o=>o.price&&catAdd(o.prod,o.model,o.sup,o.price))}})();
-/* Tabela de usuários (LocalStorage): só 'Patrick' é administrador; os demais ficam presos à própria loja */
-function mkUsers(){return [{id:1,n:'Patrick',store:null,pass:'demo',adm:true,on:true},...S.staff.map((n,i)=>({id:i+2,n,store:i,pass:'demo',adm:false,on:true}))]}
-/* Catálogo: cadastra/atualiza peça (fornecedor padrão e valor) automaticamente */
-function catAdd(n,m,sp,p){const c=S.cat.find(x=>x.n===n&&x.m===m);if(c){if(sp)c.s=sp;if(p)c.p=p}else S.cat.push({n,m,s:sp,p})}
+/* ---------- Acesso ao banco (toda regra de verdade está no Postgres) ---------- */
+async function rpc(fn,a){const{data,error}=await sb.rpc(fn,a||{});if(error)throw new Error(error.message);return data}
+const ok=r=>{if(r.error)throw new Error(r.error.message);return r.data};
+const dbx=async q=>{const{error}=await q;if(error)throw new Error(error.code==='23505'?'Já existe um cadastro igual.':error.message)};
+async function all(q,pages=50){let out=[];for(let i=0;i<pages;i++){const d=ok(await q().range(i*1000,i*1000+999));out=out.concat(d);if(d.length<1000)break}return out}
+const run=async f=>{try{await f();await load();render()}catch(e){toast(e.message||String(e))}};
+async function load(){
+ const[st,cat,o,u,h,tr]=await Promise.all([sb.from('stores').select('*').order('id'),sb.from('catalog_view').select('*').order('name'),
+  all(()=>sb.from('orders').select('*').order('created_at',{ascending:false}).order('id')),all(()=>sb.from('units').select('*').order('id')),
+  all(()=>sb.from('history').select('*').order('at',{ascending:false}).order('id',{ascending:false}),3),
+  sb.from('transfers').select('*').order('created_at',{ascending:false})]);
+ S.st=ok(st);S.cat=ok(cat);
+ S.tr=ok(tr).map(x=>({id:x.id,from:x.from_store,to:x.to_store,pn:x.part_label,qty:x.qty,by:x.requested_by_name,t:Date.parse(x.created_at),status:x.status,okBy:x.ok_by_name,obs:x.note}));
+ S.orders=o.map(x=>({id:x.id,store:x.store_id,prod:x.part_name,model:x.model,qty:x.qty,sup:x.supplier_name||'',price:+x.price,est:+x.est,obs:x.note,user:x.created_by_name,t:Date.parse(x.created_at),status:x.status,buyT:x.buy_at&&Date.parse(x.buy_at),buyer:x.buyer_name}));
+ S.units=u.map(x=>({id:x.id,order:x.order_id,prod:x.part_name,model:x.model,status:x.status,loc:x.loc_store_id,org:x.origin_store_id,cost:+x.cost}));
+ S.hist=h.map(x=>({t:Date.parse(x.at),u:x.user_name,sid:x.store_id,rid:x.related_store_id,unid:sn(x.store_id),prod:x.part,qtd:x.qty,tipo:x.kind,de:x.from_status,para:x.to_status,ref:x.ref,forn:x.supplier}));
+ if(me.admin){S.sup=ok(await sb.from('suppliers').select('*').order('name'));
+  S.users=ok(await sb.from('profiles').select('*').order('name')).map(x=>({id:x.id,n:x.name,email:x.email,store:x.store_id,adm:x.is_admin,on:x.active}))}}
 
 /* ---------- UI utilitários ---------- */
 function cl(){$('#m').className='ov'}
-function modal(title,fields,ok,ch){
+function modal(title,fields,fn,ch){
  $('#m').innerHTML=`<div class=md><h3>${title}</h3><form>${fields.map(f=>`<label>${f.l}${f.o?`<select name=${f.n}>${f.o.map(o=>`<option value="${esc(o[0])}" ${String(o[0])===String(f.v)?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`:`<input name=${f.n} type=${f.t||'text'} value="${esc(f.v)}" ${f.r?'required':''} ${f.min!=null?'min='+f.min:''} step=any>`}</label>`).join('')}<div class=bt><button type=button onclick=cl()>Cancelar</button><button class=pr>Confirmar</button></div></form></div>`;
  $('#m').className='ov on';
  {const fm=$('#m form');if(ch){fm.elements[fields[0].n].onchange=()=>ch(fm.elements);ch(fm.elements)}}
- $('#m form').onsubmit=e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target));try{ok(d);save();cl();render()}catch(x){toast(x.message)}}}
+ $('#m form').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('.pr');b.disabled=true;const d=Object.fromEntries(new FormData(e.target));
+  try{await fn(d);await load();cl();render()}catch(x){toast(x.message||String(x));b.disabled=false}}}
 const badge=s=>`<span class="tg ${/Aguard|Solic/.test(s)?'w':/Rejeit|Descart|Sem /.test(s)?'r':/Utiliz|Entreg|Receb|estoque|Dispon|Conclu/.test(s)?'g':''}">${esc(s)}</span>`;
 const tbl=(h,r)=>`<div class=tw><table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${r.length?r.map(x=>`<tr>${x.map(c=>`<td>${c}</td>`).join('')}</tr>`).join(''):`<tr><td colspan=${h.length} class=mu>Nenhum registro.</td></tr>`}</table></div>`;
 const cnt=(a,f,w=()=>1)=>{const m={};a.forEach(x=>{const k=f(x);m[k]=(m[k]||0)+w(x)});return m};
 const bars=(m,keep)=>{let e=Object.entries(m);e=keep?e.sort():e.sort((a,b)=>b[1]-a[1]);e=e.slice(keep?-6:0,keep?undefined:6);const mx=Math.max(1,...e.map(x=>x[1]));
  return e.length?e.map(([k,v])=>`<div class=br><span title="${esc(k)}">${esc(k)}</span><i><b style="width:${v/mx*100}%"></b></i><em>${v}</em></div>`).join(''):'<p class=mu>Sem dados</p>'};
-const hs=h=>{const o=ord((h.ref||'').slice(0,8));return o?o.store:null};
-const vis=()=>{const a=me.admin,v=me.view,all=a&&v==null,t=a?v:me.store;return{o:S.orders.filter(o=>all||o.store===t),u:S.units.filter(u=>all||(a?ord(u.order).store===t||u.loc===t:u.loc===t)),h:S.hist.filter(h=>all||hs(h)===t||h.unid===S.stores[t])}};
+/* O servidor já filtra por loja (RLS); aqui o admin só escolhe qual unidade quer olhar */
+const vis=()=>{const a=me.admin,v=me.view,every=a&&v==null,t=a?v:me.store;
+ return{o:S.orders.filter(o=>every||o.store===t),u:S.units.filter(u=>every||u.loc===t||u.org===t),h:S.hist.filter(h=>every||h.sid===t||h.rid===t)}};
 function csv(name,rows){if(!rows.length)return toast('Nada para exportar.');const k=Object.keys(rows[0]);
  const t='\ufeff'+[k,...rows.map(r=>k.map(c=>r[c]))].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download=name+'.csv';a.click()}
 
 /* ---------- Login ---------- */
 function login(){return `<div class=lg><form onsubmit="lgin(event)"><h1>⚙️ GestPeças</h1><p class=mu>Gestão de peças, estoque e rastreabilidade</p>
-<label>Unidade<select id=ls onchange="ul()"><option value=a>Administrador (painel central)</option>${S.stores.map((s,i)=>`<option value=${i}>${esc(s)}</option>`).join('')}</select></label>
-<label>Funcionário<select id=ln>${uopt('a')}</select></label><label>Senha<input id=lp type=password placeholder="demo" autocapitalize=off autocorrect=off autocomplete=off></label>
-<button class=pr>Entrar</button><p class=mu style="margin:12px 0 0;font-size:12px">Senha de demonstração: <b>demo</b></p></form></div>`}
-const uopt=g=>S.users.filter(u=>u.on&&(g==='a'?u.adm:!u.adm&&u.store===+g)).map(u=>`<option value=${u.id}>${esc(u.n)}</option>`).join('')||'<option value="">(sem usuários)</option>';
-function ul(){$('#ln').innerHTML=uopt($('#ls').value)}
-function lgin(e){e.preventDefault();const u=S.users.find(x=>x.id==$('#ln').value&&x.on);
- if(!u)return toast('Selecione um usuário ativo.');if($('#lp').value!==u.pass)return toast('Senha incorreta.');
- me={id:u.id,name:u.n,admin:u.adm,store:u.store,view:null};ctx={u:u.n,t:0};tab='dash';render()}
+<label>E-mail<input id=le type=email autocomplete=username autocapitalize=off required></label><label>Senha<input id=lp type=password autocomplete=current-password required></label>
+<button class=pr>Entrar</button></form></div>`}
+async function lgin(e){e.preventDefault();const b=e.target.querySelector('.pr');b.disabled=true;
+ const{error}=await sb.auth.signInWithPassword({email:$('#le').value.trim(),password:$('#lp').value});
+ if(error){b.disabled=false;return toast('E-mail ou senha incorretos.')}
+ await enter()}
+async function enter(){try{const{data:{session}}=await sb.auth.getSession();if(!session)return render();
+ const{data:p,error}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();if(error)throw error;
+ if(!p||!p.active){await sb.auth.signOut();toast('Usuário sem acesso ou desativado.');return render()}
+ me={id:p.id,name:p.name,admin:p.is_admin,store:p.store_id,view:null};tab='dash';await load();render()}catch(e){toast(e.message||String(e));render()}}
+async function logout(){await sb.auth.signOut();me=null;S={st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[]};render()}
 
 /* ---------- Páginas ---------- */
 function pDash(){const{o,u,h}=vis(),p=v=>u.filter(x=>x.status===v).length;
- const av=u.filter(x=>inStock(x)||cAv(x)||x.status==='Recebida').length,bought=o.reduce((s,x)=>s+x.qty*x.price,0),dist=u.filter(x=>x.loc!=='c').reduce((s,x)=>s+x.cost,0);
+ const av=u.filter(x=>inStock(x)||cAv(x)||x.status==='Recebida').length,bought=o.reduce((s,x)=>s+x.qty*x.price,0),dist=u.filter(x=>x.loc!==CE).reduce((s,x)=>s+x.cost,0);
  const C=[['📦','Peças cadastradas',u.length],['✅','Quantidade disponível',av],['🧾','Pedidos realizados',o.length],['⏳','Aguardando atendimento',o.filter(x=>x.status==='Aguardando atendimento').length],['🔧','Peças utilizadas',p('Utilizada')],['↩️','Peças devolvidas',p('Devolvida')],['🛠️','Em manutenção',u.filter(inM).length],['💰','Total comprado',brl(bought)],['🚚','Valor distribuído',brl(dist)]];
- return `<h1>Dashboard</h1><p class="mu sub">${me.admin?(me.view==null?'Visão consolidada das 5 lojas':esc(S.stores[me.view])):esc(S.stores[me.store])}</p>
+ return `<h1>Dashboard</h1><p class="mu sub">${me.admin?(me.view==null?'Visão consolidada das '+LJ().length+' lojas':esc(sn(me.view))):esc(sn(me.store))}</p>
 <div class=cards>${C.map(c=>`<div class=card><small>${c[0]} ${c[1]}</small><strong>${c[2]}</strong></div>`).join('')}</div>
 <div class=grid><div class=box><h3>Pedidos por unidade</h3>${bars(cnt(o,x=>sn(x.store)))}</div><div class=box><h3>Peças mais solicitadas</h3>${bars(cnt(o,nm,x=>x.qty))}</div>
 <div class=box><h3>Peças mais utilizadas</h3>${bars(cnt(u.filter(x=>x.status==='Utilizada'),nm))}</div><div class=box><h3>Peças devolvidas</h3>${bars(cnt(u.filter(x=>x.status==='Devolvida'),nm))}</div>
 <div class=box><h3>Movimentação mensal</h3>${bars(cnt(h,x=>new Date(x.t).toISOString().slice(0,7)),1)}</div></div>
-<h3 style="margin-bottom:10px">Movimentações recentes</h3>${tbl(['Data','Funcionário','Unidade','Produto','Qtd','Tipo','Novo status'],h.slice(0,8).map(x=>[dt(x.t),esc(x.u),esc(x.unid),esc(x.prod),x.qtd,x.tipo,badge(x.para)]))}`}
+<h3 style="margin-bottom:10px">Movimentações recentes</h3>${tbl(['Data','Funcionário','Unidade','Produto','Qtd','Tipo','Novo status'],h.slice(0,8).map(x=>[dt(x.t),esc(x.u),esc(x.unid),esc(x.prod),x.qtd,x.tipo,badge(x.para||'')]))}`}
 
 function pOrd(){const{o}=vis();
- const form=me.admin?'':`<div class=bar><button class=pr onclick="orderForm()">+ Nova solicitação</button></div>`;
- const act=x=>me.admin?({'Aguardando atendimento':`<button class=pr onclick="oa('${x.id}','ap')">Aprovar</button><button onclick="oa('${x.id}','rj')">Rejeitar</button>`,Aprovado:`<button class=pr onclick="oa('${x.id}','bu')">Registrar compra</button>`,Comprado:`<button class=pr onclick="oa('${x.id}','rc')">Marcar recebido</button>`,Recebido:`<button class=pr onclick="oa('${x.id}','en')">Entregar à loja</button>`}[x.status]||''):'';
+ const form=`<div class=bar><button class=pr onclick="orderForm()">+ Nova solicitação</button></div>`;
+ const act=x=>me.admin?({'Aguardando atendimento':`<button class=pr onclick="oa('${x.id}','ap')">Aprovar</button><button onclick="oa('${x.id}','rj')">Rejeitar</button>`,Aprovado:`<button class=pr onclick="oa('${x.id}','bu')">Registrar compra</button>`,Comprado:`<button class=pr onclick="oa('${x.id}','rc')">Marcar recebido</button>`,Recebido:x.store===CE?'':`<button class=pr onclick="oa('${x.id}','en')">Entregar à loja</button>`}[x.status]||''):'';
  return `<h1>${me.admin?'Pedidos das lojas':'Solicitar Peças'}</h1><p class="mu sub">Fluxo: solicitação → aprovação → compra → recebimento → entrega</p>${form}<div class=cards><div class=card><small>🧾 Pedidos</small><strong>${o.length}</strong></div><div class=card><small>💰 Valor comprado</small><strong>${brl(sum(o,x=>x.qty*x.price))}</strong></div></div>
 ${tbl(['Pedido','Data','Loja','Peça','Qtd','Fornecedor','Total','Responsável','Status','Ações'],o.map(x=>[x.id,dt(x.t),esc(sn(x.store)),esc(nm(x)),x.qty,esc(x.sup||'—'),x.price?brl(x.qty*x.price):'—',esc(x.user),badge(x.status),act(x)]))}`}
-function orderForm(){modal('Nova solicitação de peças',[{n:'c',l:'Peça do catálogo (fornecedor e valor entram sozinhos)',o:[...S.cat.map((c,i)=>[i,c.n+' '+c.m+' · '+(c.s||'sem fornecedor')]),['x','Outra peça (digitar abaixo)']]},{n:'prod',l:'Se outra: nome da peça'},{n:'model',l:'Se outra: modelo'},{n:'qty',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'obs',l:'Observação'}],d=>{let c=S.cat[d.c],novo=!c;if(novo){need(d.prod&&d.model,'Informe peça e modelo.');c={n:d.prod,m:d.model,s:'',p:0}}
- newOrder({store:me.store,prod:c.n,model:c.m,qty:d.qty,sup:c.s,est:c.p,obs:d.obs});if(novo)catAdd(c.n,c.m,'',0)})}
-function oa(id,k){const o=ord(id);
- if(k==='ap')return modal('Aprovar pedido '+id,[{n:'q',l:'Quantidade aprovada',t:'number',v:o.qty,min:1,r:1}],d=>decide(o,true,+d.q));
- if(k==='bu')return modal('Registrar compra — '+id,[{n:'s',l:'Fornecedor',v:o.sup,o:S.sup.map(s=>[s.n,s.n+' ('+s.c+')'])},{n:'p',l:'Valor unitário (R$)',t:'number',v:o.est||'',min:0.01,r:1}],d=>buy(o,d.s,+d.p));
- try{if(k==='rj')decide(o,false);if(k==='rc')receive(o);if(k==='en')deliver(o);save();render()}catch(e){toast(e.message)}}
+function orderForm(){modal('Nova solicitação de peças',[...(me.admin?[{n:'st',l:'Loja que solicita',o:lopt(),v:me.view}]:[]),
+ {n:'c',l:'Peça do catálogo (fornecedor e valor entram sozinhos)',o:[...S.cat.map(c=>[c.id,c.name+' '+c.model+' · '+(c.supplier_name||'sem fornecedor')]),['x','Outra peça (digitar abaixo)']]},
+ {n:'prod',l:'Se outra: nome da peça'},{n:'model',l:'Se outra: modelo'},{n:'qty',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'obs',l:'Observação'}],
+ d=>{const c=S.cat.find(x=>String(x.id)===d.c);return rpc('order_new',{p_store:me.admin?+d.st:me.store,p_part:c?c.name:d.prod,p_model:c?c.model:d.model,p_qty:+d.qty,p_note:d.obs})})}
+function oa(id,k){const o=S.orders.find(x=>x.id===id);
+ if(k==='ap')return modal('Aprovar pedido '+id,[{n:'q',l:'Quantidade aprovada',t:'number',v:o.qty,min:1,r:1}],d=>rpc('order_decide',{p_id:id,p_ok:true,p_qty:+d.q}));
+ if(k==='bu'){if(!S.sup.length)return toast('Cadastre um fornecedor primeiro.');
+  return modal('Registrar compra — '+id,[{n:'s',l:'Fornecedor',v:(S.sup.find(s=>s.name===o.sup)||{}).id,o:supOpt()},{n:'p',l:'Valor unitário (R$)',t:'number',v:o.est||'',min:0.01,r:1}],d=>rpc('order_buy',{p_id:id,p_supplier_id:+d.s,p_price:+d.p}))}
+ run(()=>k==='rj'?rpc('order_decide',{p_id:id,p_ok:false}):k==='rc'?rpc('order_receive',{p_id:id}):rpc('order_deliver',{p_id:id}))}
 
 const AC={use:['Utilizar',inStock],ret:['Devolver',inStock],tr:['Enviar à loja',cAv],mnt:['Manutenção',u=>inStock(u)||cAv(u)],mn2:['Atualizar manut.',inM],ds:['Descartar',u=>cAv(u)||inM(u)]};
 function pUnits(){const T={pcs:['Controle de Peças',()=>1],ret:['Devoluções',u=>u.status==='Devolvida'],use:['Peças Utilizadas',u=>u.status==='Utilizada'],mnt:['Manutenção',inM]}[tab];
  const us=vis().u.filter(T[1]);
  return `<h1>${T[0]}</h1><p class="mu sub">Cada peça tem identificação própria, ligada ao pedido de origem. Clique no código para ver o rastro completo.</p>
 <div class=cards><div class=card><small>📦 Peças</small><strong>${us.length}</strong></div><div class=card><small>💰 Valor total</small><strong>${brl(sum(us,u=>u.cost))}</strong></div></div>
-${tbl(['Código','Peça','Pedido','Local','Status','Valor','Ações'],us.map(u=>[`<a style="color:var(--a);cursor:pointer" onclick="trail('${u.id}')">${u.id}</a>`,esc(nm(u)),u.order,esc(sn(u.loc)),badge(u.status),brl(u.cost),Object.entries(AC).filter(([k,a])=>a[1](u)).map(([k,a])=>`<button onclick="ua('${u.id}','${k}')">${a[0]}</button>`).join('')]))}`}
-function trail(id){const u=unit(id);$('#m').innerHTML=`<div class=md><h3>Rastro de ${u.id} — ${esc(nm(u))}</h3>${u.trail.map(t=>`<div class=trail><b>${esc(t.de)} → ${esc(t.para)}</b><br><span class=mu>${dt(t.t)} · ${esc(t.u)}${t.m?' · '+esc(t.m):''}</span></div>`).join('')}<div class=bt><button onclick=cl()>Fechar</button></div></div>`;$('#m').className='ov on'}
-function ua(id,k){const u=unit(id);const M={
- use:['Utilizar peça '+id,[{n:'m',l:'Observações'}],d=>{need(inStock(u),'Só é possível utilizar peça disponível no estoque da unidade.');setU(u,'Utilizada',d.m,undefined,'Utilização')}],
- ret:['Devolver peça '+id,[{n:'m',l:'Motivo da devolução',r:1},{n:'e',l:'Estado da peça',o:[['Boa','Boa'],['Defeituosa','Defeituosa'],['Danificada','Danificada']]}],d=>{need(inStock(u),'Só é possível devolver peça que está no estoque da unidade.');setU(u,'Devolvida',d.m+' ('+d.e+')','c','Devolução')}],
- tr:['Transferir '+id,[{n:'d',l:'Loja de destino',o:S.stores.map((s,i)=>[i,s]).filter(x=>x[0]!==u.loc)},{n:'m',l:'Motivo'}],d=>{need(cAv(u),'Entre lojas: use o menu Transferências.');setU(u,'Em estoque da unidade','De '+sn(u.loc)+' · '+d.m,+d.d,'Transferência')}],
- mnt:['Enviar para manutenção',[{n:'t',l:'Técnico responsável',r:1},{n:'m',l:'Motivo',r:1}],d=>{need(inStock(u)||cAv(u));setU(u,'Aguardando manutenção','Téc.: '+d.t+' · '+d.m,undefined,'Manutenção')}],
- mn2:['Atualizar manutenção',[{n:'r',l:'Resultado',o:[['em','Em manutenção'],['c','Concluída — voltou ao estoque central'],['l','Concluída — devolver à loja de origem'],['x','Sem possibilidade de reparo — descartar']]},{n:'m',l:'Observações'}],d=>{need(inM(u));
-  if(d.r==='em')setU(u,'Em manutenção',d.m,undefined,'Manutenção');else if(d.r==='c')setU(u,'Disponível',d.m,'c','Manutenção');
-  else if(d.r==='l'){need(u.loc!=='c','Peça sem loja de origem: use estoque central.');setU(u,'Em estoque da unidade',d.m,undefined,'Manutenção')}else setU(u,'Descartada',d.m,undefined,'Descarte')}],
- ds:['Descartar peça',[{n:'m',l:'Motivo',r:1}],d=>{need(cAv(u)||inM(u));setU(u,'Descartada',d.m,undefined,'Descarte')}]}[k];
+${tbl(['Código','Peça','Pedido','Local','Status','Valor','Ações'],us.map(u=>[`<a style="color:var(--a);cursor:pointer" onclick="trail('${u.id}')">${u.id}</a>`,esc(nm(u)),u.order,esc(sn(u.loc)),badge(u.status),brl(u.cost),Object.entries(AC).filter(([k,a])=>a[1](u)&&(me.admin||u.loc===me.store)).map(([k,a])=>`<button onclick="ua('${u.id}','${k}')">${a[0]}</button>`).join('')]))}`}
+async function trail(id){const u=S.units.find(x=>x.id===id);try{const r=ok(await sb.from('unit_trail').select('*').eq('unit_id',id).order('at').order('id'));
+ $('#m').innerHTML=`<div class=md><h3>Rastro de ${u.id} — ${esc(nm(u))}</h3>${r.map(t=>`<div class=trail><b>${esc(t.from_status)} → ${esc(t.to_status)}</b><br><span class=mu>${dt(t.at)} · ${esc(t.by_name)}${t.note?' · '+esc(t.note):''}</span></div>`).join('')}<div class=bt><button onclick=cl()>Fechar</button></div></div>`;$('#m').className='ov on'}catch(e){toast(e.message)}}
+function ua(id,k){const u=S.units.find(x=>x.id===id),call=(a,o)=>rpc('unit_action',{p_id:id,p_action:a,...o});const M={
+ use:['Utilizar peça '+id,[{n:'m',l:'Observações'}],d=>call('use',{p_note:d.m})],
+ ret:['Devolver peça '+id,[{n:'m',l:'Motivo da devolução',r:1},{n:'e',l:'Estado da peça',o:[['Boa','Boa'],['Defeituosa','Defeituosa'],['Danificada','Danificada']]}],d=>call('ret',{p_note:d.m,p_extra:d.e})],
+ tr:['Enviar '+id+' à loja',[{n:'d',l:'Loja de destino',o:lopt()},{n:'m',l:'Motivo'}],d=>call('tr',{p_note:d.m,p_dest:+d.d})],
+ mnt:['Enviar para manutenção',[{n:'t',l:'Técnico responsável',r:1},{n:'m',l:'Motivo',r:1}],d=>call('mnt',{p_note:d.m,p_extra:d.t})],
+ mn2:['Atualizar manutenção',[{n:'r',l:'Resultado',o:[['em','Em manutenção'],['c','Concluída — voltou ao estoque central'],['l','Concluída — devolver à loja de origem'],['x','Sem possibilidade de reparo — descartar']]},{n:'m',l:'Observações'}],d=>call('mn2',{p_note:d.m,p_extra:d.r})],
+ ds:['Descartar peça',[{n:'m',l:'Motivo',r:1}],d=>call('ds',{p_note:d.m})]}[k];
  modal(M[0],M[1],M[2])}
 
 function pSup(){const P=S.orders.filter(o=>o.price);
  return `<h1>Fornecedores</h1><p class="mu sub">Cadastro e histórico de compras</p><div class=bar><button class=pr onclick="supForm()">+ Novo fornecedor</button></div>
-${tbl(['Fornecedor','Empresa','Telefone','E-mail','Observações','Compras','Total comprado'],S.sup.map(s=>{const c=P.filter(o=>o.sup===s.n);return[esc(s.n),esc(s.c),esc(s.tel),esc(s.em),esc(s.obs),c.length,brl(c.reduce((a,o)=>a+o.qty*o.price,0))]}))}
+${tbl(['Fornecedor','Empresa','Telefone','E-mail','Observações','Compras','Total comprado'],S.sup.map(s=>{const c=P.filter(o=>o.sup===s.name);return[esc(s.name),esc(s.company),esc(s.phone),esc(s.email),esc(s.notes),c.length,brl(sum(c,o=>o.qty*o.price))]}))}
 <h3 style="margin-bottom:10px">Histórico de compras</h3>${tbl(['Pedido','Data','Fornecedor','Loja','Produto','Qtd','Unitário','Total','Responsável'],P.map(o=>[o.id,dt(o.buyT),esc(o.sup),esc(sn(o.store)),esc(nm(o)),o.qty,brl(o.price),brl(o.qty*o.price),esc(o.buyer)]))}`}
-function supForm(){modal('Novo fornecedor',[{n:'n',l:'Nome',r:1},{n:'c',l:'Empresa'},{n:'tel',l:'Telefone'},{n:'em',l:'E-mail',t:'email'},{n:'obs',l:'Observações'}],d=>{S.sup.push(d)})}
+function supForm(){modal('Novo fornecedor',[{n:'n',l:'Nome',r:1},{n:'c',l:'Empresa'},{n:'tel',l:'Telefone'},{n:'em',l:'E-mail',t:'email'},{n:'obs',l:'Observações'}],
+ d=>dbx(sb.from('suppliers').insert({name:d.n.trim(),company:d.c,phone:d.tel,email:d.em,notes:d.obs})))}
 
-function pStk(){const locs=['c',0,1,2,3,4],sel=(l,p)=>S.units.filter(u=>u.loc===l&&(l==='c'?['Recebida','Disponível','Devolvida'].includes(u.status):inStock(u))&&(!p||nm(u)===p)),P=[...new Set(S.units.map(nm))].sort();
+function pStk(){const locs=[CE,...LJ().map(s=>s.id)],sel=(l,p)=>S.units.filter(u=>u.loc===l&&(l===CE?['Recebida','Disponível','Devolvida'].includes(u.status):inStock(u))&&(!p||nm(u)===p)),P=[...new Set(S.units.map(nm))].sort();
  return `<h1>Estoques</h1><p class="mu sub">Saldo e valor por local. Entradas e saídas ficam registradas no Histórico.</p><div class=bar><button class=pr onclick="entForm()">+ Entrada de peças</button><button onclick="saiForm()">− Saída para loja</button></div>
 ${tbl(['Produto',...locs.map(sn)],[...P.map(p=>[esc(p),...locs.map(l=>sel(l,p).length)]),['<b>Total (peças)</b>',...locs.map(l=>'<b>'+sel(l).length+'</b>')],['<b>Valor total</b>',...locs.map(l=>'<b>'+brl(sum(sel(l),u=>u.cost))+'</b>')]])}`}
-const supOpt=()=>S.sup.map(s=>[s.n,s.n+' ('+s.c+')']),catOpt=f=>S.cat.map((c,i)=>[i,c.n+' '+c.m+(f?f(c):'')]);
-function entForm(){if(!S.cat.length)return toast('Cadastre uma peça no catálogo.');
- modal('Entrada de peças (estoque central)',[{n:'p',l:'Peça',o:catOpt()},{n:'q',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'s',l:'Fornecedor',o:supOpt()},{n:'v',l:'Valor unitário (R$)',t:'number',min:0.01,r:1}],
- d=>{const c=S.cat[d.p],o=newOrder({store:'c',prod:c.n,model:c.m,qty:d.q,sup:d.s,obs:'Entrada avulsa'});decide(o,true,+d.q);buy(o,d.s,+d.v);receive(o)},
- f=>{const c=S.cat[f.p.value];if(c){f.s.value=c.s;f.v.value=c.p||''}})}
-const avC=c=>S.units.filter(u=>cAv(u)&&u.prod===c.n&&u.model===c.m);
+function entForm(){if(!S.cat.length)return toast('Cadastre uma peça no catálogo.');if(!S.sup.length)return toast('Cadastre um fornecedor primeiro.');
+ modal('Entrada de peças (estoque central)',[{n:'p',l:'Peça',o:S.cat.map(c=>[c.id,c.name+' '+c.model])},{n:'q',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'s',l:'Fornecedor',o:supOpt()},{n:'v',l:'Valor unitário (R$)',t:'number',min:0.01,r:1}],
+ d=>rpc('stock_entry',{p_catalog_id:+d.p,p_qty:+d.q,p_supplier_id:+d.s,p_price:+d.v}),
+ f=>{const c=S.cat.find(x=>String(x.id)===f.p.value);if(c){if(c.supplier_id)f.s.value=c.supplier_id;f.v.value=c.unit_price||''}})}
+const avC=c=>S.units.filter(u=>cAv(u)&&u.prod===c.name&&u.model===c.model);
 function saiForm(){if(!S.cat.length)return toast('Cadastre uma peça no catálogo.');
- modal('Saída do estoque central para loja',[{n:'p',l:'Peça',o:catOpt(c=>' (disp. '+avC(c).length+')')},{n:'q',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'d',l:'Loja de destino',o:S.stores.map((s,i)=>[i,s])},{n:'m',l:'Motivo'}],
- d=>{const us=avC(S.cat[d.p]),q=+d.q;need(q>0&&q<=us.length,'Saída maior que o estoque central disponível ('+us.length+').');us.slice(0,q).forEach(u=>setU(u,'Em estoque da unidade',d.m||'Saída do estoque central',+d.d,'Transferência'))})}
-function pCat(){const q=c=>S.units.filter(u=>u.prod===c.n&&u.model===c.m&&(cAv(u)||inStock(u)));
+ modal('Saída do estoque central para loja',[{n:'p',l:'Peça',o:S.cat.map(c=>[c.id,c.name+' '+c.model+' (disp. '+avC(c).length+')'])},{n:'q',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'d',l:'Loja de destino',o:lopt()},{n:'m',l:'Motivo'}],
+ d=>rpc('stock_exit',{p_catalog_id:+d.p,p_qty:+d.q,p_dest:+d.d,p_note:d.m}))}
+function pCat(){const q=c=>S.units.filter(u=>u.prod===c.name&&u.model===c.model&&(cAv(u)||inStock(u)));
  return `<h1>Catálogo de Peças</h1><p class="mu sub">Cadastre uma vez. Depois é só escolher a peça: fornecedor e valor entram sozinhos.</p><div class=bar><button class=pr onclick="catForm()">+ Nova peça</button><button onclick="supForm()">+ Novo fornecedor</button></div>
-${tbl(['Peça','Modelo','Fornecedor padrão','Valor unitário','Em estoque','Valor em estoque',''],S.cat.map((c,i)=>[esc(c.n),esc(c.m),esc(c.s||'—'),c.p?brl(c.p):'—',q(c).length,brl(sum(q(c),u=>u.cost)),`<button onclick="catForm(${i})">Editar</button>`]))}`}
-function catForm(i){const c=S.cat[i]||{n:'',m:'',s:S.sup[0]?S.sup[0].n:'',p:''},N=i==null;
- modal(N?'Nova peça':'Editar '+c.n+' '+c.m,[...(N?[{n:'n',l:'Nome da peça',r:1},{n:'m',l:'Modelo do aparelho',r:1}]:[]),{n:'s',l:'Fornecedor padrão',v:c.s,o:supOpt()},{n:'p',l:'Valor unitário (R$)',t:'number',v:c.p,min:0,r:1}],
- d=>{const x={...d,p:+d.p};if(N)S.cat.push(x);else Object.assign(c,x)})}
+${tbl(['Peça','Modelo','Fornecedor padrão','Valor unitário','Em estoque','Valor em estoque',''],S.cat.map(c=>[esc(c.name),esc(c.model),esc(c.supplier_name||'—'),c.unit_price?brl(c.unit_price):'—',q(c).length,brl(sum(q(c),u=>u.cost)),`<button onclick="catForm(${c.id})">Editar</button>`]))}`}
+function catForm(id){const c=S.cat.find(x=>x.id===id),N=!c;if(!S.sup.length)return toast('Cadastre um fornecedor primeiro.');
+ modal(N?'Nova peça':'Editar '+c.name+' '+c.model,[...(N?[{n:'n',l:'Nome da peça',r:1},{n:'m',l:'Modelo do aparelho',r:1}]:[]),{n:'s',l:'Fornecedor padrão',v:N?S.sup[0].id:c.supplier_id,o:supOpt()},{n:'p',l:'Valor unitário (R$)',t:'number',v:N?'':c.unit_price,min:0,r:1}],
+ d=>N?dbx(sb.from('catalog').insert({name:d.n.trim(),model:d.m.trim(),supplier_id:+d.s,unit_price:+d.p})):dbx(sb.from('catalog').update({supplier_id:+d.s,unit_price:+d.p}).eq('id',id)))}
+
 const hf=()=>vis().h.filter(h=>(!H.s||h.unid===H.s)&&(!H.q||Object.values(h).join(' ').toLowerCase().includes(H.q.toLowerCase()))&&(!H.a||h.t>=new Date(H.a).getTime())&&(!H.b||h.t<=new Date(H.b).getTime()+864e5));
 const hrows=()=>tbl(['Data','Funcionário','Unidade','Produto','Qtd','Tipo','Status anterior','Novo status','Ref. / motivo'],hf().map(x=>[dt(x.t),esc(x.u),esc(x.unid),esc(x.prod),x.qtd,x.tipo,esc(x.de),esc(x.para),esc(x.ref)]));
 function pHis(){return `<h1>Histórico</h1><p class="mu sub">Registro permanente de todas as movimentações (busque por loja, funcionário, produto ou fornecedor)</p>
-<div class=bar><input placeholder="Buscar funcionário, produto, fornecedor…" value="${esc(H.q)}" oninput="H.q=this.value;$('#hb').innerHTML=hrows()"><select onchange="H.s=this.value;$('#hb').innerHTML=hrows()"><option value="">Todas as unidades</option>${['Estoque Central',...S.stores].map(s=>`<option ${H.s===s?'selected':''}>${esc(s)}</option>`).join('')}</select>
+<div class=bar><input placeholder="Buscar funcionário, produto, fornecedor…" value="${esc(H.q)}" oninput="H.q=this.value;$('#hb').innerHTML=hrows()"><select onchange="H.s=this.value;$('#hb').innerHTML=hrows()"><option value="">Todas as unidades</option>${S.st.map(s=>`<option ${H.s===s.name?'selected':''}>${esc(s.name)}</option>`).join('')}</select>
 <input type=date value="${H.a}" onchange="H.a=this.value;$('#hb').innerHTML=hrows()"><input type=date value="${H.b}" onchange="H.b=this.value;$('#hb').innerHTML=hrows()"><button onclick="exp('his')">⬇ CSV</button></div><div id=hb>${hrows()}</div>`}
 
-function exp(k){const U=S.units,f=(l,o)=>o;const R={
+function exp(k){const U=S.units,R={
  ped:()=>S.orders.map(o=>({Pedido:o.id,Data:dt(o.t),Loja:sn(o.store),Peca:nm(o),Qtd:o.qty,Fornecedor:o.sup,Total:o.qty*o.price,Responsavel:o.user,Status:o.status})),
  com:()=>S.orders.filter(o=>o.price).map(o=>({Pedido:o.id,Data:dt(o.buyT),Fornecedor:o.sup,Loja:sn(o.store),Produto:nm(o),Qtd:o.qty,Unitario:o.price,Total:o.qty*o.price,Funcionario:o.buyer})),
  pec:()=>U.map(u=>({Codigo:u.id,Pedido:u.order,Peca:nm(u),Local:sn(u.loc),Status:u.status,Valor:u.cost})),
@@ -193,22 +154,25 @@ function exp(k){const U=S.units,f=(l,o)=>o;const R={
 function pRep(){const P=S.orders.filter(o=>o.price),sup=cnt(P,o=>o.sup,o=>o.qty),sv=cnt(P,o=>o.sup,o=>o.qty*o.price);
  return `<h1>Relatórios</h1><p class="mu sub">Exporte em CSV (abre no Excel)</p><div class=bar>${[['ped','Pedidos'],['com','Compras'],['pec','Peças'],['uti','Utilizadas'],['dev','Devolvidas'],['man','Em manutenção'],['his','Histórico']].map(x=>`<button onclick="exp('${x[0]}')">⬇ ${x[1]}</button>`).join('')}</div>
 <h3 style="margin-bottom:10px">Compras por fornecedor</h3>${tbl(['Fornecedor','Peças','Valor'],Object.keys(sup).map(k=>[esc(k),sup[k],brl(sv[k])]))}
-<h3 style="margin-bottom:10px">Resumo por unidade</h3>${tbl(['Unidade','Utilizadas','Devolvidas','Em manutenção','Pedidos pendentes','Valor investido'],S.stores.map((n,i)=>{const u=S.units.filter(x=>x.loc===i);return[esc(n),u.filter(x=>x.status==='Utilizada').length,S.hist.filter(h=>h.tipo==='Devolução'&&h.unid===n).length,u.filter(inM).length,S.orders.filter(o=>o.store===i&&o.status==='Aguardando atendimento').length,brl(u.reduce((a,x)=>a+x.cost,0))]}))}`}
-function pTra(){const t=me.admin?S.tr.filter(x=>me.view==null||x.from===me.view||x.to===me.view):S.tr.filter(x=>x.from===me.store||x.to===me.store);
+<h3 style="margin-bottom:10px">Resumo por unidade</h3>${tbl(['Unidade','Utilizadas','Devolvidas','Em manutenção','Pedidos pendentes','Valor em estoque'],LJ().map(s=>{const u=S.units.filter(x=>x.loc===s.id);return[esc(s.name),u.filter(x=>x.status==='Utilizada').length,S.hist.filter(h=>h.tipo==='Devolução'&&h.sid===s.id).length,u.filter(inM).length,S.orders.filter(o=>o.store===s.id&&o.status==='Aguardando atendimento').length,brl(sum(u.filter(inStock),x=>x.cost))]}))}`}
+
+function pTra(){const t=me.admin?S.tr.filter(x=>me.view==null||x.from===me.view||x.to===me.view):S.tr;
  const act=x=>(x.status===TS[0]&&!me.admin&&me.store===x.from?`<button class=pr onclick="ts('${x.id}','ok')">Dar OK</button><button onclick="ts('${x.id}','rj')">Recusar</button>`:'')+(x.status===TS[1]&&me.admin?`<button class=pr onclick="ts('${x.id}','ad')">Aprovar e transferir</button><button onclick="ts('${x.id}','rj')">Rejeitar</button>`:'');
  return `<h1>Transferências</h1><p class="mu sub">Loja solicita → OK da loja de origem (somente ela) → aprovação do admin → peças transferidas</p><div class=bar><button class=pr onclick="trForm()">+ Solicitar transferência</button></div>
 ${tbl(['Código','Data','Origem','Destino','Peça','Qtd','Solicitante','OK da origem','Status','Ações'],t.map(x=>[x.id,dt(x.t),esc(sn(x.from)),esc(sn(x.to)),esc(x.pn),x.qty,esc(x.by),x.okBy?esc(x.okBy):'—',badge(x.status),act(x)]))}`}
-function ts(id,k){try{trStep(S.tr.find(x=>x.id===id),k);save();render()}catch(e){toast(e.message)}}
-function trForm(){const P=[...new Set(S.units.filter(inStock).map(nm))].sort(),L=S.stores.map((s,i)=>[i,s]);if(!P.length)return toast('Nenhuma peça em estoque nas lojas.');
- modal('Solicitar transferência',[...(me.admin?[{n:'t',l:'Loja de destino (quem recebe)',o:L}]:[]),{n:'f',l:'Loja de origem (quem envia)',o:L.filter(x=>me.admin||x[0]!==me.store)},{n:'p',l:'Peça',o:P.map(p=>[p,p])},{n:'qty',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'m',l:'Motivo'}],trNew)}
+function ts(id,k){run(()=>rpc(k==='ok'?'transfer_ok':k==='rj'?'transfer_reject':'transfer_approve',{p_id:id}))}
+function trForm(){if(!S.cat.length)return toast('Nenhuma peça no catálogo ainda.');
+ modal('Solicitar transferência',[...(me.admin?[{n:'t',l:'Loja de destino (quem recebe)',o:lopt()}]:[]),{n:'f',l:'Loja de origem (quem envia)',o:lopt().filter(x=>me.admin||x[0]!==me.store)},{n:'p',l:'Peça',o:S.cat.map(c=>[c.name+' '+c.model,c.name+' '+c.model])},{n:'qty',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'m',l:'Motivo'}],
+ d=>rpc('transfer_new',{p_from:+d.f,p_part:d.p,p_qty:+d.qty,p_to:me.admin?+d.t:null,p_note:d.m}))}
+
+/* Usuários: o admin cria, redefine senha, troca de loja e ativa/desativa (sem precisar pedir) */
 function pUsr(){return `<h1>Usuários</h1><p class="mu sub">Crie o acesso dos funcionários. Cada um entra só na própria loja e só movimenta o que é dela. Somente o administrador vê todas as unidades.</p><div class=bar><button class=pr onclick="usrForm()">+ Novo usuário</button></div>
-${tbl(['Nome','Acesso','Unidade','Status','Ações'],S.users.map(u=>[esc(u.n),u.adm?'Administrador':'Funcionário',u.adm?'Todas':esc(S.stores[u.store]),`<span class="tg ${u.on?'g':'r'}">${u.on?'Ativo':'Inativo'}</span>`,`<button onclick="usrPass(${u.id})">Redefinir senha</button>`+(u.adm?'':`<button onclick="usrTog(${u.id})">${u.on?'Desativar':'Ativar'}</button>`)]))}`}
-function usrForm(){modal('Novo usuário',[{n:'n',l:'Nome do funcionário',r:1},{n:'s',l:'Unidade (loja)',o:S.stores.map((s,i)=>[i,s])},{n:'p',l:'Senha (mín. 4 caracteres)',t:'password',r:1}],d=>{const n=d.n.trim();need(d.p.length>=4,'Senha muito curta.');
- need(!S.users.some(x=>x.store===+d.s&&x.n.toLowerCase()===n.toLowerCase()),'Já existe esse usuário nessa loja.');S.users.push({id:Math.max(...S.users.map(x=>x.id))+1,n,store:+d.s,pass:d.p,adm:false,on:true})})}
-function usrPass(id){const u=S.users.find(x=>x.id===id);modal('Nova senha de '+u.n,[{n:'p',l:'Nova senha (mín. 4 caracteres)',t:'password',r:1}],d=>{need(d.p.length>=4,'Senha muito curta.');u.pass=d.p})}
-function usrTog(id){const u=S.users.find(x=>x.id===id);u.on=!u.on;save();render()}
-function cfg(){modal('Nomes das lojas',S.stores.map((s,i)=>({n:'s'+i,l:'Loja '+(i+1),v:s,r:1})),d=>{S.stores=S.stores.map((_,i)=>d['s'+i])})}
-function reset(){if(confirm('Restaurar dados de demonstração? Isso apaga as alterações atuais (os usuários são mantidos).')){const U=S.users;try{localStorage.removeItem(KEY)}catch(e){}seed();S.users=U;save();me=null;render()}}
+${tbl(['Nome','E-mail','Acesso','Unidade','Status','Ações'],S.users.map(u=>[esc(u.n),esc(u.email),u.adm?'Administrador':'Funcionário',u.adm?'Todas':esc(sn(u.store)),`<span class="tg ${u.on?'g':'r'}">${u.on?'Ativo':'Inativo'}</span>`,`<button onclick="usrPass('${u.id}')">Redefinir senha</button>`+(u.adm?'':`<button onclick="usrStore('${u.id}')">Trocar loja</button><button onclick="usrTog('${u.id}')">${u.on?'Desativar':'Ativar'}</button>`)]))}`}
+function usrForm(){modal('Novo usuário',[{n:'n',l:'Nome do funcionário',r:1},{n:'e',l:'E-mail (será o login)',t:'email',r:1},{n:'s',l:'Unidade (loja)',o:lopt()},{n:'p',l:'Senha (mín. 6 caracteres)',t:'password',r:1}],
+ d=>rpc('admin_create_user',{p_email:d.e,p_password:d.p,p_name:d.n,p_store:+d.s}))}
+function usrPass(id){const u=S.users.find(x=>x.id===id);modal('Nova senha de '+esc(u.n),[{n:'p',l:'Nova senha (mín. 6 caracteres)',t:'password',r:1}],d=>rpc('admin_set_password',{p_user:id,p_password:d.p}))}
+function usrStore(id){const u=S.users.find(x=>x.id===id);modal('Trocar loja de '+esc(u.n),[{n:'s',l:'Nova loja',v:u.store,o:lopt()}],d=>rpc('admin_set_store',{p_user:id,p_store:+d.s}))}
+function usrTog(id){const u=S.users.find(x=>x.id===id);run(()=>rpc('admin_set_active',{p_user:id,p_on:!u.on}))}
 
 /* ---------- Shell ---------- */
 function render(){
@@ -218,6 +182,11 @@ function render(){
  const N=[['dash','📊','Dashboard',1],['ord','📝',me.admin?'Pedidos':'Solicitar Peças',1],['pcs','🧩','Controle de Peças',1],['ret','↩️','Devoluções',1],['use','✔️','Peças Utilizadas',1],['mnt','🛠️','Manutenção',1],['cat','🧰','Catálogo de Peças',2],['sup','🏭','Fornecedores',2],['stk','🏬','Estoques',2],['tra','🔁','Transferências'+(pn?' ('+pn+')':''),1],['his','🕘','Histórico',1],['rep','📑','Relatórios',2],['usr','👥','Usuários',2]].filter(n=>n[3]===1||me.admin);
  const P={dash:pDash,ord:pOrd,pcs:pUnits,ret:pUnits,use:pUnits,mnt:pUnits,cat:pCat,tra:pTra,usr:pUsr,sup:pSup,stk:pStk,his:pHis,rep:pRep};
  $('#app').innerHTML=`<aside><h2>⚙️ Gest<span>Peças</span></h2>${N.map(n=>`<a class="${n[0]===tab?'on':''}" onclick="tab='${n[0]}';render()">${n[1]} ${n[2]}</a>`).join('')}
- ${me.admin?`<label style="padding:8px 12px;margin:6px 0">👁 Ver unidade<select onchange="me.view=this.value===''?null:+this.value;render()"><option value="">Todas as unidades</option>${S.stores.map((s,i)=>`<option value=${i} ${me.view===i?'selected':''}>${esc(s)}</option>`).join('')}</select></label><a onclick="cfg()">⚙️ Configurações</a><a onclick="reset()">♻️ Restaurar demo</a>`:''}
- <div class=me><b>${esc(me.name)}</b>${me.admin?'Administrador · todas as lojas':esc(S.stores[me.store])}<br><a style="padding:4px 0;display:inline-block;color:var(--a)" onclick="me=null;render()">Sair</a></div></aside><main>${me.admin&&me.view!=null?`<p class=tg style="display:inline-block;margin-bottom:12px">👁 Visualizando: ${esc(S.stores[me.view])}</p>`:''}${P[tab]()}</main>`}
-render();
+ ${me.admin?`<label style="padding:8px 12px;margin:6px 0">👁 Ver unidade<select onchange="me.view=this.value===''?null:+this.value;render()"><option value="">Todas as unidades</option>${LJ().map(s=>`<option value=${s.id} ${me.view===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>`:''}
+ <a onclick="run(async()=>{})">🔄 Atualizar dados</a>
+ <div class=me><b>${esc(me.name)}</b>${me.admin?'Administrador · todas as lojas':esc(sn(me.store))}<br><a style="padding:4px 0;display:inline-block;color:var(--a)" onclick="logout()">Sair</a></div></aside><main>${me.admin&&me.view!=null?`<p class=tg style="display:inline-block;margin-bottom:12px">👁 Visualizando: ${esc(sn(me.view))}</p>`:''}${P[tab]()}</main>`}
+
+/* ---------- Início ---------- */
+if(typeof SB_URL==='undefined'||/SEU-PROJETO|COLE_AQUI/.test(SB_URL+SB_KEY)||!window.supabase){
+ $('#app').innerHTML='<div class=lg><form onsubmit="return false"><h1>⚙️ GestPeças</h1><p class=mu>Falta configurar: abra <b>config.js</b> e cole a URL e a chave anon do seu projeto Supabase.</p></form></div>'}
+else{sb=window.supabase.createClient(SB_URL,SB_KEY);render();enter()}
