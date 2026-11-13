@@ -88,7 +88,7 @@ function pOrd(){const{o}=vis();
  const form=`<div class=bar><button class=pr onclick="orderForm()">+ Nova solicitação</button></div>`;
  const vp=x=>x.price||x.est||0;
  const act=x=>{if(!me.admin)return '';
-  const a=({'Aguardando atendimento':`<button class=pr onclick="oa('${x.id}','ap')">Aprovar</button><button onclick="oa('${x.id}','rj')">Rejeitar</button>`,Aprovado:`<button class=pr onclick="oa('${x.id}','bu')">Registrar compra</button>`,Comprado:`<button class=pr onclick="oa('${x.id}','rc')">Marcar recebido</button>`,Recebido:x.store===CE?'':`<button class=pr onclick="oa('${x.id}','en')">Entregar à loja</button>`}[x.status])||'';
+  const a=({'Aguardando atendimento':`<button class=pr onclick="oa('${x.id}','ap')">Aprovar</button><button onclick="oa('${x.id}','rj')">Rejeitar</button>`,Comprado:`<button class=pr onclick="oa('${x.id}','rc')">Marcar recebido</button>`,Recebido:x.store===CE?'':`<button class=pr onclick="oa('${x.id}','en')">Entregar à loja</button>`}[x.status])||'';
   return a+`<button class=dg onclick="oa('${x.id}','del')">Excluir</button>`};
  return `<h1>${me.admin?'Pedidos das lojas':'Solicitar Peças'}</h1><p class="mu sub">Pedidos das lojas já entram aprovados (sem precisar do admin). Fluxo: solicitação → compra → recebimento → entrega</p>${form}<div class=cards><div class=card><small>${ic('receipt')} Pedidos</small><strong>${o.length}</strong></div><div class=card><small>${ic('banknote')} Valor comprado</small><strong>${brl(sum(o,x=>x.qty*x.price))}</strong></div></div>
 ${tbl(['Pedido','Data','Loja','Peça','Qtd','Fornecedor','Valor de peça','Total','Responsável','Status','Ações'],o.map(x=>[x.id,dt(x.t),esc(sn(x.store)),esc(nm(x)),x.qty,esc(x.sup||'—'),vp(x)?brl(vp(x))+(x.price?'':' <span class=mu>(prev.)</span>'):'—',vp(x)?brl(x.qty*vp(x)):'—',esc(x.user),badge(x.status),act(x)]))}`}
@@ -171,7 +171,12 @@ function saiForm(){if(!S.cat.length)return toast('Cadastre uma peça no catálog
  d=>rpc('stock_exit',{p_catalog_id:+d.p,p_qty:+d.q,p_dest:+d.d,p_note:d.m}))}
 function pCat(){const q=c=>S.units.filter(u=>u.prod===c.name&&u.model===c.model&&(cAv(u)||inStock(u)));
  return `<h1>Catálogo de Peças</h1><p class="mu sub">Cadastre uma vez. Depois é só escolher a peça: fornecedor e valor entram sozinhos.</p><div class=bar><button class=pr onclick="catForm()">+ Nova peça</button><button onclick="supForm()">+ Novo fornecedor</button></div>
-${tbl(['Peça','Modelo','Fornecedor padrão','Valor unitário','Em estoque','Valor em estoque',''],S.cat.map(c=>[esc(c.name),esc(c.model),esc(c.supplier_name||'—'),c.unit_price?brl(c.unit_price):'—',q(c).length,brl(sum(q(c),u=>u.cost)),`<button onclick="catForm(${c.id})">Editar</button>`]))}`}
+${tbl(['Peça','Modelo','Fornecedor padrão','Valor unitário','Em estoque','Valor em estoque','Ações'],S.cat.map(c=>[esc(c.name),esc(c.model),esc(c.supplier_name||'—'),c.unit_price?brl(c.unit_price):'—',q(c).length,brl(sum(q(c),u=>u.cost)),`<button onclick="catForm(${c.id})">Editar</button><button class="dg" onclick="catDel(${c.id})">Excluir</button>`]))}`}
+function catDel(id){
+ const c=S.cat.find(x=>x.id===id);if(!c)return;
+ if(!confirm('Excluir esta peça do catálogo? Esta ação não pode ser desfeita.'))return;
+ run(()=>rpc('catalog_delete',{p_id:id}));
+}
 function catForm(id){const c=S.cat.find(x=>x.id===id),N=!c;if(!S.sup.length)return toast('Cadastre um fornecedor primeiro.');
  modal(N?'Nova peça':'Editar '+c.name+' '+c.model,[...(N?[{n:'n',l:'Nome da peça',r:1},{n:'m',l:'Modelo do aparelho',r:1}]:[]),{n:'s',l:'Fornecedor padrão',v:N?S.sup[0].id:c.supplier_id,o:supOpt()},{n:'p',l:'Valor unitário (R$)',t:'number',v:N?'':c.unit_price,min:0,r:1}],
  d=>N?dbx(sb.from('catalog').insert({name:d.n.trim(),model:d.m.trim(),supplier_id:+d.s,unit_price:+d.p})):dbx(sb.from('catalog').update({supplier_id:+d.s,unit_price:+d.p}).eq('id',id)))}
