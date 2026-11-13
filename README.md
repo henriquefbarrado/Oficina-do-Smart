@@ -1,4 +1,4 @@
-# GestPeças (Supabase)
+# Oficina do Smart (Supabase)
 
 Sistema de peças, estoque, fornecedores e transferências das lojas **Buritis, Savassi, Centro, Belvedere e Castelo** (+ Estoque Central).
 

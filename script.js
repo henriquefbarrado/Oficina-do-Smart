@@ -60,7 +60,7 @@ function csv(name,rows){if(!rows.length)return toast('Nada para exportar.');cons
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download=name+'.csv';a.click()}
 
 /* ---------- Login ---------- */
-function login(){return `<div class=lg><form onsubmit="lgin(event)"><h1>GestPeças</h1><p class=mu>Gestão de peças, estoque e rastreabilidade</p>
+function login(){return `<div class=lg><form onsubmit="lgin(event)"><h1>Oficina do Smart</h1><p class=mu>Gestão de peças, estoque e rastreabilidade</p>
 <label>E-mail<input id=le type=email autocomplete=username autocapitalize=off required></label><label>Senha<input id=lp type=password autocomplete=current-password required></label>
 <button class=pr>Entrar</button></form></div>`}
 async function lgin(e){e.preventDefault();const b=e.target.querySelector('.pr');b.disabled=true;
