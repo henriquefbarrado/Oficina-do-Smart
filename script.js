@@ -10,7 +10,7 @@ const toast=m=>{const t=$('#t');t.textContent=m;t.className='on';setTimeout(()=>
 const nm=x=>x.prod+' '+x.model,sum=(a,f)=>a.reduce((t,x)=>t+f(x),0);
 const CE=0,TS=['Aguardando OK da loja de origem','Aguardando aprovação do admin','Concluída','Rejeitada'];
 let sb,me=null,tab='dash',H={q:'',s:'',a:'',b:''};
-let S={st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[]};
+let S={st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[]};
 const sn=id=>(S.st.find(s=>s.id===id)||{}).name||'—';
 const LJ=()=>S.st.filter(s=>s.kind==='loja'),lopt=()=>LJ().map(s=>[s.id,s.name]);
 const supOpt=()=>S.sup.map(s=>[s.id,s.name+(s.company?' ('+s.company+')':'')]);
@@ -25,11 +25,13 @@ const dbx=async q=>{const{error}=await q;if(error)throw new Error(error.code==='
 async function all(q,pages=50){let out=[];for(let i=0;i<pages;i++){const d=ok(await q().range(i*1000,i*1000+999));out=out.concat(d);if(d.length<1000)break}return out}
 const run=async f=>{try{await f();await load();render()}catch(e){toast(e.message||String(e))}};
 async function load(){
- const[st,cat,o,u,h,tr]=await Promise.all([sb.from('stores').select('*').order('id'),sb.from('catalog_view').select('*').order('name'),
+ const[st,cat,o,u,h,tr,mn,sv]=await Promise.all([sb.from('stores').select('*').order('id'),sb.from('catalog_view').select('*').order('name'),
   all(()=>sb.from('orders').select('*').order('created_at',{ascending:false}).order('id')),all(()=>sb.from('units').select('*').order('id')),
   all(()=>sb.from('history').select('*').order('at',{ascending:false}).order('id',{ascending:false}),3),
-  sb.from('transfers').select('*').order('created_at',{ascending:false})]);
- S.st=ok(st);S.cat=ok(cat);
+  sb.from('transfers').select('*').order('created_at',{ascending:false}),
+  all(()=>sb.from('maintenances').select('*').order('created_at',{ascending:false}).order('id',{ascending:false})),sb.from('suppliers_view').select('*').order('name')]);
+ S.st=ok(st);S.cat=ok(cat);S.supv=sv.error?[]:sv.data;
+ S.mn=mn.map(x=>({id:x.id,store:x.store_id,os:x.os_number,cu:x.customer,sv:x.service,unit:x.unit_id,part:x.part_used,ch:+x.charged,pc:+x.part_cost,tech:x.technician,pf:+x.profit,by:x.created_by_name,t:Date.parse(x.created_at)}));
  S.tr=ok(tr).map(x=>({id:x.id,from:x.from_store,to:x.to_store,pn:x.part_label,qty:x.qty,by:x.requested_by_name,t:Date.parse(x.created_at),status:x.status,okBy:x.ok_by_name,obs:x.note}));
  S.orders=o.map(x=>({id:x.id,store:x.store_id,prod:x.part_name,model:x.model,qty:x.qty,sup:x.supplier_name||'',price:+x.price,est:+x.est,obs:x.note,user:x.created_by_name,t:Date.parse(x.created_at),status:x.status,buyT:x.buy_at&&Date.parse(x.buy_at),buyer:x.buyer_name}));
  S.units=u.map(x=>({id:x.id,order:x.order_id,prod:x.part_name,model:x.model,status:x.status,loc:x.loc_store_id,org:x.origin_store_id,cost:+x.cost}));
@@ -52,7 +54,7 @@ const bars=(m,keep)=>{let e=Object.entries(m);e=keep?e.sort():e.sort((a,b)=>b[1]
  return e.length?e.map(([k,v])=>`<div class=br><span title="${esc(k)}">${esc(k)}</span><i><b style="width:${v/mx*100}%"></b></i><em>${v}</em></div>`).join(''):'<p class=mu>Sem dados</p>'};
 /* O servidor já filtra por loja (RLS); aqui o admin só escolhe qual unidade quer olhar */
 const vis=()=>{const a=me.admin,v=me.view,every=a&&v==null,t=a?v:me.store;
- return{o:S.orders.filter(o=>every||o.store===t),u:S.units.filter(u=>every||u.loc===t||u.org===t),h:S.hist.filter(h=>every||h.sid===t||h.rid===t)}};
+ return{o:S.orders.filter(o=>every||o.store===t),u:S.units.filter(u=>every||u.loc===t||u.org===t),h:S.hist.filter(h=>every||h.sid===t||h.rid===t),m:S.mn.filter(m=>every||m.store===t)}};
 function csv(name,rows){if(!rows.length)return toast('Nada para exportar.');const k=Object.keys(rows[0]);
  const t='\ufeff'+[k,...rows.map(r=>k.map(c=>r[c]))].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download=name+'.csv';a.click()}
@@ -69,7 +71,7 @@ async function enter(){try{const{data:{session}}=await sb.auth.getSession();if(!
  const{data:p,error}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();if(error)throw error;
  if(!p||!p.active){await sb.auth.signOut();toast('Usuário sem acesso ou desativado.');return render()}
  me={id:p.id,name:p.name,admin:p.is_admin,store:p.store_id,view:null};tab='dash';await load();render()}catch(e){toast(e.message||String(e));render()}}
-async function logout(){await sb.auth.signOut();me=null;S={st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[]};render()}
+async function logout(){await sb.auth.signOut();me=null;S={st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[]};render()}
 
 /* ---------- Páginas ---------- */
 function pDash(){const{o,u,h}=vis(),p=v=>u.filter(x=>x.status===v).length;
@@ -84,20 +86,30 @@ function pDash(){const{o,u,h}=vis(),p=v=>u.filter(x=>x.status===v).length;
 
 function pOrd(){const{o}=vis();
  const form=`<div class=bar><button class=pr onclick="orderForm()">+ Nova solicitação</button></div>`;
- const act=x=>me.admin?({'Aguardando atendimento':`<button class=pr onclick="oa('${x.id}','ap')">Aprovar</button><button onclick="oa('${x.id}','rj')">Rejeitar</button>`,Aprovado:`<button class=pr onclick="oa('${x.id}','bu')">Registrar compra</button>`,Comprado:`<button class=pr onclick="oa('${x.id}','rc')">Marcar recebido</button>`,Recebido:x.store===CE?'':`<button class=pr onclick="oa('${x.id}','en')">Entregar à loja</button>`}[x.status]||''):'';
- return `<h1>${me.admin?'Pedidos das lojas':'Solicitar Peças'}</h1><p class="mu sub">Fluxo: solicitação → aprovação → compra → recebimento → entrega</p>${form}<div class=cards><div class=card><small>${ic('receipt')} Pedidos</small><strong>${o.length}</strong></div><div class=card><small>${ic('banknote')} Valor comprado</small><strong>${brl(sum(o,x=>x.qty*x.price))}</strong></div></div>
-${tbl(['Pedido','Data','Loja','Peça','Qtd','Fornecedor','Total','Responsável','Status','Ações'],o.map(x=>[x.id,dt(x.t),esc(sn(x.store)),esc(nm(x)),x.qty,esc(x.sup||'—'),x.price?brl(x.qty*x.price):'—',esc(x.user),badge(x.status),act(x)]))}`}
+ const vp=x=>x.price||x.est||0;
+ const act=x=>{if(!me.admin)return '';
+  const a=({'Aguardando atendimento':`<button class=pr onclick="oa('${x.id}','ap')">Aprovar</button><button onclick="oa('${x.id}','rj')">Rejeitar</button>`,Aprovado:`<button class=pr onclick="oa('${x.id}','bu')">Registrar compra</button>`,Comprado:`<button class=pr onclick="oa('${x.id}','rc')">Marcar recebido</button>`,Recebido:x.store===CE?'':`<button class=pr onclick="oa('${x.id}','en')">Entregar à loja</button>`}[x.status])||'';
+  return a+`<button class=dg onclick="oa('${x.id}','del')">Excluir</button>`};
+ return `<h1>${me.admin?'Pedidos das lojas':'Solicitar Peças'}</h1><p class="mu sub">Pedidos das lojas já entram aprovados (sem precisar do admin). Fluxo: solicitação → compra → recebimento → entrega</p>${form}<div class=cards><div class=card><small>${ic('receipt')} Pedidos</small><strong>${o.length}</strong></div><div class=card><small>${ic('banknote')} Valor comprado</small><strong>${brl(sum(o,x=>x.qty*x.price))}</strong></div></div>
+${tbl(['Pedido','Data','Loja','Peça','Qtd','Fornecedor','Valor de peça','Total','Responsável','Status','Ações'],o.map(x=>[x.id,dt(x.t),esc(sn(x.store)),esc(nm(x)),x.qty,esc(x.sup||'—'),vp(x)?brl(vp(x))+(x.price?'':' <span class=mu>(prev.)</span>'):'—',vp(x)?brl(x.qty*vp(x)):'—',esc(x.user),badge(x.status),act(x)]))}`}
+const supV=()=>[['','— Escolher fornecedor —'],...(S.supv.length?S.supv:S.sup).map(s=>[s.id,s.name])];
 function orderForm(){modal('Nova solicitação de peças',[...(me.admin?[{n:'st',l:'Loja que solicita',o:lopt(),v:me.view}]:[]),
- {n:'c',l:'Peça do catálogo (fornecedor e valor entram sozinhos)',o:[...S.cat.map(c=>[c.id,c.name+' '+c.model+' · '+(c.supplier_name||'sem fornecedor')]),['x','Outra peça (digitar abaixo)']]},
- {n:'prod',l:'Se outra: nome da peça'},{n:'model',l:'Se outra: modelo'},{n:'qty',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'obs',l:'Observação'}],
- d=>{const c=S.cat.find(x=>String(x.id)===d.c);return rpc('order_new',{p_store:me.admin?+d.st:me.store,p_part:c?c.name:d.prod,p_model:c?c.model:d.model,p_qty:+d.qty,p_note:d.obs})})}
+ {n:'c',l:'Peça do catálogo',o:[...S.cat.map(c=>[c.id,c.name+' '+c.model+' · '+(c.supplier_name||'sem fornecedor')]),['x','Outra peça (digitar abaixo)']]},
+ {n:'prod',l:'Se outra: nome da peça'},{n:'model',l:'Se outra: modelo'},
+ {n:'sf',l:'Fornecedor',o:supV()},{n:'pv',l:'Valor de peça (R$)',t:'number',min:0},
+ {n:'qty',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'obs',l:'Observação'}],
+ d=>{const c=S.cat.find(x=>String(x.id)===d.c);return rpc('order_new',{p_store:me.admin?+d.st:me.store,p_part:c?c.name:d.prod,p_model:c?c.model:d.model,p_qty:+d.qty,p_note:d.obs,p_supplier_id:d.sf?+d.sf:null,p_price:d.pv!==''?+d.pv:null})});
+ const f=$('#m form').elements,fill=()=>{const c=S.cat.find(x=>String(x.id)===f.c.value);if(c){f.sf.value=c.supplier_id||'';f.pv.value=c.unit_price||''}else{f.sf.value='';f.pv.value=''}};
+ f.c.onchange=fill;fill()}
 function oa(id,k){const o=S.orders.find(x=>x.id===id);
+ if(k==='del'){if(!confirm('Excluir o pedido '+id+' ('+nm(o)+')?\nAs peças geradas por ele também serão apagadas. Esta ação não pode ser desfeita.'))return;return run(()=>rpc('order_delete',{p_id:id}))}
  if(k==='ap')return modal('Aprovar pedido '+id,[{n:'q',l:'Quantidade aprovada',t:'number',v:o.qty,min:1,r:1}],d=>rpc('order_decide',{p_id:id,p_ok:true,p_qty:+d.q}));
  if(k==='bu'){if(!S.sup.length)return toast('Cadastre um fornecedor primeiro.');
   return modal('Registrar compra — '+id,[{n:'s',l:'Fornecedor',v:(S.sup.find(s=>s.name===o.sup)||{}).id,o:supOpt()},{n:'p',l:'Valor unitário (R$)',t:'number',v:o.est||'',min:0.01,r:1}],d=>rpc('order_buy',{p_id:id,p_supplier_id:+d.s,p_price:+d.p}))}
  run(()=>k==='rj'?rpc('order_decide',{p_id:id,p_ok:false}):k==='rc'?rpc('order_receive',{p_id:id}):rpc('order_deliver',{p_id:id}))}
 
-const AC={use:['Utilizar',inStock],ret:['Devolver',inStock],tr:['Enviar à loja',cAv],mnt:['Manutenção',u=>inStock(u)||cAv(u)],mn2:['Atualizar manut.',inM],ds:['Descartar',u=>cAv(u)||inM(u)]};
+const ALL_ST=['Solicitada','Recebida','Em estoque da unidade','Utilizada','Devolvida','Disponível','Aguardando manutenção','Em manutenção','Descartada'];
+const AC={use:['Utilizar',inStock],ret:['Devolver',inStock],tr:['Enviar à loja',cAv],mnt:['Manutenção',u=>inStock(u)||cAv(u)],mn2:['Atualizar manut.',inM],ds:['Descartar',u=>cAv(u)||inM(u)],st:['Editar status',u=>me.admin||inStock(u)||u.status==='Utilizada']};
 function pUnits(){const T={pcs:['Controle de Peças',()=>1],ret:['Devoluções',u=>u.status==='Devolvida'],use:['Peças Utilizadas',u=>u.status==='Utilizada'],mnt:['Manutenção',inM]}[tab];
  const us=vis().u.filter(T[1]);
  return `<h1>${T[0]}</h1><p class="mu sub">Cada peça tem identificação própria, ligada ao pedido de origem. Clique no código para ver o rastro completo.</p>
@@ -111,8 +123,33 @@ function ua(id,k){const u=S.units.find(x=>x.id===id),call=(a,o)=>rpc('unit_actio
  tr:['Enviar '+id+' à loja',[{n:'d',l:'Loja de destino',o:lopt()},{n:'m',l:'Motivo'}],d=>call('tr',{p_note:d.m,p_dest:+d.d})],
  mnt:['Enviar para manutenção',[{n:'t',l:'Técnico responsável',r:1},{n:'m',l:'Motivo',r:1}],d=>call('mnt',{p_note:d.m,p_extra:d.t})],
  mn2:['Atualizar manutenção',[{n:'r',l:'Resultado',o:[['em','Em manutenção'],['c','Concluída — voltou ao estoque central'],['l','Concluída — devolver à loja de origem'],['x','Sem possibilidade de reparo — descartar']]},{n:'m',l:'Observações'}],d=>call('mn2',{p_note:d.m,p_extra:d.r})],
- ds:['Descartar peça',[{n:'m',l:'Motivo',r:1}],d=>call('ds',{p_note:d.m})]}[k];
+ ds:['Descartar peça',[{n:'m',l:'Motivo',r:1}],d=>call('ds',{p_note:d.m})],
+ st:['Editar status de '+id+' — '+nm(u),[{n:'s',l:'Novo status (atual: '+u.status+')',o:(me.admin?ALL_ST:['Em estoque da unidade','Utilizada']).filter(x=>x!==u.status).map(x=>[x,x])},...(me.admin?[{n:'l',l:'Loja (só se o novo status for "Em estoque da unidade")',o:[['','— manter —'],...lopt()],v:u.loc!==CE?u.loc:''}]:[]),{n:'m',l:'Observação'}],d=>rpc('unit_set_status',{p_id:id,p_status:d.s,p_note:d.m,p_store:d.l?+d.l:null})]}[k];
  modal(M[0],M[1],M[2])}
+
+/* ---------- Manutenção (OS) ---------- */
+const pfc=v=>`<b style="color:var(${v<0?'--r':'--g'})">${brl(v)}</b>`;
+function pMnt(){const{m}=vis(),ch=sum(m,x=>x.ch),pc=sum(m,x=>x.pc),pf=sum(m,x=>x.pf);
+ const rows=m.map(x=>[esc(x.os),dt(x.t),esc(sn(x.store)),esc(x.cu),esc(x.sv),esc(x.part||'—'),brl(x.ch),brl(x.pc),pfc(x.pf),esc(x.tech),`<button onclick="mntForm(${x.id})">Editar</button>`+(me.admin?`<button class=dg onclick="mntDel(${x.id})">Excluir</button>`:'')]);
+ if(m.length)rows.push([`<b>Totais (${m.length} OS)</b>`,'','','','','',`<b>${brl(ch)}</b>`,`<b>${brl(pc)}</b>`,pfc(pf),'','']);
+ return `<h1>Manutenção</h1><p class="mu sub">Ordens de serviço: cliente, serviço, peça, valores e técnico. Lucro = valor cobrado − valor pago na peça.</p>
+<div class=bar><button class=pr onclick="mntForm()">+ Nova manutenção</button></div>
+${tbl(['OS','Data','Loja','Cliente','Serviço realizado','Peça utilizada','Valor cobrado','Valor pago na peça','Lucro','Técnico','Ações'],rows)}
+<div class=cards><div class=card><small>${ic('banknote')} Valor cobrado</small><strong>${brl(ch)}</strong></div><div class=card><small>${ic('package')} Valor gasto (peças)</small><strong>${brl(pc)}</strong></div><div class=card><small>${ic('check')} Lucro</small><strong style="color:var(${pf<0?'--r':'--g'})">${brl(pf)}</strong></div></div>
+${pUnits().replace(/^<h1>[^<]*<\/h1>/,'<h3 style="margin:22px 0 10px">Peças em manutenção</h3>')}`}
+function mntForm(id){const x=id!=null?S.mn.find(v=>v.id===id):null;
+ if(x)return modal('Editar OS '+esc(x.os),[{n:'os',l:'Número da OS',v:x.os,r:1},{n:'cu',l:'Cliente',v:x.cu,r:1},{n:'sv',l:'Serviço realizado',v:x.sv,r:1},{n:'pc',l:'Peça utilizada',v:x.part},{n:'ch',l:'Valor cobrado (R$)',t:'number',v:x.ch,min:0,r:1},{n:'pv',l:'Valor pago na peça (R$)',t:'number',v:x.pc,min:0,r:1},{n:'tc',l:'Técnico',v:x.tech,r:1}],
+  d=>rpc('maintenance_update',{p_id:id,p_os:d.os,p_customer:d.cu,p_service:d.sv,p_charged:+d.ch,p_technician:d.tc,p_part:d.pc,p_part_cost:+d.pv}));
+ modal('Nova manutenção',[...(me.admin?[{n:'st',l:'Loja',o:lopt(),v:me.view}]:[]),{n:'os',l:'Número da OS',r:1},{n:'cu',l:'Cliente',r:1},{n:'sv',l:'Serviço realizado',r:1},
+  {n:'u',l:'Peça utilizada (do estoque da loja)',o:[]},{n:'pc',l:'Ou digite a peça utilizada (se não for do estoque)'},
+  {n:'ch',l:'Valor cobrado (R$)',t:'number',min:0,r:1},{n:'pv',l:'Valor pago na peça (R$)',t:'number',min:0},{n:'tc',l:'Técnico',r:1}],
+  d=>rpc('maintenance_new',{p_os:d.os,p_customer:d.cu,p_service:d.sv,p_charged:+d.ch,p_technician:d.tc,p_store:me.admin?+d.st:null,p_unit_id:d.u||null,p_part:d.pc,p_part_cost:d.pv!==''?+d.pv:null}));
+ const f=$('#m form').elements,sid=()=>me.admin?+f.st.value:me.store,
+  fill=()=>{const us=S.units.filter(u=>u.loc===sid()&&inStock(u));f.u.innerHTML='<option value="">— Sem peça do estoque —</option>'+us.map(u=>`<option value="${esc(u.id)}">${esc(u.id+' · '+nm(u)+' · '+brl(u.cost))}</option>`).join('');f.pc.value='';f.pv.value=''};
+ if(me.admin)f.st.onchange=fill;
+ f.u.onchange=()=>{const u=S.units.find(v=>v.id===f.u.value);f.pc.value=u?nm(u):'';f.pv.value=u?u.cost:''};
+ fill()}
+function mntDel(id){const x=S.mn.find(v=>v.id===id);if(!confirm('Excluir a OS '+x.os+' ('+x.cu+')? Esta ação não pode ser desfeita.'))return;run(()=>rpc('maintenance_delete',{p_id:id}))}
 
 function pSup(){const P=S.orders.filter(o=>o.price);
  return `<h1>Fornecedores</h1><p class="mu sub">Cadastro e histórico de compras</p><div class=bar><button class=pr onclick="supForm()">+ Novo fornecedor</button></div>
@@ -182,7 +219,7 @@ function render(){
  if(!me.admin&&['cat','sup','stk','rep','usr'].includes(tab))tab='dash';
  const pn=S.tr.filter(x=>me.admin?x.status===TS[1]:x.status===TS[0]&&x.from===me.store).length;
  const N=[['dash','dashboard','Dashboard',1],['ord','clipboard',me.admin?'Pedidos':'Solicitar Peças',1],['pcs','cpu','Controle de Peças',1],['ret','undo','Devoluções',1],['use','circle-check','Peças Utilizadas',1],['mnt','wrench','Manutenção',1],['cat','book','Catálogo de Peças',2],['sup','factory','Fornecedores',2],['stk','warehouse','Estoques',2],['tra','swap','Transferências'+(pn?' ('+pn+')':''),1],['his','history','Histórico',1],['rep','file','Relatórios',2],['usr','users','Usuários',2]].filter(n=>n[3]===1||me.admin);
- const P={dash:pDash,ord:pOrd,pcs:pUnits,ret:pUnits,use:pUnits,mnt:pUnits,cat:pCat,tra:pTra,usr:pUsr,sup:pSup,stk:pStk,his:pHis,rep:pRep};
+ const P={dash:pDash,ord:pOrd,pcs:pUnits,ret:pUnits,use:pUnits,mnt:pMnt,cat:pCat,tra:pTra,usr:pUsr,sup:pSup,stk:pStk,his:pHis,rep:pRep};
  $('#app').innerHTML=`<aside><h2>${ic('phone')} Oficina do <span>Smart</span></h2>${N.map(n=>`<a class="${n[0]===tab?'on':''}" onclick="tab='${n[0]}';render()">${ic(n[1])} ${n[2]}</a>`).join('')}
  ${me.admin?`<label style="padding:8px 12px;margin:6px 0">${ic('eye')} Ver unidade<select onchange="me.view=this.value===''?null:+this.value;render()"><option value="">Todas as unidades</option>${LJ().map(s=>`<option value=${s.id} ${me.view===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>`:''}
  <a onclick="run(async()=>{})">${ic('refresh')} Atualizar dados</a>

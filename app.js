@@ -91,30 +91,12 @@ const VIEWS = {
       b.disabled = false;
     };
   },
-  async employees(el, me) {
-    const users = await api.admin.listUsers();
-    el.innerHTML = `<form id="nf" class="panel"><h2>Novo administrador</h2>
-      <label>Nome completo<input name="name" required></label><label>E-mail<input name="email" type="email" required></label>
-      <label>Senha provisória (mín. 10 caracteres)<input name="pw" type="password" minlength="10" required></label>
-      <div id="nm"></div><button class="btn">Cadastrar administrador</button></form>
-      <div id="um"></div><div class="tw"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Status</th><th></th></tr></thead><tbody>${users.map((u) => `<tr><td>${esc(u.full_name)}${u.id === me.id ? ' (você)' : ''}</td><td>${esc(u.email)}</td><td><span class="bd ${u.active ? 'ok' : 'bad'}">${u.active ? 'Ativo' : 'Inativo'}</span></td><td>${u.id === me.id ? '' : `<button class="btn ghost" data-save="${esc(u.id)}" data-act="${u.active ? 0 : 1}">${u.active ? 'Desativar' : 'Ativar'}</button>`}</td></tr>`).join('')}</tbody></table></div>`;
-    $('#nf').onsubmit = async (e) => {
-      e.preventDefault(); const f = e.target; const b = f.querySelector('button'); b.disabled = true;
-      try { await api.admin.createUser({ email: f.email.value, password: f.pw.value, fullName: f.name.value, role: 'admin', storeId: null }); await VIEWS.employees(el, me); }
-      catch (err) { $('#nm').innerHTML = alertBox(err.message); b.disabled = false; }
-    };
-    el.querySelectorAll('[data-save]').forEach((btn) => (btn.onclick = async () => {
-      try { await api.admin.updateUser(btn.dataset.save, { role: 'admin', storeId: null, active: btn.dataset.act === '1' }); await VIEWS.employees(el, me); }
-      catch (err) { $('#um').innerHTML = alertBox(err.message); }
-    }));
-  },
 };
 const NAV = [
   ['dashboard', 'Dashboard', ['admin', 'stock_manager', 'employee']],
   ['stock', 'Estoque', ['admin', 'stock_manager', 'employee']],
   ['products', 'Produtos', ['admin', 'stock_manager', 'employee']],
   ['entry', 'Registrar entrada', ['admin', 'stock_manager']],
-  ['employees', 'Administradores', ['admin']],
   ['history', 'Movimentações', ['admin', 'stock_manager', 'employee']],
 ];
 
@@ -123,12 +105,11 @@ async function start() {
   if (!session) return loginScreen();
   let me;
   try { me = await api.auth.currentProfile(); } catch { me = null; }
-  if (me && me.active && me.role !== 'admin') { await api.auth.signOut(); return loginScreen('Este painel é exclusivo para administradores.'); }
   if (!me || !me.active) { await api.auth.signOut(); return loginScreen('Seu acesso não está ativo. Fale com o administrador.'); }
   const nav = NAV.filter((n) => n[2].includes(me.role));
   root.innerHTML = `<aside class="sidebar"><div class="brand">ERP Estoque</div><nav id="menu">${nav.map((n) => `<a href="#/${n[0]}" data-k="${n[0]}">${n[1]}</a>`).join('')}</nav>
     <div class="user"><strong>${esc(me.full_name)}</strong><span class="muted small">${esc(ROLES[me.role])}</span><button id="out" class="btn ghost">Sair</button></div></aside>
-    <div class="main"><header class="topbar"><button id="bg" class="btn ghost">☰</button><h1 id="ttl"></h1></header><main id="view" class="content"></main></div>`;
+    <div class="main"><header class="topbar"><button id="bg" class="btn ghost"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><h1 id="ttl"></h1></header><main id="view" class="content"></main></div>`;
   $('#out').onclick = async () => { await api.auth.signOut(); loginScreen(); };
   $('#bg').onclick = () => document.body.classList.toggle('menu-open');
   const route = async () => {

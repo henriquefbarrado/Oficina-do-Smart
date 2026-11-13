@@ -146,3 +146,5 @@ label input,label select{margin-top:4px}
 
 @media(max-width:800px){#app{flex-direction:column}aside{width:100%;height:auto;position:static;flex-direction:row;flex-wrap:wrap}aside h2{width:100%}aside a.on::before{top:auto;bottom:0;left:10px;right:10px;width:auto;height:3px}.me{width:100%;margin:0}main{padding:16px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+button.dg{color:var(--r);border-color:rgba(239,68,68,.45)}button.dg:hover{border-color:var(--r);background:rgba(239,68,68,.12)}
