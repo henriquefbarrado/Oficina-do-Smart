@@ -46,7 +46,7 @@ Cadastro de ordens de serviço com **número da OS, cliente, serviço realizado,
 Cadastre a peça uma vez, com fornecedor padrão e valor. Nos pedidos, tudo entra sozinho. O histórico de compras fica por fornecedor.
 
 ### 🏬 Estoques e Transferências
-Saldo e valor por local, entrada no Estoque Central e saída para lojas. Entre lojas, a transferência passa por **OK da loja de origem → aprovação do admin**.
+Quantidade e valor das peças disponíveis por local, entrada no Estoque Central e saída para lojas. Entre lojas, a transferência passa por **OK da loja de origem → aprovação do admin**.
 
 ### 📊 Dashboard, Histórico e Relatórios
 Pedidos por unidade, peças mais usadas e devolvidas, movimentação mensal. Histórico permanente com busca e filtros, e exportação em **CSV** (abre no Excel).
