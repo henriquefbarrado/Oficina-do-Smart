@@ -148,3 +148,8 @@ label input,label select{margin-top:4px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 
 button.dg{color:var(--r);border-color:rgba(239,68,68,.45)}button.dg:hover{border-color:var(--r);background:rgba(239,68,68,.12)}
+
+/* Tela de carregamento (evita piscar o login ao atualizar a página) */
+.boot{text-align:center}
+.boot i{display:block;width:34px;height:34px;margin:0 auto 14px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--a);border-radius:50%;animation:bootspin .8s linear infinite}
+@keyframes bootspin{to{transform:rotate(360deg)}}

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 240" width="1200" height="240" role="img" aria-label="Fluxo da peça: solicitada, comprada, recebida, na loja, utilizada">
+<defs><linearGradient id="y" x1="0" x2="1"><stop offset="0" stop-color="#F5C518"/><stop offset="1" stop-color="#FFE082"/></linearGradient>
+<filter id="b2"><feGaussianBlur stdDeviation="9"/></filter><filter id="b3"><feGaussianBlur stdDeviation="3"/></filter>
+<clipPath id="card"><rect width="1200" height="240" rx="18"/></clipPath></defs>
+<g clip-path="url(#card)"><rect width="1200" height="240" fill="#0a0a0a"/>
+<path d="M130 105H1070" stroke="#2a2a2a" stroke-width="4" stroke-linecap="round"/>
+<path d="M130 105H1070" stroke="url(#y)" stroke-width="4" stroke-linecap="round" stroke-dasharray="14 18" opacity=".75"><animate attributeName="stroke-dashoffset" values="64;0" dur="1.6s" repeatCount="indefinite"/></path>
+<g transform="translate(130 105)">
+<circle r="46" fill="#F5C518" opacity="0" filter="url(#b2)"><animate attributeName="opacity" values="1;0;0" keyTimes="0;.12;1" dur="10s" repeatCount="indefinite"/></circle>
+<circle r="30" fill="#111" stroke="#3a3a3a" stroke-width="3"/>
+<circle r="30" fill="none" stroke="#F5C518" stroke-width="3" opacity="0"><animate attributeName="opacity" values="1;0;0" keyTimes="0;.12;1" dur="10s" repeatCount="indefinite"/></circle>
+<text y="9" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="26" font-weight="700" fill="#F5C518">1</text>
+<text y="68" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="22" font-weight="600" fill="#fff">Solicitada</text>
+<text y="92" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="15" fill="#8a8a8a">a loja pede</text></g><g transform="translate(365 105)">
+<circle r="46" fill="#F5C518" opacity="0" filter="url(#b2)"><animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.130;0.250;0.370;1" dur="10s" repeatCount="indefinite"/></circle>
+<circle r="30" fill="#111" stroke="#3a3a3a" stroke-width="3"/>
+<circle r="30" fill="none" stroke="#F5C518" stroke-width="3" opacity="0"><animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.130;0.250;0.370;1" dur="10s" repeatCount="indefinite"/></circle>
+<text y="9" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="26" font-weight="700" fill="#F5C518">2</text>
+<text y="68" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="22" font-weight="600" fill="#fff">Comprada</text>
+<text y="92" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="15" fill="#8a8a8a">admin compra</text></g><g transform="translate(600 105)">
+<circle r="46" fill="#F5C518" opacity="0" filter="url(#b2)"><animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.380;0.500;0.620;1" dur="10s" repeatCount="indefinite"/></circle>
+<circle r="30" fill="#111" stroke="#3a3a3a" stroke-width="3"/>
+<circle r="30" fill="none" stroke="#F5C518" stroke-width="3" opacity="0"><animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.380;0.500;0.620;1" dur="10s" repeatCount="indefinite"/></circle>
+<text y="9" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="26" font-weight="700" fill="#F5C518">3</text>
+<text y="68" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="22" font-weight="600" fill="#fff">Recebida</text>
+<text y="92" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="15" fill="#8a8a8a">estoque central</text></g><g transform="translate(835 105)">
+<circle r="46" fill="#F5C518" opacity="0" filter="url(#b2)"><animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.630;0.750;0.870;1" dur="10s" repeatCount="indefinite"/></circle>
+<circle r="30" fill="#111" stroke="#3a3a3a" stroke-width="3"/>
+<circle r="30" fill="none" stroke="#F5C518" stroke-width="3" opacity="0"><animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.630;0.750;0.870;1" dur="10s" repeatCount="indefinite"/></circle>
+<text y="9" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="26" font-weight="700" fill="#F5C518">4</text>
+<text y="68" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="22" font-weight="600" fill="#fff">Na loja</text>
+<text y="92" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="15" fill="#8a8a8a">pronta p/ uso</text></g><g transform="translate(1070 105)">
+<circle r="46" fill="#F5C518" opacity="0" filter="url(#b2)"><animate attributeName="opacity" values="0;0;1" keyTimes="0;.88;1" dur="10s" repeatCount="indefinite"/></circle>
+<circle r="30" fill="#111" stroke="#3a3a3a" stroke-width="3"/>
+<circle r="30" fill="none" stroke="#F5C518" stroke-width="3" opacity="0"><animate attributeName="opacity" values="0;0;1" keyTimes="0;.88;1" dur="10s" repeatCount="indefinite"/></circle>
+<text y="9" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="26" font-weight="700" fill="#F5C518">5</text>
+<text y="68" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="22" font-weight="600" fill="#fff">Utilizada</text>
+<text y="92" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="15" fill="#8a8a8a">no balcão</text></g>
+<g><circle r="9" fill="#F5C518" filter="url(#b3)"/><circle r="6" fill="#fff"/><animateMotion dur="10s" repeatCount="indefinite" path="M130 105H1070" calcMode="linear"/></g>
+<text x="600" y="228" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="14" fill="#666" letter-spacing="2">DEVOLVIDA · EM MANUTENÇÃO · DESCARTADA — TAMBÉM FICAM REGISTRADAS NO RASTRO</text></g>
+<rect x=".5" y=".5" width="1199" height="239" rx="18" fill="none" stroke="#2b2b2b"/></svg>

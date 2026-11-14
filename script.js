@@ -9,7 +9,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const toast=m=>{const t=$('#t');t.textContent=m;t.className='on';setTimeout(()=>t.className='',3600)};
 const nm=x=>x.prod+' '+x.model,sum=(a,f)=>a.reduce((t,x)=>t+f(x),0);
 const CE=0,TS=['Aguardando OK da loja de origem','Aguardando aprovação do admin','Concluída','Rejeitada'];
-let sb,me=null,tab='dash',H={q:'',s:'',a:'',b:''};
+let sb,me=null,booting=true,tab='dash',H={q:'',s:'',a:'',b:''};
 let S={st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[]};
 const sn=id=>(S.st.find(s=>s.id===id)||{}).name||'—';
 const LJ=()=>S.st.filter(s=>s.kind==='loja'),lopt=()=>LJ().map(s=>[s.id,s.name]);
@@ -67,11 +67,11 @@ async function lgin(e){e.preventDefault();const b=e.target.querySelector('.pr');
  const{error}=await sb.auth.signInWithPassword({email:$('#le').value.trim(),password:$('#lp').value});
  if(error){b.disabled=false;return toast('E-mail ou senha incorretos.')}
  await enter()}
-async function enter(){try{const{data:{session}}=await sb.auth.getSession();if(!session)return render();
+async function enter(){booting=true;render();try{const{data:{session}}=await sb.auth.getSession();if(!session)return;
  const{data:p,error}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();if(error)throw error;
- if(!p||!p.active){await sb.auth.signOut();toast('Usuário sem acesso ou desativado.');return render()}
- me={id:p.id,name:p.name,admin:p.is_admin,store:p.store_id,view:null};tab='dash';await load();render()}catch(e){toast(e.message||String(e));render()}}
-async function logout(){await sb.auth.signOut();me=null;S={st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[]};render()}
+ if(!p||!p.active){await sb.auth.signOut();toast('Usuário sem acesso ou desativado.');return}
+ me={id:p.id,name:p.name,admin:p.is_admin,store:p.store_id,view:null};tab='dash';await load()}catch(e){toast(e.message||String(e))}finally{booting=false;render()}}
+async function logout(){await sb.auth.signOut();me=null;booting=false;S={st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[]};render()}
 
 /* ---------- Páginas ---------- */
 function pDash(){const{o,u,h}=vis(),p=v=>u.filter(x=>x.status===v).length;
@@ -220,7 +220,7 @@ function usrTog(id){const u=S.users.find(x=>x.id===id);run(()=>rpc('admin_set_ac
 
 /* ---------- Shell ---------- */
 function render(){
- if(!me){$('#app').innerHTML=login();return}
+ if(!me){$('#app').innerHTML=booting?'<div class=lg><div class=boot><i></i><p class=mu>Carregando…</p></div></div>':login();return}
  if(!me.admin&&['cat','sup','stk','rep','usr'].includes(tab))tab='dash';
  const pn=S.tr.filter(x=>me.admin?x.status===TS[1]:x.status===TS[0]&&x.from===me.store).length;
  const N=[['dash','dashboard','Dashboard',1],['ord','clipboard',me.admin?'Pedidos':'Solicitar Peças',1],['pcs','cpu','Controle de Peças',1],['ret','undo','Devoluções',1],['use','circle-check','Peças Utilizadas',1],['mnt','wrench','Manutenção',1],['cat','book','Catálogo de Peças',2],['sup','factory','Fornecedores',2],['stk','warehouse','Estoques',2],['tra','swap','Transferências'+(pn?' ('+pn+')':''),1],['his','history','Histórico',1],['rep','file','Relatórios',2],['usr','users','Usuários',2]].filter(n=>n[3]===1||me.admin);
@@ -234,4 +234,4 @@ function render(){
 /* ---------- Início ---------- */
 if(typeof SB_URL==='undefined'||/SEU-PROJETO|COLE_AQUI/.test(SB_URL+SB_KEY)||!window.supabase){
  $('#app').innerHTML='<div class=lg><form onsubmit="return false"><h1>GestPeças</h1><p class=mu>Falta configurar: abra <b>config.js</b> e cole a URL e a chave anon do seu projeto Supabase.</p></form></div>'}
-else{sb=window.supabase.createClient(SB_URL,SB_KEY);render();enter()}
+else{sb=window.supabase.createClient(SB_URL,SB_KEY);enter()}
