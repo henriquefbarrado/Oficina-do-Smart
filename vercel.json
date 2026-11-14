@@ -1,6 +1,0 @@
-   {
-     "framework": null,
-     "installCommand": "echo sem-instalacao",
-     "buildCommand": "echo sem-build",
-     "outputDirectory": "."
-   }
