@@ -60,16 +60,7 @@ O admin cria acessos, redefine senhas, troca a loja e ativa ou desativa pessoas.
 
 ### Transferência entre lojas
 
-```mermaid
-sequenceDiagram
-    participant D as Loja destino
-    participant O as Loja de origem
-    participant A as Administrador
-    D->>O: Solicita a peça
-    O->>A: Dá o OK (tem saldo)
-    A->>D: Aprova e a peça é transferida
-    Note over D,O: O histórico é gravado nas duas lojas
-```
+<img src="assets/transfer.svg" alt="A loja destino solicita, a loja de origem dá o OK e o administrador aprova" width="100%">
 
 <br>
 
