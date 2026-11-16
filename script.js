@@ -181,15 +181,11 @@ function pStk(){const locs=[CE,...LJ().map(s=>s.id)],sel=(l,p)=>S.units.filter(u
   /* Lista = peças do catálogo + peças com unidade em estoque em algum local */
   const M={};S.cat.forEach(c=>{M[c.name+' '+c.model]={n:c.name,m:c.model}});S.units.filter(u=>(u.loc===CE?cAv(u):inStock(u))).forEach(u=>{M[nm(u)]=M[nm(u)]||{n:u.prod,m:u.model}});
   const P=Object.keys(M).sort((a,b)=>a.localeCompare(b,'pt-BR'));SP=P.map(k=>M[k]);
- return `<h1>Estoques</h1><p class="mu sub">Peças disponíveis e valor por local. Entradas e saídas ficam registradas no Histórico.</p><div class=bar><button class=pr onclick="entForm()">+ Cadastrar peça</button><button onclick="stForm()">+ Cadastrar loja</button><button onclick="estEdit()">Editar</button><button onclick="stkImp()">Importar planilha</button><button onclick="stkExp()">${ic('download')} Exportar planilha</button></div>
+ return `<h1>Estoques</h1><p class="mu sub">Peças disponíveis e valor por local. Entradas e saídas ficam registradas no Histórico.</p><div class=bar><button class=pr onclick="entForm()">+ Cadastrar peça</button><button onclick="estEdit()">Editar</button><button onclick="stkImp()">Importar planilha</button><button onclick="stkExp()">${ic('download')} Exportar planilha</button></div>
 ${tbl(['Produto',...locs.map(sn),'Ações'],[...P.map((p,i)=>[esc(p),...locs.map(l=>sel(l,p).length),`<button class="dg" onclick="stkDel(${i})">Excluir</button>`]),['<b>Total (peças)</b>',...locs.map(l=>'<b>'+sel(l).length+'</b>'),''],['<b>Valor total</b>',...locs.map(l=>'<b>'+brl(sum(sel(l),u=>u.cost))+'</b>'),'']])}`}
 /* Excluir peça do estoque: tira do catálogo e das prateleiras; o histórico fica (unidades viram "Descartada") */
 function stkDel(i){const x=SP[i];if(!x)return;const k=x.n+' '+x.m,q=S.units.filter(u=>nm(u)===k&&(u.loc===CE?cAv(u):inStock(u))).length;
   ask('Excluir peça do estoque','Excluir "'+k+'"?\n'+(q?q+' unidade(s) em estoque será(ão) baixada(s) (status Descartada) e sai(rão) de todas as lojas.':'Esta peça não tem unidades em estoque.')+'\nO histórico é mantido. Esta ação não pode ser desfeita.',()=>rpc('stock_part_delete',{p_name:x.n,p_model:x.m}))}
-/* Cadastrar loja: cria um novo local de estoque (nova coluna em Estoques) */
-function stForm(){modal('Cadastrar loja',[{n:'n',l:'Nome da loja',r:1}],
-  d=>rpc('store_create',{p_name:d.n}).then(()=>toast('Loja "'+d.n.trim()+'" cadastrada. Já aparece em Estoques e nas listas de loja.')));
-  const f=$('#m form').elements.n;f.setAttribute('autocomplete','off');f.focus()}
 /* ---------- Planilhas: exportar o estoque / importar entradas (Estoques > Importar planilha / Exportar planilha) ---------- */
 const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
 const num=v=>{if(typeof v==='number')return v;let s=String(v??'').replace(/[^\d,.\-]/g,'');if(!s)return NaN;
@@ -226,7 +222,7 @@ function stkParse(rows){
    x={line:hi+k+2,n,m,q,lname:ln||'Estoque Central',sid:CE,sup:null,price:0,nova:false,err:''},cat=S.cat.find(c=>key(c.name,c.model)===key(n,m));
   if(!n||!m)x.err='Informe a peça e o modelo.';
   else if(!(q>0)||!Number.isInteger(q))x.err='Quantidade inválida (use um número inteiro maior que zero).';
-  if(!x.err&&ln&&!['estoque central','central'].includes(norm(ln))){const st=stores.find(s=>norm(s.name)===norm(ln));if(st)x.sid=st.id;else x.err='Loja "'+ln+'" não cadastrada (use + Cadastrar loja).'}
+  if(!x.err&&ln&&!['estoque central','central'].includes(norm(ln))){const st=stores.find(s=>norm(s.name)===norm(ln));if(st)x.sid=st.id;else x.err='Loja "'+ln+'" não cadastrada.'}
   if(!x.err){let sp=null;if(fn){sp=S.sup.find(s=>norm(s.name)===norm(fn)||norm(s.name+' ('+(s.company||'')+')')===norm(fn)||(s.company&&norm(s.company)===norm(fn)));if(!sp)x.err='Fornecedor "'+fn+'" não cadastrado (aba Fornecedores).'}
    const prev=seen[key(n,m)];
    x.sup=sp?sp.id:(cat&&cat.supplier_id)||(prev&&prev.sup)||null;x.price=pv>0?pv:(cat&&+cat.unit_price)||(prev&&prev.price)||0;
