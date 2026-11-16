@@ -39,6 +39,12 @@ Todas as peças com código, local, status e valor. Utilizar, devolver, enviar p
 ### 🔧 Manutenção (OS)
 Cadastro de ordens de serviço com **número da OS, cliente, serviço realizado, peça utilizada, valor cobrado, valor pago na peça e técnico**. No rodapé, a soma de **valor cobrado**, **valor gasto** e **lucro**.
 
+### 🧾 Fechamento Técnico
+Registro diário dos serviços feitos pelos técnicos: **OS, cliente, serviço realizado, valor da peça, valor cobrado e fornecedor**. Cada preenchimento vira um **registro individual** com a **data salva automaticamente**. Todos os usuários consultam os fechamentos anteriores (busca, filtro por período e totais); o técnico preenche e pode filtrar **só os seus**.
+
+### 🎮 Manutenção de Manetes
+Controle das manetes em reparo: **número da OS, loja de origem e status** (*Aguardando peças*, *Sem reparo*, *Pronta* ou *Enviada para reparo em placa*). **Todos veem** os status; **só o técnico** cadastra, atualiza o status, edita e exclui.
+
 </td>
 <td width="50%" valign="top">
 
@@ -52,7 +58,7 @@ Quantidade e valor das peças disponíveis por local, entrada no Estoque Central
 Pedidos por unidade, peças mais usadas e devolvidas, movimentação mensal. Histórico permanente com busca e filtros, e exportação em **CSV** (abre no Excel).
 
 ### 👥 Usuários
-O admin cria acessos, redefine senhas, troca a loja e ativa ou desativa pessoas.
+O admin cria acessos, define o perfil (**funcionário** ou **técnico**), redefine senhas, troca a loja e ativa ou desativa pessoas.
 
 </td>
 </tr>
@@ -72,9 +78,12 @@ As regras valem **dentro do banco de dados** (Row Level Security e funções do 
 |---|---|
 | 👑 **Administrador** | Único do sistema. Vê e movimenta todas as unidades, compra, recebe, entrega, exclui pedidos, manutenções e peças do catálogo, e gerencia usuários. |
 | 🧑‍🔧 **Funcionário** | Entra só na própria loja. Faz pedidos (sem aprovação), usa e devolve peças, cadastra manutenções e pede transferências. **Nunca vira administrador.** |
+| 🔧 **Técnico** | Tem as mesmas abas e permissões do funcionário (só a própria loja) e, além disso, preenche o **Fechamento Técnico** e cadastra, atualiza, edita e exclui **manetes**. O admin define quem é técnico em **Usuários → Tornar técnico**. |
 | 🚫 **Usuário desativado** | Perde o acesso na hora. |
 
 O cadastro público fica desligado: **só o administrador cria acessos**.
+
+> O **Fechamento Técnico** e a **Manutenção de Manetes** são visíveis para **todos os usuários ativos, de todas as lojas**. Quem escreve é só o técnico, e isso também é verificado no banco.
 
 <br>
 
@@ -91,7 +100,8 @@ index.html        estrutura da página
 script.js         telas e chamadas ao banco
 style.css         visual (tema preto e amarelo)
 config.js         URL e chave pública do Supabase
-supabase.sql      banco de dados completo (rodar no Supabase)
+supabase.sql      banco de dados completo (rodar no Supabase; não vai para o GitHub)
+migracao_tecnico.sql  perfil de técnico, Fechamento Técnico e Manetes (para bancos já existentes)
 wrangler.jsonc    configuração da hospedagem
 assets/           imagens animadas deste README
 ```
@@ -108,7 +118,8 @@ assets/           imagens animadas deste README
 <br>
 
 1. Crie um projeto no [Supabase](https://supabase.com).
-2. Abra o **SQL Editor**, cole o `supabase.sql` **inteiro** e execute. Pode rodar de novo sem perder dados.
+2. Abra o **SQL Editor**, cole o `supabase.sql` **inteiro** e execute. Pode rodar de novo sem perder dados, mas **ele volta a senha do administrador para a inicial**.
+   - **Banco que já está em uso?** Rode **somente** o `migracao_tecnico.sql`. Ele só acrescenta o perfil de técnico, o Fechamento Técnico e as Manetes, não mexe em nada que já existe e pode ser rodado mais de uma vez.
 3. Em **Authentication → Providers → Email**, desative **Allow new users to sign up**.
 4. Em **Authentication → URL Configuration**, coloque o endereço do seu site em **Site URL**.
 
@@ -150,12 +161,15 @@ Cada `git push` na branch `main` publica a nova versão sozinho.
 
 O `supabase.sql` cria o login do administrador. **Entre e troque a senha imediatamente** em **Usuários → Redefinir senha**.
 
+Para criar um técnico, use **Usuários → + Novo usuário** e escolha o perfil **Técnico**, ou clique em **Tornar técnico** em um usuário já existente.
+
 </details>
 
 <br>
 
 ## 🛡️ Segurança do repositório
 
+- O `migracao_tecnico.sql` não tem senhas e pode ficar no repositório. Ele é rodado à mão no SQL Editor; a Cloudflare não o publica por causa do `.assetsignore`.
 - **Não deixe o `supabase.sql` em repositório público.** Ele contém a senha inicial do administrador. Guarde-o fora do GitHub ou remova a senha antes de publicar.
 - Mantenha um `.assetsignore` para a Cloudflare **não publicar** arquivos que o site não usa (`*.sql`, `backend/`, `web/` etc.).
 - Nunca versione tokens de API, a chave `service_role` ou senhas.
