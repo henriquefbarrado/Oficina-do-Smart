@@ -258,13 +258,13 @@ let MF='';
 const mbadge=s=>`<span class="tg ${s==='Aguardando peças'?'w':s==='Sem reparo'?'r':s==='Pronta'?'g':''}">${esc(s)}</span>`;
 function pMan(){const l=S.cr.filter(x=>!MF||x.st===MF);
  return `<h1>Manutenção de Manetes</h1><p class="mu sub">Acompanhe o status de cada manete. Todos visualizam; somente o técnico atualiza.</p>
-<div class=bar>${me.tech?`<button class=pr onclick="manForm()">+ Novo manete</button>`:''}<select onchange="MF=this.value;render()"><option value="">Todos os status</option>${MS.map(s=>`<option ${MF===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div>
+<div class=bar>${me.tech?`<button class=pr onclick="manForm()">+ Nova manete</button>`:''}<select onchange="MF=this.value;render()"><option value="">Todos os status</option>${MS.map(s=>`<option ${MF===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div>
 <div class=cards>${MS.map(s=>`<div class=card><small>${ic('gamepad')} ${esc(s)}</small><strong>${S.cr.filter(x=>x.st===s).length}</strong></div>`).join('')}</div>
 ${tbl(['OS','Loja de origem','Status','Cadastrado em','Última atualização',...(me.tech?['Ações']:[])],l.map(x=>[esc(x.os),esc(sn(x.store)),mbadge(x.st),dt(x.t),dt(x.ut)+' · '+esc(x.ub),...(me.tech?[`<button onclick="manSt(${x.id})">Atualizar status</button>`]:[])]))}`}
-function manForm(){modal('Novo manete',[{n:'os',l:'Número da OS',r:1},{n:'s',l:'Loja de origem',o:lopt()},{n:'st',l:'Status',o:MS.map(x=>[x,x])}],
+function manForm(){modal('Nova manete',[{n:'os',l:'Número da OS',r:1},{n:'s',l:'Loja de origem',o:lopt()},{n:'st',l:'Status',o:MS.map(x=>[x,x])}],
  d=>rpc('controller_new',{p_os:d.os,p_store:+d.s,p_status:d.st}))}
 function manSt(id){const x=S.cr.find(v=>v.id===id);if(!x)return;
- modal('Status do manete — OS '+esc(x.os),[{n:'st',l:'Status (atual: '+x.st+')',v:x.st,o:MS.map(s=>[s,s])}],d=>rpc('controller_set_status',{p_id:id,p_status:d.st}))}
+ modal('Status da manete — OS '+esc(x.os),[{n:'st',l:'Status (atual: '+x.st+')',v:x.st,o:MS.map(s=>[s,s])}],d=>rpc('controller_set_status',{p_id:id,p_status:d.st}))}
 
 /* ---------- Shell ---------- */
 function render(){
