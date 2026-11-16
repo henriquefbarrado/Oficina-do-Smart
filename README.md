@@ -6,21 +6,54 @@
 
 ![Front-end](https://img.shields.io/badge/Front--end-HTML%20·%20CSS%20·%20JS-F5C518?style=for-the-badge&labelColor=0a0a0a)
 ![Supabase](https://img.shields.io/badge/Banco-Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white&labelColor=0a0a0a)
+![Postgres](https://img.shields.io/badge/Seguran%C3%A7a-Row%20Level%20Security-F5C518?style=for-the-badge&logo=postgresql&logoColor=white&labelColor=0a0a0a)
 ![Cloudflare](https://img.shields.io/badge/Hospedagem-Cloudflare-F38020?style=for-the-badge&logo=cloudflare&logoColor=white&labelColor=0a0a0a)
+![Build](https://img.shields.io/badge/Build-zero-3ECF8E?style=for-the-badge&labelColor=0a0a0a)
 
-**[Funcionalidades](#-funcionalidades)** · **[Fluxo da peça](#-fluxo-da-peça)** · **[Regras de acesso](#-regras-de-acesso)** · **[Como colocar no ar](#-como-colocar-no-ar)** · **[Segurança](#-segurança-do-repositório)**
+### Do pedido ao balcão, com rastro de cada peça.
+
+**[Visual](#-visual)** · **[Fluxo](#-fluxo-da-peça)** · **[Funcionalidades](#-funcionalidades)** · **[Planilhas](#-importar-e-exportar-planilhas)** · **[Acesso](#-regras-de-acesso)** · **[Arquitetura](#-arquitetura)** · **[Como colocar no ar](#-como-colocar-no-ar)** · **[Segurança](#-segurança)**
 
 </div>
 
 <br>
 
-Sistema web que acompanha cada peça **do pedido até o uso no balcão** nas lojas Buritis, Savassi, Centro, Belvedere e Castelo, mais o Estoque Central. Cada peça física tem **código próprio** (ex.: `PED-0001-01`) e um **rastro completo** de tudo o que aconteceu com ela: quem mexeu, quando e por quê.
+Sistema web que acompanha cada peça **do pedido até o uso no balcão** nas lojas **Buritis, Savassi, Centro, Belvedere e Castelo**, mais o **Estoque Central**.
+
+Cada peça física tem **código próprio** (ex.: `PED-0001-01`) e um **rastro completo** de tudo o que aconteceu com ela: **quem mexeu, quando e por quê**. Sem planilha perdida, sem "quem pegou aquela tela?".
+
+<br>
+
+<img src="assets/stats.svg" alt="6 locais de estoque, 3 perfis de acesso, 29 funções no Postgres, 0 etapas de build" width="100%">
+
+<br>
+
+## 📸 Visual
+
+Tema preto e amarelo, tabelas rápidas e tudo a um clique. Aqui, a aba **Estoques**: quantidade por peça em cada local, com **cadastro, exclusão, importação e exportação** de planilha.
+
+<img src="assets/estoques.png" alt="Tela de Estoques: peças por local com botões Cadastrar peça, Editar, Importar planilha e Exportar planilha" width="100%">
 
 <br>
 
 ## 🔄 Fluxo da peça
 
 <img src="assets/flow.svg" alt="Solicitada, comprada, recebida, na loja, utilizada" width="100%">
+
+E quando a peça foge do caminho feliz, tudo continua registrado:
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#1b1b1b','primaryTextColor':'#ffffff','primaryBorderColor':'#F5C518','lineColor':'#8a8a8a','fontFamily':'Inter, Segoe UI, sans-serif'}}}%%
+flowchart LR
+  A(["📝 Solicitada"]) --> B(["🛒 Comprada"]) --> C(["📦 Estoque Central"]) --> D(["🏬 Na loja"]) --> E(["✅ Utilizada"])
+  D -- devolver --> C
+  D -- defeito --> M(["🔧 Em manutenção"])
+  M -- consertada --> C
+  M -- volta à origem --> D
+  M -- sem reparo --> X(["🗑️ Descartada"])
+  classDef ok fill:#F5C518,stroke:#0a0a0a,color:#0a0a0a,font-weight:bold
+  class E ok
+```
 
 <br>
 
@@ -34,40 +67,76 @@ Sistema web que acompanha cada peça **do pedido até o uso no balcão** nas loj
 A loja solicita escolhendo o **fornecedor** e o **valor da peça**. O pedido já nasce **aprovado**, sem esperar o administrador. O admin registra compra, recebimento e entrega, e tem **poder total para excluir** qualquer pedido.
 
 ### 🧩 Controle de Peças
-Todas as peças com código, local, status e valor. Utilizar, devolver, enviar para manutenção, descartar e **editar o status** (ex.: *tela iPhone 11 → Utilizada*). Clique no código para ver o rastro.
+Todas as peças com código, local, status e valor. Utilizar, devolver, enviar para manutenção, descartar e **editar o status** (ex.: *tela iPhone 11 → Utilizada*). Clique no código para ver o **rastro completo**.
 
 ### 🔧 Manutenção (OS)
-Cadastro de ordens de serviço com **número da OS, cliente, serviço realizado, peça utilizada, valor cobrado, valor pago na peça e técnico**. No rodapé, a soma de **valor cobrado**, **valor gasto** e **lucro**.
+Ordens de serviço com **número da OS, cliente, serviço, peça utilizada, valor cobrado, valor pago na peça e técnico**. No rodapé: soma de **cobrado**, **gasto** e **lucro**.
 
 ### 🧾 Fechamento Técnico
-Registro diário dos serviços feitos pelos técnicos: **OS, cliente, serviço realizado, valor da peça, valor cobrado e fornecedor**. Cada preenchimento vira um **registro individual** com a **data salva automaticamente**. Todos os usuários consultam os fechamentos anteriores (busca, filtro por período e totais); o técnico preenche e pode filtrar **só os seus**.
+Registro diário dos serviços dos técnicos: **OS, cliente, serviço, valor da peça, valor cobrado e fornecedor**. Cada preenchimento vira um **registro individual** com a **data salva automaticamente**. Todos consultam (busca, período e totais); o técnico pode filtrar **só os seus**.
 
 ### 🎮 Manutenção de Manetes
-Controle das manetes em reparo: **número da OS, loja de origem e status** (*Aguardando peças*, *Sem reparo*, *Pronta* ou *Enviada para reparo em placa*). **Todos veem** os status; **só o técnico** cadastra, atualiza o status, edita e exclui.
+Controle das manetes em reparo: **OS, loja de origem e status** (*Aguardando peças*, *Sem reparo*, *Pronta* ou *Enviada para reparo em placa*). **Todos veem**; **só o técnico** cadastra, atualiza, edita e exclui.
 
 </td>
 <td width="50%" valign="top">
 
-### 📚 Catálogo e Fornecedores
-As peças são cadastradas na aba de estoque. O catálogo guarda o fornecedor padrão e o valor, que você ajusta aqui, e nos pedidos tudo entra sozinho. O histórico de compras fica por fornecedor.
-
-### 🏬 Estoques e Transferências
-Quantidade e valor das peças disponíveis por local, **cadastro de peça direto no estoque** (um único formulário: nome, modelo, quantidade, **loja**, fornecedor e valor; a peça é criada e já entra na loja escolhida (Estoque Central, Buritis, Belvedere etc.), e se já existir só soma a quantidade), entrada em lote de peças já cadastradas, saída para lojas, **exclusão de peça** (botão Excluir em cada linha; o histórico é mantido) **exportar o estoque em planilha** (.xlsx) e **importar planilha** (.xlsx ou .csv) para dar entrada de peças no Estoque Central ou direto numa loja, com prévia e validação antes de lançar. Entre lojas, a transferência passa por **OK da loja de origem → aprovação do admin**.
-
-### 📊 Dashboard, Histórico e Relatórios
-Pedidos por unidade, peças mais usadas e devolvidas, movimentação mensal. Histórico permanente com busca e filtros, e exportação em **CSV** (abre no Excel).
+### 🏬 Estoques
+Matriz **peça × local** com quantidade e valor. Dá para:
+- **cadastrar peça** direto na **loja escolhida** (nome, modelo, quantidade, loja, fornecedor e valor; se a peça já existe, só soma);
+- dar **entrada em lote** de peças já cadastradas;
+- fazer **saída** do central para uma loja;
+- **excluir peça** com um clique (o histórico é mantido);
+- **importar e exportar planilhas** ([veja abaixo](#-importar-e-exportar-planilhas)).
 
 ### 🏭 Estoque Central
-Aba aberta a **todos os usuários**: quantidade disponível por peça, valor unitário e valor total em estoque, com busca. Funcionários e técnicos só consultam; entrada e saída continuam com o administrador.
+Aba aberta a **todos os usuários**: quantidade disponível por peça, valor unitário e valor total, com busca. Funcionários e técnicos só consultam; a movimentação é do administrador.
+
+### 🔁 Transferências
+Entre lojas, o pedido passa por **OK da loja de origem → aprovação do admin**. Nada some no meio do caminho.
+
+### 📚 Catálogo e Fornecedores
+O catálogo guarda **fornecedor padrão** e **valor**; nos pedidos, tudo entra sozinho. O histórico de compras fica por fornecedor.
+
+### 📊 Dashboard, Histórico e Relatórios
+Pedidos por unidade, peças mais usadas e devolvidas, movimentação mensal. **Histórico permanente** com busca e filtros e exportação em **CSV** (abre no Excel).
 
 ### 👥 Usuários
-O admin cria acessos de qualquer perfil (**funcionário**, **técnico** ou **administrador**), promove ou remove administradores, redefine senhas, troca a loja, ativa, desativa e **exclui** pessoas. Tudo isso fica dentro de um único botão **Editar** em cada usuário.
+O admin cria acessos (**funcionário**, **técnico** ou **administrador**), promove ou remove admins, redefine senhas, troca a loja, ativa, desativa e **exclui**. Tudo dentro de um único botão **Editar**.
 
 </td>
 </tr>
 </table>
 
-### Transferência entre lojas
+<br>
+
+## 📥 Importar e exportar planilhas
+
+Na aba **Estoques**, dois botões fazem o trabalho pesado:
+
+| Botão | O que faz |
+|---|---|
+| **Exportar planilha** | Baixa um `.xlsx` com uma linha por peça: fornecedor, valor unitário, quantidade em **cada local**, total e valor em estoque. |
+| **Importar planilha** | Lê `.xlsx` ou `.csv` (inclusive o CSV com `;` do Excel brasileiro), mostra uma **prévia linha por linha** e só então lança no estoque. |
+
+**Colunas da importação** (o botão **Baixar modelo** já entrega a planilha pronta):
+
+| Peça | Modelo | Loja | Quantidade | Fornecedor | Valor unitário |
+|---|---|---|---:|---|---:|
+| BATERIA | S22 | Buritis | 5 | Canal das peças | 45,90 |
+| TELA | S23 | *(vazio = Estoque Central)* | 2 | Canal das peças | 320 |
+
+- **Soma, não substitui:** as quantidades entram por cima do que já existe.
+- **Loja:** a peça entra no Estoque Central e sai para a loja informada, e os **dois movimentos ficam no Histórico**.
+- **Fornecedor e valor** só são obrigatórios para **peça nova** (ou sem padrão no catálogo).
+- **Validação antes de lançar:** loja inexistente, fornecedor desconhecido e quantidade inválida aparecem na prévia com o motivo, e **só as linhas OK entram**.
+
+> [!NOTE]
+> A planilha exportada tem uma coluna por loja (visão de consulta). Para importar, use o formato de uma linha por peça e loja, igual ao modelo.
+
+<br>
+
+## 🔁 Transferência entre lojas
 
 <img src="assets/transfer.svg" alt="A loja destino solicita, a loja de origem dá o OK e o administrador aprova" width="100%">
 
@@ -75,47 +144,73 @@ O admin cria acessos de qualquer perfil (**funcionário**, **técnico** ou **adm
 
 ## 🔐 Regras de acesso
 
-As regras valem **dentro do banco de dados** (Row Level Security e funções do Postgres), e não só nos botões da tela.
+As regras valem **dentro do banco de dados** (Row Level Security e funções do Postgres), e não só nos botões da tela. Esconder um botão não protege nada; aqui, o banco recusa.
 
-| Quem | O que pode |
-|---|---|
-| 👑 **Administrador** | Pode haver mais de um. Vê e movimenta todas as unidades, compra, recebe, entrega, exclui pedidos, manutenções e peças do catálogo, e gerencia usuários. |
-| 🧑‍🔧 **Funcionário** | Entra só na própria loja. Faz pedidos (sem aprovação), usa e devolve peças, cadastra manutenções e pede transferências, e **consulta o Estoque Central**. Só vira administrador se outro administrador promover. |
-| 🔧 **Técnico** | Tem as mesmas abas e permissões do funcionário (só a própria loja) e, além disso, preenche o **Fechamento Técnico** e cadastra, atualiza, edita e exclui **manetes**. O admin define quem é técnico em **Usuários → Tornar técnico**. |
-| 🚫 **Usuário desativado** | Perde o acesso na hora. |
+| | 👑 Administrador | 🧑‍💼 Funcionário | 🔧 Técnico |
+|---|:---:|:---:|:---:|
+| Enxerga | **todas as lojas** | só a própria loja | só a própria loja |
+| Faz pedidos (nascem aprovados) | ✅ | ✅ | ✅ |
+| Compra, recebe e entrega pedidos | ✅ | — | — |
+| Usa, devolve e manda peça para manutenção | ✅ | ✅ | ✅ |
+| Cadastra manutenções (OS) | ✅ | ✅ | ✅ |
+| Pede transferência | ✅ | ✅ | ✅ |
+| Dá o OK como loja de origem | — | ✅ | ✅ |
+| Aprova transferência | ✅ | — | — |
+| **Consulta** o Estoque Central | ✅ | ✅ | ✅ |
+| Cadastra/exclui peça, importa/exporta planilha, dá saída do central | ✅ | — | — |
+| Vê Fechamento Técnico e Manetes (todas as lojas) | ✅ | ✅ | ✅ |
+| **Escreve** no Fechamento Técnico e nas Manetes | — | — | ✅ |
+| Exclui pedidos, manutenções e peças do catálogo | ✅ | — | — |
+| Gerencia usuários e usa **Logar como** | ✅ | — | — |
 
-O cadastro público fica desligado: **só o administrador cria acessos**.
-
-> O **Fechamento Técnico** e a **Manutenção de Manetes** são visíveis para **todos os usuários ativos, de todas as lojas**. Quem escreve é só o técnico, e isso também é verificado no banco.
+- Pode haver **mais de um administrador**. Funcionário só vira admin se outro admin promover; o técnico é definido em **Usuários → Tornar técnico**.
+- 🚫 **Usuário desativado** perde o acesso na hora.
+- O cadastro público fica **desligado**: **só o administrador cria acessos**.
 
 <br>
 
-## 🧱 Como é feito
+## 🧱 Arquitetura
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#1b1b1b','primaryTextColor':'#ffffff','primaryBorderColor':'#F5C518','lineColor':'#8a8a8a','fontFamily':'Inter, Segoe UI, sans-serif'}}}%%
+flowchart LR
+  U["👤 Navegador<br/>HTML · CSS · JS puros"]
+  CF["☁️ Cloudflare<br/>serve o site estático"]
+  AU["🔑 Supabase Auth<br/>login e sessão"]
+  PG[("🐘 Postgres<br/>RLS + funções")]
+  EF["⚡ Edge Function<br/>logar-como"]
+
+  CF -- "index.html · script.js" --> U
+  U -- "login" --> AU
+  U -- "consultas + RPC" --> PG
+  AU -. "identidade (JWT)" .-> PG
+  U -. "Logar como" .-> EF
+  EF -- "service_role<br/>só no servidor" --> AU
+```
 
 | | |
 |---|---|
-| **Front-end** | HTML, CSS e JavaScript puros, sem etapa de build |
+| **Front-end** | HTML, CSS e JavaScript puros, **sem etapa de build** |
 | **Login e banco** | [Supabase](https://supabase.com): Auth + Postgres + RLS |
-| **Hospedagem** | [Cloudflare](https://www.cloudflare.com), com deploy automático a cada `git push` |
+| **Planilhas** | [SheetJS](https://sheetjs.com) (`.xlsx`), carregado por CDN com versão fixa |
+| **Hospedagem** | [Cloudflare](https://www.cloudflare.com), deploy automático a cada `git push` |
+
+### Estrutura do projeto
 
 ```
-index.html        estrutura da página
-script.js         telas e chamadas ao banco
-style.css         visual (tema preto e amarelo)
-config.js         URL e chave pública do Supabase
-supabase.sql      banco de dados completo (rodar no Supabase; não vai para o GitHub)
-migracao_tecnico.sql  perfil de técnico, Fechamento Técnico e Manetes (para bancos já existentes)
-migracao_usuarios_estoque.sql  vários administradores e Estoque Central visível a todos (para bancos já existentes)
-backend/edge-function/logar-como.ts  função do Supabase para o admin entrar na conta de outro usuário (ver passo abaixo)
-migracao_visibilidade.sql  garante que todo usuário novo enxergue os dados da própria loja e o histórico do Estoque Central (para bancos já existentes)
-migracao_estoque_central.sql  função que garante o Estoque Central visível a técnicos e funcionários (para bancos já existentes)
-migracao_excluir_usuario.sql  função para o administrador excluir usuários (para bancos já existentes)
-migracao_excluir_peca_e_loja.sql  função para excluir peça do estoque (para bancos já existentes)
-wrangler.jsonc    configuração da hospedagem
-assets/           imagens animadas deste README
+index.html                       estrutura da página
+script.js                        telas e chamadas ao banco
+style.css                        visual (tema preto e amarelo)
+config.js                        URL e chave pública do Supabase
+wrangler.jsonc                   configuração da hospedagem
+assets/                          imagens do README (hero, fluxo, transferência, print)
+
+supabase.sql                     banco completo (fica fora do GitHub, ver Segurança)
+migracao_*.sql                   migrações para bancos que já estão em uso
+backend/edge-function/           função "logar-como" (Supabase Edge Function)
 ```
 
-> `gestpecas.html`, `app.js` e as pastas `web/` e `backend/` são de versões antigas e não são usados pelo site.
+> `gestpecas.html`, `app.js`, `app.css`, `supabase.js` e as pastas `web/` e `backend/` (exceto `edge-function/`) são de versões antigas e não são usados pelo site.
 
 <br>
 
@@ -128,9 +223,18 @@ assets/           imagens animadas deste README
 
 1. Crie um projeto no [Supabase](https://supabase.com).
 2. Abra o **SQL Editor**, cole o `supabase.sql` **inteiro** e execute. Pode rodar de novo sem perder dados, mas **ele volta a senha do administrador para a inicial**.
-   - **Banco que já está em uso?** Rode **somente** o `migracao_tecnico.sql`. Ele só acrescenta o perfil de técnico, o Fechamento Técnico e as Manetes, não mexe em nada que já existe e pode ser rodado mais de uma vez.
 3. Em **Authentication → Providers → Email**, desative **Allow new users to sign up**.
 4. Em **Authentication → URL Configuration**, coloque o endereço do seu site em **Site URL**.
+
+**Banco que já está em uso?** Rode só as migrações que faltam. Nenhuma apaga dados e todas podem ser rodadas mais de uma vez:
+
+| Arquivo | Para quê |
+|---|---|
+| `migracao_usuarios_estoque.sql` | Vários administradores e Estoque Central visível a todos |
+| `migracao_estoque_central.sql` | Função que garante o Estoque Central visível a técnicos e funcionários |
+| `migracao_visibilidade.sql` | Todo usuário novo enxerga os dados da própria loja e o histórico do central |
+| `migracao_excluir_usuario.sql` | Administrador exclui usuários |
+| `migracao_excluir_peca.sql` | Botão **Excluir** da aba Estoques (a peça sai do catálogo e das lojas; o histórico fica) |
 
 </details>
 
@@ -146,7 +250,8 @@ const SB_URL = 'https://SEU-PROJETO.supabase.co';  // só o endereço, sem nada 
 const SB_KEY = 'sb_publishable_...';               // chave pública
 ```
 
-> ⚠️ Use sempre a chave **publishable/anon**. Nunca coloque a `service_role` no site.
+> [!WARNING]
+> Use sempre a chave **publishable/anon**. **Nunca** coloque a `service_role` no site.
 
 </details>
 
@@ -164,40 +269,90 @@ Cada `git push` na branch `main` publica a nova versão sozinho.
 </details>
 
 <details>
-<summary><b>Botão "Logar como" (opcional)</b></summary>
-
-<br>
-
-O administrador pode entrar na conta de funcionários e técnicos sem a senha, pelo botão **Logar como** em **Usuários**. Para isso é preciso publicar uma função no Supabase:
-
-1. No Supabase, abra **Edge Functions → Deploy a new function → Via Editor**.
-2. Cole o conteúdo de `backend/edge-function/logar-como.ts`. O Supabase pode gerar um nome automático (ex.: `smooth-service`). O nome usado pelo site está em `script.js`, na linha com `sb.functions.invoke(`; ele precisa ser igual ao da função publicada (hoje: `smooth-service`).
-3. Nas configurações da função, **desligue "Verify JWT"** (a própria função confere se quem chamou é administrador) e publique.
-
-Só administradores ativos conseguem usar. Não funciona para outro administrador nem para usuário desativado. Enquanto estiver na conta de outra pessoa, aparece uma faixa no topo com o botão **Voltar para minha conta**. Atenção: o que for feito ali fica registrado no nome dessa pessoa.
-
-</details>
-
-<details>
 <summary><b>4 · Primeiro acesso</b></summary>
 
 <br>
 
 O `supabase.sql` cria o login do administrador. **Entre e troque a senha imediatamente** em **Usuários → Redefinir senha**.
 
-Depois de rodar o `migracao_usuarios_estoque.sql`, o administrador também pode criar **outros administradores** (perfil *Administrador* em **+ Novo usuário**, ou **Tornar admin** na lista).
+Para criar outros acessos, use **Usuários → + Novo usuário** e escolha o perfil (**Funcionário**, **Técnico** ou **Administrador**), ou clique em **Tornar técnico** / **Tornar admin** em quem já existe.
 
-Para criar um técnico, use **Usuários → + Novo usuário** e escolha o perfil **Técnico**, ou clique em **Tornar técnico** em um usuário já existente.
+</details>
+
+<details>
+<summary><b>Botão "Logar como" (opcional)</b></summary>
+
+<br>
+
+O administrador entra na conta de funcionários e técnicos, sem a senha, pelo botão **Logar como** em **Usuários**. Para isso, publique uma função no Supabase:
+
+1. Abra **Edge Functions → Deploy a new function → Via Editor**.
+2. Cole o conteúdo de `backend/edge-function/logar-como.ts`. O Supabase pode gerar um nome automático (ex.: `smooth-service`). O nome usado pelo site está em `script.js`, na linha com `sb.functions.invoke(`, e precisa ser igual ao da função publicada (hoje: `smooth-service`).
+3. Nas configurações da função, **desligue "Verify JWT"** (a própria função confere se quem chamou é administrador) e publique.
+
+Só administradores ativos usam, e não funciona para outro administrador nem para usuário desativado. Enquanto estiver na conta de outra pessoa, aparece uma faixa no topo com **Voltar para minha conta**.
+
+> [!IMPORTANT]
+> O que for feito ali fica registrado **no nome dessa pessoa**.
+
+</details>
+
+<details>
+<summary><b>Rodar na sua máquina</b></summary>
+
+<br>
+
+Não tem build. É só servir a pasta:
+
+```bash
+git clone https://github.com/henriquefbarrado/Oficina-do-Smart.git
+cd Oficina-do-Smart
+# edite o config.js com a URL e a chave publishable do seu Supabase
+python3 -m http.server 8080      # ou: npx serve .
+```
+
+Abra `http://localhost:8080`.
 
 </details>
 
 <br>
 
-## 🛡️ Segurança do repositório
+## ❓ Dúvidas rápidas
 
-- O `migracao_tecnico.sql` não tem senhas e pode ficar no repositório. Ele é rodado à mão no SQL Editor; a Cloudflare não o publica por causa do `.assetsignore`.
-- **Não deixe o `supabase.sql` em repositório público.** Ele contém a senha inicial do administrador. Guarde-o fora do GitHub ou remova a senha antes de publicar.
-- Mantenha um `.assetsignore` para a Cloudflare **não publicar** arquivos que o site não usa (`*.sql`, `backend/`, `web/` etc.).
+<details>
+<summary><b>Excluir uma peça apaga o histórico?</b></summary>
+
+<br>
+
+Não. A peça sai do catálogo e as unidades em estoque ficam com o status **Descartada**, então o rastro de cada código continua intacto. A exclusão é bloqueada se a peça ainda tiver unidade pedida, em manutenção, em devolução ou em transferência pendente.
+
+</details>
+
+<details>
+<summary><b>A importação soma ou substitui o estoque?</b></summary>
+
+<br>
+
+**Soma.** Cada linha é uma entrada, e fica registrada no Histórico como qualquer outra.
+
+</details>
+
+<details>
+<summary><b>E se a importação falhar no meio?</b></summary>
+
+<br>
+
+As linhas que já foram lançadas ficam lançadas, e o resultado final lista cada linha que falhou e o motivo. Corrija só essas linhas e importe de novo.
+
+</details>
+
+<br>
+
+## 🔒 Segurança
+
+- A **segurança está no banco** (RLS e funções do Postgres). A `publishable/anon` no `config.js` é feita para ser pública; o que protege os dados são as regras do banco.
+- **Não deixe o `supabase.sql` em repositório público.** Ele contém a senha inicial do administrador. O `.gitignore` já o bloqueia; guarde-o fora do GitHub.
+- Mantenha o `.assetsignore` para a Cloudflare **não publicar** arquivos que o site não usa (`*.sql`, `backend/`, `web/` etc.).
 - Nunca versione tokens de API, a chave `service_role` ou senhas.
 
 <br>
