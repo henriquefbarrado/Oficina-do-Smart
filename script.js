@@ -176,9 +176,87 @@ function supDel(id){
 function supForm(){modal('Novo fornecedor',[{n:'n',l:'Nome',r:1},{n:'c',l:'Empresa'},{n:'tel',l:'Telefone'},{n:'em',l:'E-mail',t:'email'},{n:'obs',l:'Observações'}],
  d=>dbx(sb.from('suppliers').insert({name:d.n.trim(),company:d.c,phone:d.tel,email:d.em,notes:d.obs})))}
 
-function pStk(){const locs=[CE,...LJ().map(s=>s.id)],sel=(l,p)=>S.units.filter(u=>u.loc===l&&(l===CE?['Recebida','Disponível','Devolvida'].includes(u.status):inStock(u))&&(!p||nm(u)===p)),P=[...new Set(S.units.map(nm))].sort();
- return `<h1>Estoques</h1><p class="mu sub">Peças disponíveis e valor por local. Entradas e saídas ficam registradas no Histórico.</p><div class=bar><button class=pr onclick="entForm()">+ Cadastrar peça</button><button onclick="estEdit()">Editar</button></div>
-${tbl(['Produto',...locs.map(sn)],[...P.map(p=>[esc(p),...locs.map(l=>sel(l,p).length)]),['<b>Total (peças)</b>',...locs.map(l=>'<b>'+sel(l).length+'</b>')],['<b>Valor total</b>',...locs.map(l=>'<b>'+brl(sum(sel(l),u=>u.cost))+'</b>')]])}`}
+let SP=[];
+function pStk(){const locs=[CE,...LJ().map(s=>s.id)],sel=(l,p)=>S.units.filter(u=>u.loc===l&&(l===CE?['Recebida','Disponível','Devolvida'].includes(u.status):inStock(u))&&(!p||nm(u)===p));
+  /* Lista = peças do catálogo + peças com unidade em estoque em algum local */
+  const M={};S.cat.forEach(c=>{M[c.name+' '+c.model]={n:c.name,m:c.model}});S.units.filter(u=>(u.loc===CE?cAv(u):inStock(u))).forEach(u=>{M[nm(u)]=M[nm(u)]||{n:u.prod,m:u.model}});
+  const P=Object.keys(M).sort((a,b)=>a.localeCompare(b,'pt-BR'));SP=P.map(k=>M[k]);
+ return `<h1>Estoques</h1><p class="mu sub">Peças disponíveis e valor por local. Entradas e saídas ficam registradas no Histórico.</p><div class=bar><button class=pr onclick="entForm()">+ Cadastrar peça</button><button onclick="stForm()">+ Cadastrar loja</button><button onclick="estEdit()">Editar</button><button onclick="stkImp()">Importar planilha</button><button onclick="stkExp()">${ic('download')} Exportar planilha</button></div>
+${tbl(['Produto',...locs.map(sn),'Ações'],[...P.map((p,i)=>[esc(p),...locs.map(l=>sel(l,p).length),`<button class="dg" onclick="stkDel(${i})">Excluir</button>`]),['<b>Total (peças)</b>',...locs.map(l=>'<b>'+sel(l).length+'</b>'),''],['<b>Valor total</b>',...locs.map(l=>'<b>'+brl(sum(sel(l),u=>u.cost))+'</b>'),'']])}`}
+/* Excluir peça do estoque: tira do catálogo e das prateleiras; o histórico fica (unidades viram "Descartada") */
+function stkDel(i){const x=SP[i];if(!x)return;const k=x.n+' '+x.m,q=S.units.filter(u=>nm(u)===k&&(u.loc===CE?cAv(u):inStock(u))).length;
+  ask('Excluir peça do estoque','Excluir "'+k+'"?\n'+(q?q+' unidade(s) em estoque será(ão) baixada(s) (status Descartada) e sai(rão) de todas as lojas.':'Esta peça não tem unidades em estoque.')+'\nO histórico é mantido. Esta ação não pode ser desfeita.',()=>rpc('stock_part_delete',{p_name:x.n,p_model:x.m}))}
+/* Cadastrar loja: cria um novo local de estoque (nova coluna em Estoques) */
+function stForm(){modal('Cadastrar loja',[{n:'n',l:'Nome da loja',r:1}],
+  d=>rpc('store_create',{p_name:d.n}).then(()=>toast('Loja "'+d.n.trim()+'" cadastrada. Já aparece em Estoques e nas listas de loja.')));
+  const f=$('#m form').elements.n;f.setAttribute('autocomplete','off');f.focus()}
+/* ---------- Planilhas: exportar o estoque / importar entradas (Estoques > Importar planilha / Exportar planilha) ---------- */
+const norm=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+const num=v=>{if(typeof v==='number')return v;let s=String(v??'').replace(/[^\d,.\-]/g,'');if(!s)return NaN;
+ if(s.includes(',')&&s.includes('.'))s=s.lastIndexOf(',')>s.lastIndexOf('.')?s.replace(/\./g,'').replace(',','.'):s.replace(/,/g,'');else if(s.includes(','))s=s.replace(',','.');return parseFloat(s)};
+const stkSel=(l,p)=>S.units.filter(u=>u.loc===l&&(l===CE?['Recebida','Disponível','Devolvida'].includes(u.status):inStock(u))&&(!p||nm(u)===p));
+/* baixa .xlsx (se a biblioteca carregou) ou CSV */
+function dl(name,rows,sheet){if(!rows.length)return toast('Nada para exportar.');
+ if(window.XLSX){const k=Object.keys(rows[0]),ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=k.map(c=>({wch:Math.min(48,Math.max(c.length,...rows.map(r=>String(r[c]??'').length))+2)}));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,sheet);XLSX.writeFile(wb,name+'.xlsx')}else csv(name,rows)}
+function stkExp(){const locs=[CE,...LJ().map(s=>s.id)],M={};
+ S.cat.forEach(c=>{M[c.name+' '+c.model]={n:c.name,m:c.model,c}});S.units.filter(u=>u.loc===CE?cAv(u):inStock(u)).forEach(u=>{M[nm(u)]=M[nm(u)]||{n:u.prod,m:u.model}});
+ const rows=Object.keys(M).sort((a,b)=>a.localeCompare(b,'pt-BR')).map(k=>{const x=M[k],r={'Peça':x.n,'Modelo':x.m,'Fornecedor':(x.c&&x.c.supplier_name)||'','Valor unitário':(x.c&&+x.c.unit_price)||0};
+  locs.forEach(l=>r[sn(l)]=stkSel(l,k).length);r['Total']=sum(locs,l=>stkSel(l,k).length);r['Valor em estoque']=sum(locs.flatMap(l=>stkSel(l,k)),u=>u.cost);return r});
+ dl('estoques_'+new Date().toISOString().slice(0,10),rows,'Estoques')}
+function stkModelo(){const l=(LJ()[0]||{}).name||'Buritis',f=(S.sup[0]||{}).name||'Nome do fornecedor';
+ dl('modelo_importacao_estoque',[{'Peça':'BATERIA','Modelo':'S22','Loja':l,'Quantidade':5,'Fornecedor':f,'Valor unitário':45.9},{'Peça':'TELA','Modelo':'S23','Loja':'','Quantidade':2,'Fornecedor':f,'Valor unitário':320}],'Importação')}
+function parseCsv(t){const first=t.split(/\r?\n/)[0]||'',d=(first.match(/;/g)||[]).length>=(first.match(/,/g)||[]).length?';':',',rows=[];let r=[],c='',q=false;
+ for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch==='"'){if(t[i+1]==='"'){c+='"';i++}else q=false}else c+=ch}
+  else if(ch==='"')q=true;else if(ch===d){r.push(c);c=''}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;r.push(c);c='';rows.push(r);r=[]}else c+=ch}
+ if(c!==''||r.length){r.push(c);rows.push(r)}return rows}
+async function readSheet(file){const n=file.name.toLowerCase(),buf=await file.arrayBuffer();
+ if(/\.xlsx?$/.test(n)){if(!window.XLSX)throw new Error('A biblioteca de planilhas não carregou. Salve como CSV ou verifique a internet.');
+  const wb=XLSX.read(buf,{type:'array'});return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:'',raw:true})}
+ let t=new TextDecoder('utf-8').decode(buf);if(t.includes('\ufffd'))t=new TextDecoder('windows-1252').decode(buf);return parseCsv(t.replace(/^\ufeff/,''))}
+const COLS={n:['peca','produto','nome','nome da peca','item'],m:['modelo','aparelho'],l:['loja','destino','local','unidade','loja destino'],q:['quantidade','qtd','qtde','quant'],f:['fornecedor'],v:['valor unitario','valor','preco','preco unitario','valor unit','valor unitario (r$)']};
+function stkParse(rows){
+ const hi=rows.findIndex(r=>r.some(c=>COLS.n.includes(norm(c)))&&r.some(c=>COLS.q.includes(norm(c))));
+ if(hi<0)throw new Error('Não achei o cabeçalho. A planilha precisa ter as colunas "Peça", "Modelo" e "Quantidade". Use "Baixar modelo".');
+ const ix={};rows[hi].forEach((c,i)=>{const k=norm(c);for(const j in COLS)if(ix[j]==null&&COLS[j].includes(k))ix[j]=i});
+ if(ix.m==null)throw new Error('Falta a coluna "Modelo". Use "Baixar modelo".');
+ const key=(n,m)=>norm(n)+'|'+norm(m),stores=LJ(),seen={},out=[];
+ rows.slice(hi+1).forEach((r,k)=>{if(r.every(c=>String(c).trim()===''))return;
+  const g=j=>ix[j]==null?'':r[ix[j]],n=String(g('n')).trim(),m=String(g('m')).trim(),ln=String(g('l')).trim(),q=num(g('q')),fn=String(g('f')).trim(),pv=num(g('v')),
+   x={line:hi+k+2,n,m,q,lname:ln||'Estoque Central',sid:CE,sup:null,price:0,nova:false,err:''},cat=S.cat.find(c=>key(c.name,c.model)===key(n,m));
+  if(!n||!m)x.err='Informe a peça e o modelo.';
+  else if(!(q>0)||!Number.isInteger(q))x.err='Quantidade inválida (use um número inteiro maior que zero).';
+  if(!x.err&&ln&&!['estoque central','central'].includes(norm(ln))){const st=stores.find(s=>norm(s.name)===norm(ln));if(st)x.sid=st.id;else x.err='Loja "'+ln+'" não cadastrada (use + Cadastrar loja).'}
+  if(!x.err){let sp=null;if(fn){sp=S.sup.find(s=>norm(s.name)===norm(fn)||norm(s.name+' ('+(s.company||'')+')')===norm(fn)||(s.company&&norm(s.company)===norm(fn)));if(!sp)x.err='Fornecedor "'+fn+'" não cadastrado (aba Fornecedores).'}
+   const prev=seen[key(n,m)];
+   x.sup=sp?sp.id:(cat&&cat.supplier_id)||(prev&&prev.sup)||null;x.price=pv>0?pv:(cat&&+cat.unit_price)||(prev&&prev.price)||0;
+   if(!x.err&&!x.sup)x.err='Informe o fornecedor (peça nova ou sem fornecedor padrão).';
+   else if(!x.err&&!(x.price>0))x.err='Informe o valor unitário (peça nova ou sem valor no catálogo).';
+   if(!x.err){x.nova=!cat;seen[key(n,m)]={sup:x.sup,price:x.price}}}
+  x.cat=cat;out.push(x)});
+ if(!out.length)throw new Error('A planilha não tem linhas de dados abaixo do cabeçalho.');return out}
+function stkImp(){
+ $('#m').innerHTML=`<div class=md style="max-width:860px"><h3>Importar planilha de estoque</h3>
+ <p class=mu style="margin:6px 0 12px;line-height:1.5">Aceita <b>.xlsx</b> e <b>.csv</b>. Colunas: <b>Peça</b>, <b>Modelo</b>, <b>Loja</b> (em branco = Estoque Central), <b>Quantidade</b>, <b>Fornecedor</b> e <b>Valor unitário</b> (fornecedor e valor só são obrigatórios para peça nova). As quantidades são <b>somadas</b> ao estoque. Para uma loja, a peça entra no Estoque Central e sai para a loja, e tudo fica no Histórico.</p>
+ <input type=file id=sf accept=".xlsx,.xls,.csv,text/csv">
+ <div id=sp style="margin-top:12px"></div>
+ <div class=bt><button type=button onclick="stkModelo()">Baixar modelo</button><button type=button onclick=cl()>Fechar</button><button type=button class=pr id=sok disabled>Importar</button></div></div>`;
+ $('#m').className='ov on';let L=[];
+ $('#sf').onchange=async e=>{const f=e.target.files[0],sp=$('#sp'),b=$('#sok');b.disabled=true;if(!f)return;sp.innerHTML='<p class=mu>Lendo planilha…</p>';
+  try{L=stkParse(await readSheet(f));const ok=L.filter(x=>!x.err),er=L.length-ok.length;
+   sp.innerHTML=`<p style="margin:0 0 8px"><span class="tg g">${ok.length} linha(s) pronta(s)</span> ${er?`<span class="tg r">${er} com erro (não serão importadas)</span>`:''} <span class=mu>· ${sum(ok,x=>x.q)} peça(s) no total</span></p>
+   <div class=tw style="max-height:40vh;overflow:auto"><table><tr><th>Linha</th><th>Peça</th><th>Destino</th><th>Qtd</th><th>Situação</th></tr>${L.map(x=>`<tr><td>${x.line}</td><td>${esc(x.n+' '+x.m)}</td><td>${esc(x.lname)}</td><td>${isNaN(x.q)?'—':x.q}</td><td>${x.err?`<span class="tg r">${esc(x.err)}</span>`:`<span class="tg g">OK${x.nova?' · peça nova':''}</span>`}</td></tr>`).join('')}</table></div>`;
+   b.disabled=!ok.length}catch(err){L=[];sp.innerHTML=`<p class="tg r" style="display:inline-block">${esc(err.message||String(err))}</p>`}};
+ $('#sok').onclick=async e=>{const b=e.currentTarget,sp=$('#sp'),R=L.filter(x=>!x.err);if(!R.length)return;b.disabled=true;$('#sf').disabled=true;
+  let n=0,pcs=0;const bad=[],made={};
+  for(let i=0;i<R.length;i++){const x=R[i];sp.innerHTML=`<p class=mu>Importando ${i+1} de ${R.length}…</p>`;let step='entrada';
+   try{let id=x.cat&&x.cat.id;if(!id){const k=norm(x.n)+'|'+norm(x.m);if(!made[k]){const r=await sb.from('catalog').insert({name:x.n,model:x.m,supplier_id:x.sup,unit_price:x.price}).select('id').single();if(r.error)throw new Error(r.error.message);made[k]=r.data.id}id=made[k]}
+    await rpc('stock_entry',{p_catalog_id:id,p_qty:x.q,p_supplier_id:x.sup,p_price:x.price});
+    if(x.sid!==CE){step='saída para a loja';await rpc('stock_exit',{p_catalog_id:id,p_qty:x.q,p_dest:x.sid,p_note:'Importação de planilha'})}
+    n++;pcs+=x.q}catch(err){bad.push('Linha '+x.line+' ('+x.n+' '+x.m+'): '+(step!=='entrada'?'a entrada no Estoque Central foi feita, mas a saída para a loja falhou — ':'')+(err.message||String(err)))}}
+  try{await load()}catch(_){}render();
+  sp.innerHTML=`<p style="margin:0 0 8px"><span class="tg g">${n} linha(s) importada(s) · ${pcs} peça(s)</span> ${bad.length?`<span class="tg r">${bad.length} falharam</span>`:''}</p>${bad.length?`<div class=tw style="max-height:30vh;overflow:auto;padding:10px 12px"><p class=mu style="line-height:1.6;margin:0">${bad.map(esc).join('<br>')}</p></div>`:''}`;
+  b.style.display='none'}}
 function estEdit(){$('#m').innerHTML=`<div class=md><h3>Editar estoque</h3><div style="display:flex;flex-direction:column;gap:8px;margin-top:14px"><button onclick="bulkForm()">Entrada em lote (várias peças já cadastradas)</button><button onclick="saiForm()">− Saída para loja</button><button onclick=cl()>Fechar</button></div></div>`;$('#m').className='ov on'}
 function entForm(){if(!S.sup.length)return toast('Cadastre um fornecedor primeiro.');
  const key=(n,m)=>(n||'').trim().toLowerCase()+'|'+(m||'').trim().toLowerCase(),find=(n,m)=>S.cat.find(c=>key(c.name,c.model)===key(n,m));

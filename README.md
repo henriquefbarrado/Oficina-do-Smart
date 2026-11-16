@@ -52,7 +52,7 @@ Controle das manetes em reparo: **número da OS, loja de origem e status** (*Agu
 As peças são cadastradas na aba de estoque. O catálogo guarda o fornecedor padrão e o valor, que você ajusta aqui, e nos pedidos tudo entra sozinho. O histórico de compras fica por fornecedor.
 
 ### 🏬 Estoques e Transferências
-Quantidade e valor das peças disponíveis por local, **cadastro de peça direto no estoque** (um único formulário: nome, modelo, quantidade, fornecedor e valor; a peça é criada e já entra no Estoque Central, e se já existir só soma a quantidade), entrada em lote de peças já cadastradas e saída para lojas. Entre lojas, a transferência passa por **OK da loja de origem → aprovação do admin**.
+Quantidade e valor das peças disponíveis por local, **cadastro de peça direto no estoque** (um único formulário: nome, modelo, quantidade, fornecedor e valor; a peça é criada e já entra no Estoque Central, e se já existir só soma a quantidade), entrada em lote de peças já cadastradas, saída para lojas, **exclusão de peça** (botão Excluir em cada linha; o histórico é mantido) **cadastro de nova loja** (vira uma coluna nova no estoque), **exportar o estoque em planilha** (.xlsx) e **importar planilha** (.xlsx ou .csv) para dar entrada de peças no Estoque Central ou direto numa loja, com prévia e validação antes de lançar. Entre lojas, a transferência passa por **OK da loja de origem → aprovação do admin**.
 
 ### 📊 Dashboard, Histórico e Relatórios
 Pedidos por unidade, peças mais usadas e devolvidas, movimentação mensal. Histórico permanente com busca e filtros, e exportação em **CSV** (abre no Excel).
@@ -110,6 +110,7 @@ backend/edge-function/logar-como.ts  função do Supabase para o admin entrar na
 migracao_visibilidade.sql  garante que todo usuário novo enxergue os dados da própria loja e o histórico do Estoque Central (para bancos já existentes)
 migracao_estoque_central.sql  função que garante o Estoque Central visível a técnicos e funcionários (para bancos já existentes)
 migracao_excluir_usuario.sql  função para o administrador excluir usuários (para bancos já existentes)
+migracao_excluir_peca_e_loja.sql  funções para excluir peça do estoque e cadastrar nova loja (para bancos já existentes)
 wrangler.jsonc    configuração da hospedagem
 assets/           imagens animadas deste README
 ```
