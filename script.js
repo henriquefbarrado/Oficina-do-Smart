@@ -260,18 +260,21 @@ function stkImp(){
 function estEdit(){$('#m').innerHTML=`<div class=md><h3>Editar estoque</h3><div style="display:flex;flex-direction:column;gap:8px;margin-top:14px"><button onclick="bulkForm()">Entrada em lote (várias peças já cadastradas)</button><button onclick="saiForm()">− Saída para loja</button><button onclick=cl()>Fechar</button></div></div>`;$('#m').className='ov on'}
 function entForm(){if(!S.sup.length)return toast('Cadastre um fornecedor primeiro.');
  const key=(n,m)=>(n||'').trim().toLowerCase()+'|'+(m||'').trim().toLowerCase(),find=(n,m)=>S.cat.find(c=>key(c.name,c.model)===key(n,m));
- modal('Cadastrar peça no estoque central',[{n:'n',l:'Nome da peça',r:1},{n:'m',l:'Modelo do aparelho',r:1},{n:'q',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'s',l:'Fornecedor',o:supOpt()},{n:'v',l:'Valor unitário (R$)',t:'number',min:0.01,r:1}],
+ modal('Cadastrar peça no estoque',[{n:'n',l:'Nome da peça',r:1},{n:'m',l:'Modelo do aparelho',r:1},{n:'q',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'l',l:'Loja (onde a peça será cadastrada)',v:CE,o:[[CE,'Estoque Central'],...lopt()]},{n:'s',l:'Fornecedor',o:supOpt()},{n:'v',l:'Valor unitário (R$)',t:'number',min:0.01,r:1}],
  async d=>{const n=d.n.trim(),m=d.m.trim();let c=find(n,m),id=c&&c.id;
   if(!c){const r=await sb.from('catalog').insert({name:n,model:m,supplier_id:+d.s,unit_price:+d.v}).select('id').single();
    if(r.error){if(r.error.code!=='23505')throw new Error(r.error.message);throw new Error('Essa peça já existe no catálogo. Atualize os dados e tente de novo.')}id=r.data.id}
-  return rpc('stock_entry',{p_catalog_id:id,p_qty:+d.q,p_supplier_id:+d.s,p_price:+d.v})});
+  await rpc('stock_entry',{p_catalog_id:id,p_qty:+d.q,p_supplier_id:+d.s,p_price:+d.v});
+  /* Loja diferente do Estoque Central: a peça entra no central e já sai para a loja escolhida (ambos ficam no Histórico) */
+  if(+d.l!==CE){try{await rpc('stock_exit',{p_catalog_id:id,p_qty:+d.q,p_dest:+d.l,p_note:'Cadastro de peça direto na loja'})}
+   catch(e){toast('A peça entrou no Estoque Central, mas não foi enviada para '+sn(+d.l)+': '+(e.message||e)+' Use Editar → Saída para loja.')}}});
  const f=$('#m form').elements,uniq=a=>[...new Set(a)].sort((x,y)=>x.localeCompare(y,'pt-BR'));
  f.n.setAttribute('list','dln');f.m.setAttribute('list','dlm');f.n.setAttribute('autocomplete','off');f.m.setAttribute('autocomplete','off');
  f.n.insertAdjacentHTML('afterend',`<datalist id=dln>${uniq(S.cat.map(c=>c.name)).map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`);
  f.m.insertAdjacentHTML('afterend',`<datalist id=dlm>${uniq(S.cat.map(c=>c.model)).map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`);
  const hint=document.createElement('p');hint.className='mu';hint.style.cssText='margin:0 0 8px;font-size:13px';f.v.closest('label').after(hint);
- const sync=()=>{const c=find(f.n.value,f.m.value);if(c){if(c.supplier_id)f.s.value=c.supplier_id;if(c.unit_price)f.v.value=c.unit_price;hint.textContent='Peça já cadastrada: a quantidade será somada ao estoque.'}else hint.textContent=f.n.value&&f.m.value?'Peça nova: será cadastrada e já entra no estoque.':''};
- f.n.oninput=f.m.oninput=sync;f.n.onchange=f.m.onchange=sync}
+ const sync=()=>{const c=find(f.n.value,f.m.value);if(c){if(c.supplier_id)f.s.value=c.supplier_id;if(c.unit_price)f.v.value=c.unit_price;hint.textContent='Peça já cadastrada: a quantidade será somada ao estoque de '+sn(+f.l.value)+'.'}else hint.textContent=f.n.value&&f.m.value?'Peça nova: será cadastrada e já entra no estoque de '+sn(+f.l.value)+'.':''};
+ f.n.oninput=f.m.oninput=sync;f.n.onchange=f.m.onchange=sync;f.l.onchange=sync}
 /* Entrada em lote: digita a quantidade de várias peças do catálogo de uma vez */
 function bulkForm(){if(!S.cat.length)return toast('Ainda não há peças cadastradas. Use "+ Cadastrar peça".');
  const ok_=c=>c.supplier_id&&+c.unit_price>0;
