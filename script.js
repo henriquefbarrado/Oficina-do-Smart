@@ -41,6 +41,10 @@ async function load(){
 
 /* ---------- UI utilitários ---------- */
 function cl(){$('#m').className='ov'}
+function ask(title,msg,fn,label){
+ $('#m').innerHTML=`<div class=md><h3>${esc(title)}</h3><p class=mu style="margin:6px 0 20px;line-height:1.55">${esc(msg).replace(/\n/g,'<br>')}</p><div class=bt><button type=button id=ask-no onclick=cl()>Cancelar</button><button type=button class=dg id=ask-ok>${label||'Excluir'}</button></div></div>`;
+ $('#m').className='ov on';$('#ask-no').focus();
+ $('#ask-ok').onclick=async e=>{const b=e.currentTarget;b.disabled=true;try{await fn();await load();cl();render()}catch(x){toast(x.message||String(x));b.disabled=false}}}
 function modal(title,fields,fn,ch){
  $('#m').innerHTML=`<div class=md><h3>${title}</h3><form>${fields.map(f=>`<label>${f.l}${f.o?`<select name=${f.n}>${f.o.map(o=>`<option value="${esc(o[0])}" ${String(o[0])===String(f.v)?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`:`<input name=${f.n} type=${f.t||'text'} value="${esc(f.v)}" ${f.r?'required':''} ${f.min!=null?'min='+f.min:''} step=any>`}</label>`).join('')}<div class=bt><button type=button onclick=cl()>Cancelar</button><button class=pr>Confirmar</button></div></form></div>`;
  $('#m').className='ov on';
@@ -102,7 +106,7 @@ function orderForm(){modal('Nova solicitação de peças',[...(me.admin?[{n:'st'
  const f=$('#m form').elements,fill=()=>{const c=S.cat.find(x=>String(x.id)===f.c.value);if(c){f.sf.value=c.supplier_id||'';f.pv.value=c.unit_price||''}else{f.sf.value='';f.pv.value=''}};
  f.c.onchange=fill;fill()}
 function oa(id,k){const o=S.orders.find(x=>x.id===id);
- if(k==='del'){if(!confirm('Excluir o pedido '+id+' ('+nm(o)+')?\nAs peças geradas por ele também serão apagadas. Esta ação não pode ser desfeita.'))return;return run(()=>rpc('order_delete',{p_id:id}))}
+ if(k==='del')return ask('Excluir pedido','Excluir o pedido '+id+' ('+nm(o)+')?\nAs peças geradas por ele também serão apagadas. Esta ação não pode ser desfeita.',()=>rpc('order_delete',{p_id:id}))
  if(k==='ap')return modal('Aprovar pedido '+id,[{n:'q',l:'Quantidade aprovada',t:'number',v:o.qty,min:1,r:1}],d=>rpc('order_decide',{p_id:id,p_ok:true,p_qty:+d.q}));
  if(k==='bu'){if(!S.sup.length)return toast('Cadastre um fornecedor primeiro.');
   return modal('Registrar compra — '+id,[{n:'s',l:'Fornecedor',v:(S.sup.find(s=>s.name===o.sup)||{}).id,o:supOpt()},{n:'p',l:'Valor unitário (R$)',t:'number',v:o.est||'',min:0.01,r:1}],d=>rpc('order_buy',{p_id:id,p_supplier_id:+d.s,p_price:+d.p}))}
@@ -149,7 +153,7 @@ function mntForm(id){const x=id!=null?S.mn.find(v=>v.id===id):null;
  if(me.admin)f.st.onchange=fill;
  f.u.onchange=()=>{const u=S.units.find(v=>v.id===f.u.value);f.pc.value=u?nm(u):'';f.pv.value=u?u.cost:''};
  fill()}
-function mntDel(id){const x=S.mn.find(v=>v.id===id);if(!confirm('Excluir a OS '+x.os+' ('+x.cu+')? Esta ação não pode ser desfeita.'))return;run(()=>rpc('maintenance_delete',{p_id:id}))}
+function mntDel(id){const x=S.mn.find(v=>v.id===id);ask('Excluir OS','Excluir a OS '+x.os+' ('+x.cu+')? Esta ação não pode ser desfeita.',()=>rpc('maintenance_delete',{p_id:id}))}
 
 function pSup(){const P=S.orders.filter(o=>o.price);
  return `<h1>Fornecedores</h1><p class="mu sub">Cadastro e histórico de compras</p><div class=bar><button class=pr onclick="supForm()">+ Novo fornecedor</button></div>
@@ -158,8 +162,7 @@ ${tbl(['Fornecedor','Empresa','Telefone','E-mail','Observações','Compras','Tot
 function supDel(id){
  const s=S.sup.find(x=>x.id===id);if(!s)return;
  const n=S.cat.filter(c=>c.supplier_id===id).length;
- if(!confirm('Excluir o fornecedor "'+s.name+'"?'+(n?'\n'+n+' peça(s) do catálogo ficarão sem fornecedor padrão.':'')+'\nO histórico de compras já feito é mantido. Esta ação não pode ser desfeita.'))return;
- run(()=>dbx(sb.from('suppliers').delete().eq('id',id)));
+ ask('Excluir fornecedor','Excluir o fornecedor "'+s.name+'"?'+(n?'\n'+n+' peça(s) do catálogo ficarão sem fornecedor padrão.':'')+'\nO histórico de compras já feito é mantido. Esta ação não pode ser desfeita.',()=>dbx(sb.from('suppliers').delete().eq('id',id)));
 }
 function supForm(){modal('Novo fornecedor',[{n:'n',l:'Nome',r:1},{n:'c',l:'Empresa'},{n:'tel',l:'Telefone'},{n:'em',l:'E-mail',t:'email'},{n:'obs',l:'Observações'}],
  d=>dbx(sb.from('suppliers').insert({name:d.n.trim(),company:d.c,phone:d.tel,email:d.em,notes:d.obs})))}
@@ -180,8 +183,7 @@ function pCat(){const q=c=>S.units.filter(u=>u.prod===c.name&&u.model===c.model&
 ${tbl(['Peça','Modelo','Fornecedor padrão','Valor unitário','Em estoque','Valor em estoque','Ações'],S.cat.map(c=>[esc(c.name),esc(c.model),esc(c.supplier_name||'—'),c.unit_price?brl(c.unit_price):'—',q(c).length,brl(sum(q(c),u=>u.cost)),`<button onclick="catForm(${c.id})">Editar</button><button class="dg" onclick="catDel(${c.id})">Excluir</button>`]))}`}
 function catDel(id){
  const c=S.cat.find(x=>x.id===id);if(!c)return;
- if(!confirm('Excluir esta peça do catálogo? Esta ação não pode ser desfeita.'))return;
- run(()=>rpc('catalog_delete',{p_id:id}));
+ ask('Excluir peça','Excluir "'+c.name+' '+c.model+'" do catálogo? Esta ação não pode ser desfeita.',()=>rpc('catalog_delete',{p_id:id}));
 }
 function catForm(id){const c=S.cat.find(x=>x.id===id),N=!c;if(!S.sup.length)return toast('Cadastre um fornecedor primeiro.');
  modal(N?'Nova peça':'Editar '+c.name+' '+c.model,[...(N?[{n:'n',l:'Nome da peça',r:1},{n:'m',l:'Modelo do aparelho',r:1}]:[]),{n:'s',l:'Fornecedor padrão',v:N?S.sup[0].id:c.supplier_id,o:supOpt()},{n:'p',l:'Valor unitário (R$)',t:'number',v:N?'':c.unit_price,min:0,r:1}],
