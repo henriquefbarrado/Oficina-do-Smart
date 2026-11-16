@@ -157,8 +157,12 @@ function mntDel(id){const x=S.mn.find(v=>v.id===id);ask('Excluir OS','Excluir a 
 
 function pSup(){const P=S.orders.filter(o=>o.price);
  return `<h1>Fornecedores</h1><p class="mu sub">Cadastro e histórico de compras</p><div class=bar><button class=pr onclick="supForm()">+ Novo fornecedor</button></div>
-${tbl(['Fornecedor','Empresa','Telefone','E-mail','Observações','Compras','Total comprado','Ações'],S.sup.map(s=>{const c=P.filter(o=>o.sup===s.name);return[esc(s.name),esc(s.company),esc(s.phone),esc(s.email),esc(s.notes),c.length,brl(sum(c,o=>o.qty*o.price)),`<button class="dg" onclick="supDel(${s.id})">Excluir</button>`]}))}
+${tbl(['Fornecedor','Empresa','Telefone','E-mail','Observações','Compras','Total comprado','Ações'],S.sup.map(s=>{const c=P.filter(o=>o.sup===s.name);return[esc(s.name),esc(s.company),esc(s.phone),esc(s.email),esc(s.notes),c.length,brl(sum(c,o=>o.qty*o.price)),`<button onclick="supEdit(${s.id})">Editar</button><button class="dg" onclick="supDel(${s.id})">Excluir</button>`]}))}
 <h3 style="margin-bottom:10px">Histórico de compras</h3>${tbl(['Pedido','Data','Fornecedor','Loja','Produto','Qtd','Unitário','Total','Responsável'],P.map(o=>[o.id,dt(o.buyT),esc(o.sup),esc(sn(o.store)),esc(nm(o)),o.qty,brl(o.price),brl(o.qty*o.price),esc(o.buyer)]))}`}
+function supEdit(id){
+ const s=S.sup.find(x=>x.id===id);if(!s)return;
+ modal('Editar '+esc(s.name),[{n:'c',l:'Empresa',v:s.company},{n:'tel',l:'Telefone',v:s.phone},{n:'em',l:'E-mail',t:'email',v:s.email},{n:'obs',l:'Observações',v:s.notes}],
+ d=>dbx(sb.from('suppliers').update({company:d.c,phone:d.tel,email:d.em,notes:d.obs}).eq('id',id)))}
 function supDel(id){
  const s=S.sup.find(x=>x.id===id);if(!s)return;
  const n=S.cat.filter(c=>c.supplier_id===id).length;
