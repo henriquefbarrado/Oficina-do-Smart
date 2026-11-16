@@ -280,7 +280,7 @@ let AS=null;
 function usrAs(id){const u=S.users.find(x=>x.id===id);if(!u)return;
  ask('Logar como '+u.n,'Você vai entrar na conta de '+u.n+' ('+u.email+') sem usar a senha dela.\nTudo o que você fizer ali ficará registrado no nome dessa pessoa. Para voltar, use o botão no topo da tela.',async()=>{
   const{data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Sessão expirada. Entre novamente.');
-  const r=await sb.functions.invoke('smooth-service',{body:{user_id:id}});
+  const r=await sb.functions.invoke('smooth-service',{body:{user_id:id},headers:{Authorization:'Bearer '+session.access_token}});
   if(r.error){let m=r.error.message;try{const j=await r.error.context.json();if(j&&j.error)m=j.error}catch(_){}throw new Error(m)}
   const v=await sb.auth.verifyOtp({token_hash:r.data.token_hash,type:'magiclink'});
   if(v.error)throw new Error(v.error.message);
