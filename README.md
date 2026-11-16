@@ -106,6 +106,8 @@ config.js         URL e chave pública do Supabase
 supabase.sql      banco de dados completo (rodar no Supabase; não vai para o GitHub)
 migracao_tecnico.sql  perfil de técnico, Fechamento Técnico e Manetes (para bancos já existentes)
 migracao_usuarios_estoque.sql  vários administradores e Estoque Central visível a todos (para bancos já existentes)
+backend/edge-function/logar-como.ts  função do Supabase para o admin entrar na conta de outro usuário (ver passo abaixo)
+migracao_visibilidade.sql  garante que todo usuário novo enxergue os dados da própria loja e o histórico do Estoque Central (para bancos já existentes)
 migracao_estoque_central.sql  função que garante o Estoque Central visível a técnicos e funcionários (para bancos já existentes)
 migracao_excluir_usuario.sql  função para o administrador excluir usuários (para bancos já existentes)
 wrangler.jsonc    configuração da hospedagem
@@ -157,6 +159,21 @@ const SB_KEY = 'sb_publishable_...';               // chave pública
 3. Ative o endereço `workers.dev` em **Settings → Domains & Routes**, ou use um domínio próprio.
 
 Cada `git push` na branch `main` publica a nova versão sozinho.
+
+</details>
+
+<details>
+<summary><b>Botão "Logar como" (opcional)</b></summary>
+
+<br>
+
+O administrador pode entrar na conta de funcionários e técnicos sem a senha, pelo botão **Logar como** em **Usuários**. Para isso é preciso publicar uma função no Supabase:
+
+1. No Supabase, abra **Edge Functions → Deploy a new function → Via Editor**.
+2. Cole o conteúdo de `backend/edge-function/logar-como.ts`. O Supabase pode gerar um nome automático (ex.: `smooth-service`). O nome usado pelo site está em `script.js`, na linha com `sb.functions.invoke(`; ele precisa ser igual ao da função publicada (hoje: `smooth-service`).
+3. Nas configurações da função, **desligue "Verify JWT"** (a própria função confere se quem chamou é administrador) e publique.
+
+Só administradores ativos conseguem usar. Não funciona para outro administrador nem para usuário desativado. Enquanto estiver na conta de outra pessoa, aparece uma faixa no topo com o botão **Voltar para minha conta**. Atenção: o que for feito ali fica registrado no nome dessa pessoa.
 
 </details>
 

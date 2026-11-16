@@ -63,7 +63,7 @@ const bars=(m,keep)=>{let e=Object.entries(m);e=keep?e.sort():e.sort((a,b)=>b[1]
  return e.length?e.map(([k,v])=>`<div class=br><span title="${esc(k)}">${esc(k)}</span><i><b style="width:${v/mx*100}%"></b></i><em>${v}</em></div>`).join(''):'<p class=mu>Sem dados</p>'};
 /* O servidor já filtra por loja (RLS); aqui o admin só escolhe qual unidade quer olhar */
 const vis=()=>{const a=me.admin,v=me.view,every=a&&v==null,t=a?v:me.store;
- return{o:S.orders.filter(o=>every||o.store===t),u:S.units.filter(u=>every||u.loc===t||u.org===t),h:S.hist.filter(h=>every||h.sid===t||h.rid===t),m:S.mn.filter(m=>every||m.store===t)}};
+ return{o:S.orders.filter(o=>every||o.store===t),u:S.units.filter(u=>every||u.loc===t||u.org===t),h:S.hist.filter(h=>every||h.sid===t||h.rid===t||(!a&&h.sid===CE)),m:S.mn.filter(m=>every||m.store===t)}};
 function csv(name,rows){if(!rows.length)return toast('Nada para exportar.');const k=Object.keys(rows[0]);
  const t='\ufeff'+[k,...rows.map(r=>k.map(c=>r[c]))].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download=name+'.csv';a.click()}
@@ -80,7 +80,7 @@ async function enter(){booting=true;render();try{const{data:{session}}=await sb.
  const{data:p,error}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();if(error)throw error;
  if(!p||!p.active){await sb.auth.signOut();toast('Usuário sem acesso ou desativado.');return}
  me={id:p.id,name:p.name,admin:p.is_admin,store:p.store_id,view:null,tech:!!p.is_technician};tab='dash';await load()}catch(e){toast(e.message||String(e))}finally{booting=false;render()}}
-async function logout(){await sb.auth.signOut();me=null;booting=false;S={cu:[],st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[],tc:[],cr:[]};render()}
+async function logout(){const imp=!!AS;AS=null;await sb.auth.signOut(imp?{scope:'local'}:undefined);me=null;booting=false;S={cu:[],st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[],tc:[],cr:[]};render()}
 
 /* ---------- Páginas ---------- */
 function pDash(){const{o,u,h}=vis(),p=v=>u.filter(x=>x.status===v).length;
@@ -260,7 +260,7 @@ function trForm(){if(!S.cat.length)return toast('Nenhuma peça no catálogo aind
 
 /* Usuários: o admin cria, redefine senha, troca de loja e ativa/desativa (sem precisar pedir) */
 function pUsr(){return `<h1>Usuários</h1><p class="mu sub">Crie o acesso de funcionários, técnicos e administradores. Funcionários e técnicos entram só na própria loja e só movimentam o que é dela. Administradores veem e gerenciam todas as unidades.</p><div class=bar><button class=pr onclick="usrForm()">+ Novo usuário</button></div>
-${tbl(['Nome','E-mail','Acesso','Unidade','Status','Ações'],S.users.map(u=>[esc(u.n),esc(u.email),u.adm?'Administrador':u.tech?'Técnico':'Funcionário',u.adm?'Todas':esc(sn(u.store)),`<span class="tg ${u.on?'g':'r'}">${u.on?'Ativo':'Inativo'}</span>`,`<button onclick="usrEdit('${u.id}')">Editar</button>`]))}`}
+${tbl(['Nome','E-mail','Acesso','Unidade','Status','Ações'],S.users.map(u=>[esc(u.n),esc(u.email),u.adm?'Administrador':u.tech?'Técnico':'Funcionário',u.adm?'Todas':esc(sn(u.store)),`<span class="tg ${u.on?'g':'r'}">${u.on?'Ativo':'Inativo'}</span>`,`<button onclick="usrEdit('${u.id}')">Editar</button>`+(u.id!==me.id&&!u.adm&&u.on&&!AS?`<button onclick="usrAs('${u.id}')">Logar como</button>`:'')]))}`}
 function usrForm(){modal('Novo usuário',[{n:'n',l:'Nome do funcionário',r:1},{n:'e',l:'E-mail (será o login)',t:'email',r:1},{n:'s',l:'Unidade (loja)',o:lopt()},{n:'r',l:'Perfil',o:[['f','Funcionário (vendedor)'],['t','Técnico'],['a','Administrador (acesso total)']]},{n:'p',l:'Senha (mín. 6 caracteres)',t:'password',r:1}],
  async d=>{const id=await rpc('admin_create_user',{p_email:d.e,p_password:d.p,p_name:d.n,p_store:+d.s});if(d.r==='t')await rpc('admin_set_technician',{p_user:id,p_on:true});
   if(d.r==='a'){try{await rpc('admin_set_admin',{p_user:id,p_on:true})}catch(e){toast('Usuário criado, mas não foi possível torná-lo administrador: '+e.message+' Use o botão "Tornar admin" na lista.')}}})}
@@ -271,6 +271,19 @@ function usrEdit(id){const u=S.users.find(x=>x.id===id);if(!u)return;const self=
  <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">${B('usrPass','Redefinir senha')}${self?'':B('usrAdm',u.adm?'Remover admin':'Tornar admin')}${u.adm?'':B('usrTec',u.tech?'Remover técnico':'Tornar técnico')+B('usrStore','Trocar loja')+B('usrTog',u.on?'Desativar':'Ativar')}${self?'':B('usrDel','Excluir usuário','dg')}<button onclick=cl()>Fechar</button></div></div>`;$('#m').className='ov on'}
 function usrDel(id){const u=S.users.find(x=>x.id===id);if(!u)return;
  ask('Excluir usuário','Excluir o acesso de '+u.n+' ('+u.email+')?\nEle não vai mais conseguir entrar. Se tiver histórico no sistema, use Desativar em vez de excluir. Esta ação não pode ser desfeita.',()=>rpc('admin_delete_user',{p_user:id}))}
+/* Logar como outro usuário (só admin; a troca é feita por uma Edge Function, sem digitar senha) */
+let AS=null;
+function usrAs(id){const u=S.users.find(x=>x.id===id);if(!u)return;
+ ask('Logar como '+u.n,'Você vai entrar na conta de '+u.n+' ('+u.email+') sem usar a senha dela.\nTudo o que você fizer ali ficará registrado no nome dessa pessoa. Para voltar, use o botão no topo da tela.',async()=>{
+  const{data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Sessão expirada. Entre novamente.');
+  const r=await sb.functions.invoke('smooth-service',{body:{user_id:id}});
+  if(r.error){let m=r.error.message;try{const j=await r.error.context.json();if(j&&j.error)m=j.error}catch(_){}throw new Error(m)}
+  const v=await sb.auth.verifyOtp({token_hash:r.data.token_hash,type:'magiclink'});
+  if(v.error)throw new Error(v.error.message);
+  AS={access_token:session.access_token,refresh_token:session.refresh_token};await enter()},'Entrar')}
+async function backAdmin(){if(!AS)return;const a=AS;AS=null;booting=true;render();
+ try{await sb.auth.signOut({scope:'local'});const{error}=await sb.auth.setSession(a);if(error)throw error;await enter()}
+ catch(e){booting=false;me=null;try{await sb.auth.signOut({scope:'local'})}catch(_){}render();toast('Sua sessão de administrador expirou. Entre novamente.')}}
 function usrTec(id){const u=S.users.find(x=>x.id===id);run(()=>rpc('admin_set_technician',{p_user:id,p_on:!u.tech}))}
 function usrPass(id){const u=S.users.find(x=>x.id===id);modal('Nova senha de '+esc(u.n),[{n:'p',l:'Nova senha (mín. 6 caracteres)',t:'password',r:1}],d=>rpc('admin_set_password',{p_user:id,p_password:d.p}))}
 function usrStore(id){const u=S.users.find(x=>x.id===id);modal('Trocar loja de '+esc(u.n),[{n:'s',l:'Nova loja',v:u.store,o:lopt()}],d=>rpc('admin_set_store',{p_user:id,p_store:+d.s}))}
@@ -323,7 +336,7 @@ function render(){
 
  ${me.admin?`<label style="padding:8px 12px;margin:6px 0">${ic('eye')} Ver unidade<select onchange="me.view=this.value===''?null:+this.value;render()"><option value="">Todas as unidades</option>${LJ().map(s=>`<option value=${s.id} ${me.view===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>`:''}
  <a onclick="run(async()=>{})">${ic('refresh')} Atualizar dados</a>
- <div class=me><b>${esc(me.name)}</b>${me.admin?'Administrador · todas as lojas':(me.tech?'Técnico · ':'')+esc(sn(me.store))}<br><a style="padding:4px 0;display:inline-block;color:var(--a)" onclick="logout()">Sair</a></div></aside><main>${me.admin&&me.view!=null?`<p class=tg style="display:inline-block;margin-bottom:12px">${ic('eye')} Visualizando: ${esc(sn(me.view))}</p>`:''}${P[tab]()}</main>`}
+ <div class=me><b>${esc(me.name)}</b>${me.admin?'Administrador · todas as lojas':(me.tech?'Técnico · ':'')+esc(sn(me.store))}<br><a style="padding:4px 0;display:inline-block;color:var(--a)" onclick="logout()">Sair</a></div></aside><main>${AS?`<div class=tg style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px">${ic('eye')} Você está logado como <b>${esc(me.name)}</b><button class=pr onclick="backAdmin()">Voltar para minha conta</button></div>`:''}${me.admin&&me.view!=null?`<p class=tg style="display:inline-block;margin-bottom:12px">${ic('eye')} Visualizando: ${esc(sn(me.view))}</p>`:''}${P[tab]()}</main>`}
 
 /* ---------- Início ---------- */
 if(typeof SB_URL==='undefined'||/SEU-PROJETO|COLE_AQUI/.test(SB_URL+SB_KEY)||!window.supabase){
