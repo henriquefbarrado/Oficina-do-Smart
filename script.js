@@ -10,7 +10,7 @@ const toast=m=>{const t=$('#t');t.textContent=m;t.className='on';setTimeout(()=>
 const nm=x=>x.prod+' '+x.model,sum=(a,f)=>a.reduce((t,x)=>t+f(x),0);
 const CE=0,TS=['Aguardando OK da loja de origem','Aguardando aprovação do admin','Concluída','Rejeitada'];
 let sb,me=null,booting=true,tab='dash',H={q:'',s:'',a:'',b:''};
-let S={st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[],tc:[],cr:[]};
+let S={cu:[],st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[],tc:[],cr:[]};
 const sn=id=>(S.st.find(s=>s.id===id)||{}).name||'—';
 const LJ=()=>S.st.filter(s=>s.kind==='loja'),lopt=()=>LJ().map(s=>[s.id,s.name]);
 const supOpt=()=>S.sup.map(s=>[s.id,s.name+(s.company?' ('+s.company+')':'')]);
@@ -36,6 +36,7 @@ async function load(){
  S.orders=o.map(x=>({id:x.id,store:x.store_id,prod:x.part_name,model:x.model,qty:x.qty,sup:x.supplier_name||'',price:+x.price,est:+x.est,obs:x.note,user:x.created_by_name,t:Date.parse(x.created_at),status:x.status,buyT:x.buy_at&&Date.parse(x.buy_at),buyer:x.buyer_name}));
  S.units=u.map(x=>({id:x.id,order:x.order_id,prod:x.part_name,model:x.model,status:x.status,loc:x.loc_store_id,org:x.origin_store_id,cost:+x.cost}));
  S.hist=h.map(x=>({t:Date.parse(x.at),u:x.user_name,sid:x.store_id,rid:x.related_store_id,unid:sn(x.store_id),prod:x.part,qtd:x.qty,tipo:x.kind,de:x.from_status,para:x.to_status,ref:x.ref,forn:x.supplier}));
+ {const r=await sb.rpc('central_units');S.cuErr=!!r.error;S.cu=r.error?[]:(r.data||[]).map(x=>({id:x.id,order:x.order_id,prod:x.part_name,model:x.model,status:x.status,loc:x.loc_store_id,org:x.origin_store_id,cost:+x.cost}))}
  {const[tc,cr]=await Promise.all([all(()=>sb.from('tech_closings').select('*').order('closing_date',{ascending:false}).order('id',{ascending:false})).catch(()=>[]),
    all(()=>sb.from('controller_repairs').select('*').order('created_at',{ascending:false}).order('id',{ascending:false})).catch(()=>[])]);
   S.tc=tc.map(x=>({id:x.id,d:x.closing_date,store:x.store_id,os:x.os_number,cu:x.customer,sv:x.service,pc:+x.part_cost,ch:+x.charged,sup:x.supplier,by:x.created_by_name,uid:x.created_by,t:Date.parse(x.created_at)}));
@@ -79,7 +80,7 @@ async function enter(){booting=true;render();try{const{data:{session}}=await sb.
  const{data:p,error}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();if(error)throw error;
  if(!p||!p.active){await sb.auth.signOut();toast('Usuário sem acesso ou desativado.');return}
  me={id:p.id,name:p.name,admin:p.is_admin,store:p.store_id,view:null,tech:!!p.is_technician};tab='dash';await load()}catch(e){toast(e.message||String(e))}finally{booting=false;render()}}
-async function logout(){await sb.auth.signOut();me=null;booting=false;S={st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[],tc:[],cr:[]};render()}
+async function logout(){await sb.auth.signOut();me=null;booting=false;S={cu:[],st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[],tc:[],cr:[]};render()}
 
 /* ---------- Páginas ---------- */
 function pDash(){const{o,u,h}=vis(),p=v=>u.filter(x=>x.status===v).length;
@@ -209,13 +210,13 @@ function saiForm(){if(!S.cat.length)return toast('Cadastre uma peça no catálog
  d=>rpc('stock_exit',{p_catalog_id:+d.p,p_qty:+d.q,p_dest:+d.d,p_note:d.m}))}
 /* ---------- Estoque Central (todos os usuários consultam; só o admin movimenta) ---------- */
 let EC={q:''};
-const ecg=()=>{const G={};S.units.filter(cAv).forEach(u=>{const k=nm(u),g=G[k]||(G[k]={n:k,q:0,v:0});g.q++;g.v+=u.cost});
+const ecg=()=>{const G={};(S.cu||[]).filter(cAv).forEach(u=>{const k=nm(u),g=G[k]||(G[k]={n:k,q:0,v:0});g.q++;g.v+=u.cost});
  const q=EC.q.trim().toLowerCase();return Object.values(G).filter(g=>!q||g.n.toLowerCase().includes(q)).sort((a,b)=>a.n.localeCompare(b.n,'pt-BR'))};
 const ecrows=()=>{const l=ecg(),t=sum(l,g=>g.q),v=sum(l,g=>g.v),rows=l.map(g=>[esc(g.n),'<b>'+g.q+'</b>',brl(g.q?g.v/g.q:0),brl(g.v)]);
  if(l.length)rows.push(['<b>Total</b>','<b>'+t+'</b>','','<b>'+brl(v)+'</b>']);return tbl(['Peça','Quantidade disponível','Valor unitário (médio)','Valor total'],rows)};
-function pCen(){const l=S.units.filter(cAv);
+function pCen(){const l=(S.cu||[]).filter(cAv);
  return `<h1>Estoque Central</h1><p class="mu sub">Peças disponíveis no estoque central, para consulta de todas as lojas.${me.admin?'':' Para pegar uma peça, peça uma transferência ou fale com o administrador.'}</p>
-<div class=bar>${me.admin?`<button class=pr onclick="estEdit()">Editar</button>`:''}<input placeholder="Buscar peça ou modelo…" value="${esc(EC.q)}" oninput="EC.q=this.value;$('#eb').innerHTML=ecrows()"></div>
+${S.cuErr?'<p class=tg style="display:inline-block;margin-bottom:12px">Não foi possível carregar o estoque central. Falta rodar o migracao_estoque_central.sql no Supabase.</p>':''}<div class=bar>${me.admin?`<button class=pr onclick="estEdit()">Editar</button>`:''}<input placeholder="Buscar peça ou modelo…" value="${esc(EC.q)}" oninput="EC.q=this.value;$('#eb').innerHTML=ecrows()"></div>
 <div class=cards><div class=card><small>${ic('package')} Peças disponíveis</small><strong>${l.length}</strong></div><div class=card><small>${ic('cpu')} Tipos de peça</small><strong>${new Set(l.map(nm)).size}</strong></div><div class=card><small>${ic('banknote')} Valor em estoque</small><strong>${brl(sum(l,u=>u.cost))}</strong></div></div>
 <div id=eb>${ecrows()}</div>`}
 function pCat(){const q=c=>S.units.filter(u=>u.prod===c.name&&u.model===c.model&&(cAv(u)||inStock(u)));

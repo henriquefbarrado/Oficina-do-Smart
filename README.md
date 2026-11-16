@@ -106,6 +106,7 @@ config.js         URL e chave pública do Supabase
 supabase.sql      banco de dados completo (rodar no Supabase; não vai para o GitHub)
 migracao_tecnico.sql  perfil de técnico, Fechamento Técnico e Manetes (para bancos já existentes)
 migracao_usuarios_estoque.sql  vários administradores e Estoque Central visível a todos (para bancos já existentes)
+migracao_estoque_central.sql  função que garante o Estoque Central visível a técnicos e funcionários (para bancos já existentes)
 migracao_excluir_usuario.sql  função para o administrador excluir usuários (para bancos já existentes)
 wrangler.jsonc    configuração da hospedagem
 assets/           imagens animadas deste README
