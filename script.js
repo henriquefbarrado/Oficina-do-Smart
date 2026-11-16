@@ -176,8 +176,9 @@ function supForm(){modal('Novo fornecedor',[{n:'n',l:'Nome',r:1},{n:'c',l:'Empre
  d=>dbx(sb.from('suppliers').insert({name:d.n.trim(),company:d.c,phone:d.tel,email:d.em,notes:d.obs})))}
 
 function pStk(){const locs=[CE,...LJ().map(s=>s.id)],sel=(l,p)=>S.units.filter(u=>u.loc===l&&(l===CE?['Recebida','Disponível','Devolvida'].includes(u.status):inStock(u))&&(!p||nm(u)===p)),P=[...new Set(S.units.map(nm))].sort();
- return `<h1>Estoques</h1><p class="mu sub">Peças disponíveis e valor por local. Entradas e saídas ficam registradas no Histórico.</p><div class=bar><button class=pr onclick="entForm()">+ Entrada de peças</button><button onclick="bulkForm()">Entrada em lote (catálogo)</button><button onclick="saiForm()">− Saída para loja</button></div>
+ return `<h1>Estoques</h1><p class="mu sub">Peças disponíveis e valor por local. Entradas e saídas ficam registradas no Histórico.</p><div class=bar><button class=pr onclick="estEdit()">Editar</button></div>
 ${tbl(['Produto',...locs.map(sn)],[...P.map(p=>[esc(p),...locs.map(l=>sel(l,p).length)]),['<b>Total (peças)</b>',...locs.map(l=>'<b>'+sel(l).length+'</b>')],['<b>Valor total</b>',...locs.map(l=>'<b>'+brl(sum(sel(l),u=>u.cost))+'</b>')]])}`}
+function estEdit(){$('#m').innerHTML=`<div class=md><h3>Editar estoque</h3><div style="display:flex;flex-direction:column;gap:8px;margin-top:14px"><button class=pr onclick="entForm()">+ Entrada de peças</button><button onclick="bulkForm()">Entrada em lote (catálogo)</button><button onclick="saiForm()">− Saída para loja</button><button onclick=cl()>Fechar</button></div></div>`;$('#m').className='ov on'}
 function entForm(){if(!S.sup.length)return toast('Cadastre um fornecedor primeiro.');
  modal('Entrada de peças (estoque central)',[{n:'p',l:'Peça',o:[...S.cat.map(c=>[c.id,c.name+' '+c.model]),['new','+ Peça nova (cadastrar agora)']]},{n:'n',l:'Peça nova: nome da peça'},{n:'m',l:'Peça nova: modelo do aparelho'},{n:'q',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'s',l:'Fornecedor',o:supOpt()},{n:'v',l:'Valor unitário (R$)',t:'number',min:0.01,r:1}],
  async d=>{let id=+d.p;
@@ -214,7 +215,7 @@ const ecrows=()=>{const l=ecg(),t=sum(l,g=>g.q),v=sum(l,g=>g.v),rows=l.map(g=>[e
  if(l.length)rows.push(['<b>Total</b>','<b>'+t+'</b>','','<b>'+brl(v)+'</b>']);return tbl(['Peça','Quantidade disponível','Valor unitário (médio)','Valor total'],rows)};
 function pCen(){const l=S.units.filter(cAv);
  return `<h1>Estoque Central</h1><p class="mu sub">Peças disponíveis no estoque central, para consulta de todas as lojas.${me.admin?'':' Para pegar uma peça, peça uma transferência ou fale com o administrador.'}</p>
-<div class=bar>${me.admin?`<button class=pr onclick="entForm()">+ Entrada de peças</button><button onclick="bulkForm()">Entrada em lote (catálogo)</button><button onclick="saiForm()">− Saída para loja</button>`:''}<input placeholder="Buscar peça ou modelo…" value="${esc(EC.q)}" oninput="EC.q=this.value;$('#eb').innerHTML=ecrows()"></div>
+<div class=bar>${me.admin?`<button class=pr onclick="estEdit()">Editar</button>`:''}<input placeholder="Buscar peça ou modelo…" value="${esc(EC.q)}" oninput="EC.q=this.value;$('#eb').innerHTML=ecrows()"></div>
 <div class=cards><div class=card><small>${ic('package')} Peças disponíveis</small><strong>${l.length}</strong></div><div class=card><small>${ic('cpu')} Tipos de peça</small><strong>${new Set(l.map(nm)).size}</strong></div><div class=card><small>${ic('banknote')} Valor em estoque</small><strong>${brl(sum(l,u=>u.cost))}</strong></div></div>
 <div id=eb>${ecrows()}</div>`}
 function pCat(){const q=c=>S.units.filter(u=>u.prod===c.name&&u.model===c.model&&(cAv(u)||inStock(u)));
