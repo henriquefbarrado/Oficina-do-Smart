@@ -61,7 +61,7 @@ Pedidos por unidade, peças mais usadas e devolvidas, movimentação mensal. His
 Aba aberta a **todos os usuários**: quantidade disponível por peça, valor unitário e valor total em estoque, com busca. Funcionários e técnicos só consultam; entrada e saída continuam com o administrador.
 
 ### 👥 Usuários
-O admin cria acessos de qualquer perfil (**funcionário**, **técnico** ou **administrador**), promove ou remove administradores, redefine senhas, troca a loja e ativa ou desativa pessoas.
+O admin cria acessos de qualquer perfil (**funcionário**, **técnico** ou **administrador**), promove ou remove administradores, redefine senhas, troca a loja, ativa, desativa e **exclui** pessoas. Tudo isso fica dentro de um único botão **Editar** em cada usuário.
 
 </td>
 </tr>
@@ -106,6 +106,7 @@ config.js         URL e chave pública do Supabase
 supabase.sql      banco de dados completo (rodar no Supabase; não vai para o GitHub)
 migracao_tecnico.sql  perfil de técnico, Fechamento Técnico e Manetes (para bancos já existentes)
 migracao_usuarios_estoque.sql  vários administradores e Estoque Central visível a todos (para bancos já existentes)
+migracao_excluir_usuario.sql  função para o administrador excluir usuários (para bancos já existentes)
 wrangler.jsonc    configuração da hospedagem
 assets/           imagens animadas deste README
 ```
