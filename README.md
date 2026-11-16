@@ -49,10 +49,10 @@ Controle das manetes em reparo: **número da OS, loja de origem e status** (*Agu
 <td width="50%" valign="top">
 
 ### 📚 Catálogo e Fornecedores
-Cadastre a peça uma vez, com fornecedor padrão e valor. Nos pedidos, tudo entra sozinho. O histórico de compras fica por fornecedor.
+As peças são cadastradas na aba de estoque. O catálogo guarda o fornecedor padrão e o valor, que você ajusta aqui, e nos pedidos tudo entra sozinho. O histórico de compras fica por fornecedor.
 
 ### 🏬 Estoques e Transferências
-Quantidade e valor das peças disponíveis por local, entrada no Estoque Central (com **peça nova cadastrada na hora** ou **entrada em lote** do catálogo inteiro) e saída para lojas. Entre lojas, a transferência passa por **OK da loja de origem → aprovação do admin**.
+Quantidade e valor das peças disponíveis por local, **cadastro de peça direto no estoque** (um único formulário: nome, modelo, quantidade, fornecedor e valor; a peça é criada e já entra no Estoque Central, e se já existir só soma a quantidade), entrada em lote de peças já cadastradas e saída para lojas. Entre lojas, a transferência passa por **OK da loja de origem → aprovação do admin**.
 
 ### 📊 Dashboard, Histórico e Relatórios
 Pedidos por unidade, peças mais usadas e devolvidas, movimentação mensal. Histórico permanente com busca e filtros, e exportação em **CSV** (abre no Excel).
