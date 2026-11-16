@@ -176,16 +176,47 @@ function supForm(){modal('Novo fornecedor',[{n:'n',l:'Nome',r:1},{n:'c',l:'Empre
  d=>dbx(sb.from('suppliers').insert({name:d.n.trim(),company:d.c,phone:d.tel,email:d.em,notes:d.obs})))}
 
 function pStk(){const locs=[CE,...LJ().map(s=>s.id)],sel=(l,p)=>S.units.filter(u=>u.loc===l&&(l===CE?['Recebida','Disponível','Devolvida'].includes(u.status):inStock(u))&&(!p||nm(u)===p)),P=[...new Set(S.units.map(nm))].sort();
- return `<h1>Estoques</h1><p class="mu sub">Peças disponíveis e valor por local. Entradas e saídas ficam registradas no Histórico.</p><div class=bar><button class=pr onclick="entForm()">+ Entrada de peças</button><button onclick="saiForm()">− Saída para loja</button></div>
+ return `<h1>Estoques</h1><p class="mu sub">Peças disponíveis e valor por local. Entradas e saídas ficam registradas no Histórico.</p><div class=bar><button class=pr onclick="entForm()">+ Entrada de peças</button><button onclick="bulkForm()">Entrada em lote (catálogo)</button><button onclick="saiForm()">− Saída para loja</button></div>
 ${tbl(['Produto',...locs.map(sn)],[...P.map(p=>[esc(p),...locs.map(l=>sel(l,p).length)]),['<b>Total (peças)</b>',...locs.map(l=>'<b>'+sel(l).length+'</b>')],['<b>Valor total</b>',...locs.map(l=>'<b>'+brl(sum(sel(l),u=>u.cost))+'</b>')]])}`}
-function entForm(){if(!S.cat.length)return toast('Cadastre uma peça no catálogo.');if(!S.sup.length)return toast('Cadastre um fornecedor primeiro.');
- modal('Entrada de peças (estoque central)',[{n:'p',l:'Peça',o:S.cat.map(c=>[c.id,c.name+' '+c.model])},{n:'q',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'s',l:'Fornecedor',o:supOpt()},{n:'v',l:'Valor unitário (R$)',t:'number',min:0.01,r:1}],
- d=>rpc('stock_entry',{p_catalog_id:+d.p,p_qty:+d.q,p_supplier_id:+d.s,p_price:+d.v}),
- f=>{const c=S.cat.find(x=>String(x.id)===f.p.value);if(c){if(c.supplier_id)f.s.value=c.supplier_id;f.v.value=c.unit_price||''}})}
+function entForm(){if(!S.sup.length)return toast('Cadastre um fornecedor primeiro.');
+ modal('Entrada de peças (estoque central)',[{n:'p',l:'Peça',o:[...S.cat.map(c=>[c.id,c.name+' '+c.model]),['new','+ Peça nova (cadastrar agora)']]},{n:'n',l:'Peça nova: nome da peça'},{n:'m',l:'Peça nova: modelo do aparelho'},{n:'q',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'s',l:'Fornecedor',o:supOpt()},{n:'v',l:'Valor unitário (R$)',t:'number',min:0.01,r:1}],
+ async d=>{let id=+d.p;
+  if(d.p==='new'){const n=d.n.trim(),m=d.m.trim();if(!n||!m)throw new Error('Informe o nome e o modelo da peça nova.');
+   const r=await sb.from('catalog').insert({name:n,model:m,supplier_id:+d.s,unit_price:+d.v}).select('id').single();
+   if(r.error){if(r.error.code!=='23505')throw new Error(r.error.message);
+    const c=S.cat.find(x=>x.name.toLowerCase()===n.toLowerCase()&&x.model.toLowerCase()===m.toLowerCase());if(!c)throw new Error('Essa peça já existe no catálogo.');id=c.id}else id=r.data.id}
+  return rpc('stock_entry',{p_catalog_id:id,p_qty:+d.q,p_supplier_id:+d.s,p_price:+d.v})},
+ f=>{const nw=f.p.value==='new';f.n.closest('label').style.display=nw?'':'none';f.m.closest('label').style.display=nw?'':'none';f.n.required=nw;f.m.required=nw;
+  const c=S.cat.find(x=>String(x.id)===f.p.value);if(c){if(c.supplier_id)f.s.value=c.supplier_id;f.v.value=c.unit_price||''}})}
+/* Entrada em lote: digita a quantidade de várias peças do catálogo de uma vez */
+function bulkForm(){if(!S.cat.length)return toast('O catálogo está vazio. Use "+ Entrada de peças" e escolha "Peça nova".');
+ const ok_=c=>c.supplier_id&&+c.unit_price>0;
+ $('#m').innerHTML=`<div class=md style="max-width:780px"><h3>Entrada em lote — catálogo no estoque central</h3><p class=mu style="margin:6px 0 12px;line-height:1.5">Digite a quantidade que chegou de cada peça. Fornecedor e valor vêm do catálogo. O que ficar em branco não é lançado.</p>
+ <input id=bq placeholder="Buscar peça ou modelo…" style="margin-bottom:10px" oninput="const q=this.value.toLowerCase();document.querySelectorAll('#bl tr[data-n]').forEach(r=>r.style.display=r.dataset.n.includes(q)?'':'none')">
+ <div class=tw style="max-height:50vh;overflow:auto"><table id=bl><tr><th>Peça</th><th>Fornecedor</th><th>Valor</th><th>Qtd</th></tr>${S.cat.map(c=>`<tr data-n="${esc((c.name+' '+c.model).toLowerCase())}"><td>${esc(c.name+' '+c.model)}</td><td>${esc(c.supplier_name||'—')}</td><td>${c.unit_price?brl(c.unit_price):'—'}</td><td>${ok_(c)?`<input type=number min=0 step=1 data-id="${c.id}" style="width:80px">`:'<span class=mu>sem fornecedor/valor</span>'}</td></tr>`).join('')}</table></div>
+ <div class=bt><button type=button onclick=cl()>Cancelar</button><button type=button class=pr id=bok>Lançar no estoque</button></div></div>`;
+ $('#m').className='ov on';
+ $('#bok').onclick=async e=>{const b=e.currentTarget,L=[...document.querySelectorAll('#bl input[data-id]')].map(i=>({c:S.cat.find(x=>String(x.id)===i.dataset.id),q:parseInt(i.value,10)})).filter(x=>x.q>0);
+  if(!L.length)return toast('Digite a quantidade de pelo menos uma peça.');b.disabled=true;let n=0,pcs=0;
+  try{for(const x of L){await rpc('stock_entry',{p_catalog_id:x.c.id,p_qty:x.q,p_supplier_id:x.c.supplier_id,p_price:+x.c.unit_price});n++;pcs+=x.q}
+   toast(pcs+' peça(s) de '+n+' item(ns) lançadas no estoque central.')}
+  catch(err){toast((n?n+' item(ns) lançados antes do erro. ':'')+(err.message||String(err)))}
+  try{await load()}catch(_){}cl();render()}}
 const avC=c=>S.units.filter(u=>cAv(u)&&u.prod===c.name&&u.model===c.model);
 function saiForm(){if(!S.cat.length)return toast('Cadastre uma peça no catálogo.');
  modal('Saída do estoque central para loja',[{n:'p',l:'Peça',o:S.cat.map(c=>[c.id,c.name+' '+c.model+' (disp. '+avC(c).length+')'])},{n:'q',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'d',l:'Loja de destino',o:lopt()},{n:'m',l:'Motivo'}],
  d=>rpc('stock_exit',{p_catalog_id:+d.p,p_qty:+d.q,p_dest:+d.d,p_note:d.m}))}
+/* ---------- Estoque Central (todos os usuários consultam; só o admin movimenta) ---------- */
+let EC={q:''};
+const ecg=()=>{const G={};S.units.filter(cAv).forEach(u=>{const k=nm(u),g=G[k]||(G[k]={n:k,q:0,v:0});g.q++;g.v+=u.cost});
+ const q=EC.q.trim().toLowerCase();return Object.values(G).filter(g=>!q||g.n.toLowerCase().includes(q)).sort((a,b)=>a.n.localeCompare(b.n,'pt-BR'))};
+const ecrows=()=>{const l=ecg(),t=sum(l,g=>g.q),v=sum(l,g=>g.v),rows=l.map(g=>[esc(g.n),'<b>'+g.q+'</b>',brl(g.q?g.v/g.q:0),brl(g.v)]);
+ if(l.length)rows.push(['<b>Total</b>','<b>'+t+'</b>','','<b>'+brl(v)+'</b>']);return tbl(['Peça','Quantidade disponível','Valor unitário (médio)','Valor total'],rows)};
+function pCen(){const l=S.units.filter(cAv);
+ return `<h1>Estoque Central</h1><p class="mu sub">Peças disponíveis no estoque central, para consulta de todas as lojas.${me.admin?'':' Para pegar uma peça, peça uma transferência ou fale com o administrador.'}</p>
+<div class=bar>${me.admin?`<button class=pr onclick="entForm()">+ Entrada de peças</button><button onclick="bulkForm()">Entrada em lote (catálogo)</button><button onclick="saiForm()">− Saída para loja</button>`:''}<input placeholder="Buscar peça ou modelo…" value="${esc(EC.q)}" oninput="EC.q=this.value;$('#eb').innerHTML=ecrows()"></div>
+<div class=cards><div class=card><small>${ic('package')} Peças disponíveis</small><strong>${l.length}</strong></div><div class=card><small>${ic('cpu')} Tipos de peça</small><strong>${new Set(l.map(nm)).size}</strong></div><div class=card><small>${ic('banknote')} Valor em estoque</small><strong>${brl(sum(l,u=>u.cost))}</strong></div></div>
+<div id=eb>${ecrows()}</div>`}
 function pCat(){const q=c=>S.units.filter(u=>u.prod===c.name&&u.model===c.model&&(cAv(u)||inStock(u)));
  return `<h1>Catálogo de Peças</h1><p class="mu sub">Cadastre uma vez. Depois é só escolher a peça: fornecedor e valor entram sozinhos.</p><div class=bar><button class=pr onclick="catForm()">+ Nova peça</button></div>
 ${tbl(['Peça','Modelo','Fornecedor padrão','Valor unitário','Em estoque','Valor em estoque','Ações'],S.cat.map(c=>[esc(c.name),esc(c.model),esc(c.supplier_name||'—'),c.unit_price?brl(c.unit_price):'—',q(c).length,brl(sum(q(c),u=>u.cost)),`<button onclick="catForm(${c.id})">Editar</button><button class="dg" onclick="catDel(${c.id})">Excluir</button>`]))}`}
@@ -226,10 +257,13 @@ function trForm(){if(!S.cat.length)return toast('Nenhuma peça no catálogo aind
  d=>rpc('transfer_new',{p_from:+d.f,p_part:d.p,p_qty:+d.qty,p_to:me.admin?+d.t:null,p_note:d.m}))}
 
 /* Usuários: o admin cria, redefine senha, troca de loja e ativa/desativa (sem precisar pedir) */
-function pUsr(){return `<h1>Usuários</h1><p class="mu sub">Crie o acesso dos funcionários. Cada um entra só na própria loja e só movimenta o que é dela. Somente o administrador vê todas as unidades.</p><div class=bar><button class=pr onclick="usrForm()">+ Novo usuário</button></div>
-${tbl(['Nome','E-mail','Acesso','Unidade','Status','Ações'],S.users.map(u=>[esc(u.n),esc(u.email),u.adm?'Administrador':u.tech?'Técnico':'Funcionário',u.adm?'Todas':esc(sn(u.store)),`<span class="tg ${u.on?'g':'r'}">${u.on?'Ativo':'Inativo'}</span>`,`<button onclick="usrPass('${u.id}')">Redefinir senha</button>`+(u.adm?'':`<button onclick="usrTec('${u.id}')">${u.tech?'Remover técnico':'Tornar técnico'}</button><button onclick="usrStore('${u.id}')">Trocar loja</button><button onclick="usrTog('${u.id}')">${u.on?'Desativar':'Ativar'}</button>`)]))}`}
-function usrForm(){modal('Novo usuário',[{n:'n',l:'Nome do funcionário',r:1},{n:'e',l:'E-mail (será o login)',t:'email',r:1},{n:'s',l:'Unidade (loja)',o:lopt()},{n:'r',l:'Perfil',o:[['f','Funcionário (vendedor)'],['t','Técnico']]},{n:'p',l:'Senha (mín. 6 caracteres)',t:'password',r:1}],
- async d=>{const id=await rpc('admin_create_user',{p_email:d.e,p_password:d.p,p_name:d.n,p_store:+d.s});if(d.r==='t')await rpc('admin_set_technician',{p_user:id,p_on:true})})}
+function pUsr(){return `<h1>Usuários</h1><p class="mu sub">Crie o acesso de funcionários, técnicos e administradores. Funcionários e técnicos entram só na própria loja e só movimentam o que é dela. Administradores veem e gerenciam todas as unidades.</p><div class=bar><button class=pr onclick="usrForm()">+ Novo usuário</button></div>
+${tbl(['Nome','E-mail','Acesso','Unidade','Status','Ações'],S.users.map(u=>[esc(u.n),esc(u.email),u.adm?'Administrador':u.tech?'Técnico':'Funcionário',u.adm?'Todas':esc(sn(u.store)),`<span class="tg ${u.on?'g':'r'}">${u.on?'Ativo':'Inativo'}</span>`,`<button onclick="usrPass('${u.id}')">Redefinir senha</button>`+(u.id===me.id?'':`<button onclick="usrAdm('${u.id}')">${u.adm?'Remover admin':'Tornar admin'}</button>`)+(u.adm?'':`<button onclick="usrTec('${u.id}')">${u.tech?'Remover técnico':'Tornar técnico'}</button><button onclick="usrStore('${u.id}')">Trocar loja</button><button onclick="usrTog('${u.id}')">${u.on?'Desativar':'Ativar'}</button>`)]))}`}
+function usrForm(){modal('Novo usuário',[{n:'n',l:'Nome do funcionário',r:1},{n:'e',l:'E-mail (será o login)',t:'email',r:1},{n:'s',l:'Unidade (loja)',o:lopt()},{n:'r',l:'Perfil',o:[['f','Funcionário (vendedor)'],['t','Técnico'],['a','Administrador (acesso total)']]},{n:'p',l:'Senha (mín. 6 caracteres)',t:'password',r:1}],
+ async d=>{const id=await rpc('admin_create_user',{p_email:d.e,p_password:d.p,p_name:d.n,p_store:+d.s});if(d.r==='t')await rpc('admin_set_technician',{p_user:id,p_on:true});
+  if(d.r==='a'){try{await rpc('admin_set_admin',{p_user:id,p_on:true})}catch(e){toast('Usuário criado, mas não foi possível torná-lo administrador: '+e.message+' Use o botão "Tornar admin" na lista.')}}})}
+function usrAdm(id){const u=S.users.find(x=>x.id===id);if(!u)return;
+ ask(u.adm?'Remover administrador':'Tornar administrador',u.adm?u.n+' deixa de ser administrador e passa a ser funcionário da loja dele.':u.n+' passa a ter acesso total: todas as lojas, estoque central, usuários e exclusões.',()=>rpc('admin_set_admin',{p_user:id,p_on:!u.adm}),'Confirmar')}
 function usrTec(id){const u=S.users.find(x=>x.id===id);run(()=>rpc('admin_set_technician',{p_user:id,p_on:!u.tech}))}
 function usrPass(id){const u=S.users.find(x=>x.id===id);modal('Nova senha de '+esc(u.n),[{n:'p',l:'Nova senha (mín. 6 caracteres)',t:'password',r:1}],d=>rpc('admin_set_password',{p_user:id,p_password:d.p}))}
 function usrStore(id){const u=S.users.find(x=>x.id===id);modal('Trocar loja de '+esc(u.n),[{n:'s',l:'Nova loja',v:u.store,o:lopt()}],d=>rpc('admin_set_store',{p_user:id,p_store:+d.s}))}
@@ -276,8 +310,8 @@ function render(){
  if(!me){$('#app').innerHTML=booting?'<div class=lg><div class=boot><i></i><p class=mu>Carregando…</p></div></div>':login();return}
  if(!me.admin&&['cat','sup','stk','rep','usr'].includes(tab))tab='dash';
  const pn=S.tr.filter(x=>me.admin?x.status===TS[1]:x.status===TS[0]&&x.from===me.store).length;
- const N=[['dash','dashboard','Dashboard',1],['ord','clipboard',me.admin?'Pedidos':'Solicitar Peças',1],['pcs','cpu','Controle de Peças',1],['ret','undo','Devoluções',1],['use','circle-check','Peças Utilizadas',1],['mnt','wrench','Manutenção',1],['fec','banknote','Fechamento Técnico',1],['man','gamepad','Manutenção de Manetes',1],['cat','book','Catálogo de Peças',2],['sup','factory','Fornecedores',2],['stk','warehouse','Estoques',2],['tra','swap','Transferências'+(pn?' ('+pn+')':''),1],['his','history','Histórico',1],['rep','file','Relatórios',2],['usr','users','Usuários',2]].filter(n=>n[3]===1||me.admin);
- const P={dash:pDash,ord:pOrd,pcs:pUnits,ret:pUnits,use:pUnits,mnt:pMnt,cat:pCat,tra:pTra,usr:pUsr,sup:pSup,stk:pStk,his:pHis,rep:pRep,fec:pFec,man:pMan};
+ const N=[['dash','dashboard','Dashboard',1],['ord','clipboard',me.admin?'Pedidos':'Solicitar Peças',1],['pcs','cpu','Controle de Peças',1],['cen','warehouse','Estoque Central',1],['ret','undo','Devoluções',1],['use','circle-check','Peças Utilizadas',1],['mnt','wrench','Manutenção',1],['fec','banknote','Fechamento Técnico',1],['man','gamepad','Manutenção de Manetes',1],['cat','book','Catálogo de Peças',2],['sup','factory','Fornecedores',2],['stk','warehouse','Estoques',2],['tra','swap','Transferências'+(pn?' ('+pn+')':''),1],['his','history','Histórico',1],['rep','file','Relatórios',2],['usr','users','Usuários',2]].filter(n=>n[3]===1||me.admin);
+ const P={dash:pDash,cen:pCen,ord:pOrd,pcs:pUnits,ret:pUnits,use:pUnits,mnt:pMnt,cat:pCat,tra:pTra,usr:pUsr,sup:pSup,stk:pStk,his:pHis,rep:pRep,fec:pFec,man:pMan};
  $('#app').innerHTML=`<aside><h2>${ic('phone')} Oficina do <span>Smart</span></h2>${N.map(n=>`<a class="${n[0]===tab?'on':''}" onclick="tab='${n[0]}';render()">${ic(n[1])} ${n[2]}</a>`).join('')}
 
  ${me.admin?`<label style="padding:8px 12px;margin:6px 0">${ic('eye')} Ver unidade<select onchange="me.view=this.value===''?null:+this.value;render()"><option value="">Todas as unidades</option>${LJ().map(s=>`<option value=${s.id} ${me.view===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>`:''}

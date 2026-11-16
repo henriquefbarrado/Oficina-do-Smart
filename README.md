@@ -52,13 +52,16 @@ Controle das manetes em reparo: **número da OS, loja de origem e status** (*Agu
 Cadastre a peça uma vez, com fornecedor padrão e valor. Nos pedidos, tudo entra sozinho. O histórico de compras fica por fornecedor.
 
 ### 🏬 Estoques e Transferências
-Quantidade e valor das peças disponíveis por local, entrada no Estoque Central e saída para lojas. Entre lojas, a transferência passa por **OK da loja de origem → aprovação do admin**.
+Quantidade e valor das peças disponíveis por local, entrada no Estoque Central (com **peça nova cadastrada na hora** ou **entrada em lote** do catálogo inteiro) e saída para lojas. Entre lojas, a transferência passa por **OK da loja de origem → aprovação do admin**.
 
 ### 📊 Dashboard, Histórico e Relatórios
 Pedidos por unidade, peças mais usadas e devolvidas, movimentação mensal. Histórico permanente com busca e filtros, e exportação em **CSV** (abre no Excel).
 
+### 🏭 Estoque Central
+Aba aberta a **todos os usuários**: quantidade disponível por peça, valor unitário e valor total em estoque, com busca. Funcionários e técnicos só consultam; entrada e saída continuam com o administrador.
+
 ### 👥 Usuários
-O admin cria acessos, define o perfil (**funcionário** ou **técnico**), redefine senhas, troca a loja e ativa ou desativa pessoas.
+O admin cria acessos de qualquer perfil (**funcionário**, **técnico** ou **administrador**), promove ou remove administradores, redefine senhas, troca a loja e ativa ou desativa pessoas.
 
 </td>
 </tr>
@@ -76,8 +79,8 @@ As regras valem **dentro do banco de dados** (Row Level Security e funções do 
 
 | Quem | O que pode |
 |---|---|
-| 👑 **Administrador** | Único do sistema. Vê e movimenta todas as unidades, compra, recebe, entrega, exclui pedidos, manutenções e peças do catálogo, e gerencia usuários. |
-| 🧑‍🔧 **Funcionário** | Entra só na própria loja. Faz pedidos (sem aprovação), usa e devolve peças, cadastra manutenções e pede transferências. **Nunca vira administrador.** |
+| 👑 **Administrador** | Pode haver mais de um. Vê e movimenta todas as unidades, compra, recebe, entrega, exclui pedidos, manutenções e peças do catálogo, e gerencia usuários. |
+| 🧑‍🔧 **Funcionário** | Entra só na própria loja. Faz pedidos (sem aprovação), usa e devolve peças, cadastra manutenções e pede transferências, e **consulta o Estoque Central**. Só vira administrador se outro administrador promover. |
 | 🔧 **Técnico** | Tem as mesmas abas e permissões do funcionário (só a própria loja) e, além disso, preenche o **Fechamento Técnico** e cadastra, atualiza, edita e exclui **manetes**. O admin define quem é técnico em **Usuários → Tornar técnico**. |
 | 🚫 **Usuário desativado** | Perde o acesso na hora. |
 
@@ -102,6 +105,7 @@ style.css         visual (tema preto e amarelo)
 config.js         URL e chave pública do Supabase
 supabase.sql      banco de dados completo (rodar no Supabase; não vai para o GitHub)
 migracao_tecnico.sql  perfil de técnico, Fechamento Técnico e Manetes (para bancos já existentes)
+migracao_usuarios_estoque.sql  vários administradores e Estoque Central visível a todos (para bancos já existentes)
 wrangler.jsonc    configuração da hospedagem
 assets/           imagens animadas deste README
 ```
@@ -160,6 +164,8 @@ Cada `git push` na branch `main` publica a nova versão sozinho.
 <br>
 
 O `supabase.sql` cria o login do administrador. **Entre e troque a senha imediatamente** em **Usuários → Redefinir senha**.
+
+Depois de rodar o `migracao_usuarios_estoque.sql`, o administrador também pode criar **outros administradores** (perfil *Administrador* em **+ Novo usuário**, ou **Tornar admin** na lista).
 
 Para criar um técnico, use **Usuários → + Novo usuário** e escolha o perfil **Técnico**, ou clique em **Tornar técnico** em um usuário já existente.
 
