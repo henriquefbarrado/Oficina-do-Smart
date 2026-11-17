@@ -24,7 +24,7 @@ Cada peça física tem **código próprio** (ex.: `PED-0001-01`) e um **rastro c
 
 <br>
 
-<img src="assets/destaques.svg" alt="Tudo o que a oficina precisa num lugar só: módulos do sistema, regras de acesso e tecnologias" width="100%">
+<img src="assets/destaques.svg" alt="6 locais de estoque, 3 perfis de acesso, 1 rastro por peça, 0 etapas de build" width="100%">
 
 <br>
 
