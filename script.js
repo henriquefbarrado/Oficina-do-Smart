@@ -58,7 +58,7 @@ async function load(){
   S.gr=gr.map(x=>({id:x.id,os:x.os_number,store:x.store_id,dev:x.device,st:x.status,nt:x.note,by:x.created_by_name,ub:x.updated_by_name,ut:Date.parse(x.updated_at),t:Date.parse(x.created_at)}))}
  if(me.admin){S.sup=ok(await sb.from('suppliers').select('*').order('name'));
   S.users=ok(await sb.from('profiles').select('*').order('name')).map(x=>({id:x.id,n:x.name,email:x.email,store:x.store_id,adm:x.is_admin,dev:!!x.is_dev,tech:x.is_technician,gl:!!x.is_glass_editor,on:x.active}))}
- if(me.dev){try{const r=await sb.rpc('dev_last_logins');D.ll={};if(!r.error)(r.data||[]).forEach(x=>D.ll[x.user_id]=x)}catch(_){D.ll={}}
+ if(me.dev){try{const r=await sb.rpc('dev_last_logins');D.ll={};D.llErr=r.error?(r.error.message||'erro'):'';if(!r.error)(r.data||[]).forEach(x=>D.ll[x.user_id]=x)}catch(e){D.ll={};D.llErr=e.message||'erro'}
   try{const r=await sb.from('error_log').select('id',{count:'exact',head:true}).eq('resolved',false).eq('level','erro');D.ne=r.error?0:(r.count||0)}catch(_){D.ne=0}
   if(DT.includes(tab)&&!D.ld)await devFetch(tab)}}
 
@@ -374,10 +374,10 @@ function trForm(){if(!S.cat.length)return toast('Nenhuma peça cadastrada ainda.
 
 /* Usuários: o admin cria, redefine senha, troca de loja e ativa/desativa (sem precisar pedir) */
 /* Último login: só o dev vê (o banco também só entrega para dev) */
-function lastLogin(id){const x=D.ll[id];if(!x||!x.last_sign_in_at)return '<span class=mu>Nunca</span>';
+function lastLogin(id){if(D.llErr)return '<span class=mu>—</span>';const x=D.ll[id];if(!x||!x.last_sign_in_at)return '<span class=mu>Nunca</span>';
  const t=Date.parse(x.last_sign_in_at),im=x.last_impersonated_at&&Math.abs(t-Date.parse(x.last_impersonated_at))<12e4;
  return dt(t)+(im?' <span class=mu>(via Logar como)</span>':'')}
-function pUsr(){return `<h1>Usuários</h1><p class="mu sub">Crie o acesso de funcionários, técnicos e administradores. Funcionários e técnicos entram só na própria loja e só movimentam o que é dela. Administradores veem e gerenciam todas as unidades.</p><div class=bar><button class=pr onclick="usrForm()">+ Novo usuário</button></div>
+function pUsr(){return `<h1>Usuários</h1><p class="mu sub">Crie o acesso de funcionários, técnicos e administradores. Funcionários e técnicos entram só na própria loja e só movimentam o que é dela. Administradores veem e gerenciam todas as unidades.</p>${me.dev&&D.llErr?`<div class=box style="border-color:var(--w);margin-bottom:14px"><h3>Último login indisponível</h3><p class=mu style="line-height:1.55">${esc(D.llErr)}<br>Rode o <b>migracao_logs_dev.sql</b> inteiro no Supabase (SQL Editor) e clique em <b>Atualizar dados</b>.</p></div>`:''}<div class=bar><button class=pr onclick="usrForm()">+ Novo usuário</button></div>
 ${tbl(['Nome','E-mail','Acesso','Unidade',...(me.dev?['Último login']:[]),'Status','Ações'],S.users.map(u=>[esc(u.n),esc(u.email),u.dev?'Desenvolvedor':u.adm?'Administrador':u.tech?'Técnico':'Funcionário',u.adm?'Todas':esc(sn(u.store)),...(me.dev?[lastLogin(u.id)]:[]),`<span class="tg ${u.on?'g':'r'}">${u.on?'Ativo':'Inativo'}</span>`,`<button onclick="usrEdit('${u.id}')">Editar</button>`+(u.id!==me.id&&!u.adm&&u.on&&!AS?`<button onclick="usrAs('${u.id}')">Logar como</button>`:'')]))}`}
 function usrForm(){modal('Novo usuário',[{n:'n',l:'Nome do funcionário',r:1},{n:'e',l:'E-mail (será o login)',t:'email',r:1},{n:'s',l:'Unidade (loja)',o:lopt()},{n:'r',l:'Perfil',o:[['f','Funcionário (vendedor)'],['t','Técnico'],['a','Administrador (acesso total)'],...(me.dev?[['d','Desenvolvedor (acesso total + gerencia devs)']]:[])]},{n:'p',l:'Senha (mín. 6 caracteres)',t:'password',r:1}],
  async d=>{const id=await rpc('admin_create_user',{p_email:d.e,p_password:d.p,p_name:d.n,p_store:+d.s});if(d.r==='t')await rpc('admin_set_technician',{p_user:id,p_on:true});
@@ -447,8 +447,8 @@ function manSt(id){const x=S.cr.find(v=>v.id===id);if(!x)return;
  modal('Status da manete — OS '+esc(x.os),[{n:'st',l:'Status (atual: '+x.st+')',v:x.st,o:MS.map(s=>[s,s])}],d=>rpc('controller_set_status',{p_id:id,p_status:d.st}))}
 
 /* ---------- Painel do desenvolvedor (só dev): Auditoria, Diagnóstico, Backup e Erros ---------- */
-const DT=['aud','log','dia','bkp','err'],APP_V='20261117g';
-const D0=()=>({aud:[],log:[],err:[],ll:{},diag:null,diagMs:0,miss:'',ld:false,ne:0});
+const DT=['aud','log','dia','bkp','err'],APP_V='20261117h';
+const D0=()=>({aud:[],log:[],err:[],ll:{},llErr:'',diag:null,diagMs:0,miss:'',ld:false,ne:0});
 let D=D0();
 const AU={q:'',k:'',a:'',b:''},ER={lvl:'erro',res:'0',q:''};
 async function devFetch(t){
