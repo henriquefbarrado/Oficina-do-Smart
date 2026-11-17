@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 696" width="1200" height="696" role="img" aria-label="Estrutura do projeto: arquivos do site, hospedagem e banco de dados">
+<defs><linearGradient id="y" x1="0" x2="1"><stop offset="0" stop-color="#F5C518"/><stop offset="1" stop-color="#FFE082"/></linearGradient>
+<pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#161616" stroke-width="1"/></pattern>
+<clipPath id="card"><rect width="1200" height="696" rx="18"/></clipPath></defs>
+<g clip-path="url(#card)"><rect width="1200" height="696" fill="#0a0a0a"/><rect width="1200" height="696" fill="url(#g)"/>
+<rect x="0" y="0" width="1200" height="64" fill="#0f0f0f"/><line x1="0" x2="1200" y1="64" y2="64" stroke="#1f1f1f"/>
+<circle cx="34" cy="32" r="7" fill="#ff5f57"/><circle cx="58" cy="32" r="7" fill="#febc2e"/><circle cx="82" cy="32" r="7" fill="#28c840"/>
+<text x="112" y="38" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="16" fill="#8a8a8a">Oficina-do-Smart/</text>
+<text x="1136" y="38" text-anchor="end" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="14" font-weight="600" fill="#F5C518">HTML · CSS · JS puros</text>
+<circle cx="1148" cy="32" r="0" fill="#F5C518"/>
+<g>
+<rect x="44" y="144" width="1112" height="36" rx="10" fill="#F5C518" fill-opacity=".07">
+<animate attributeName="y" values="144;144;190;190;236;236;282;282;376;376;422;422;516;516;562;562;608;608" keyTimes="0.0000;0.0868;0.1111;0.1979;0.2222;0.3090;0.3333;0.4201;0.4444;0.5312;0.5556;0.6424;0.6667;0.7535;0.7778;0.8646;0.8889;1.0000" dur="14.4s" repeatCount="indefinite" calcMode="linear"/></rect>
+<rect x="44" y="150" width="4" height="24" rx="2" fill="#F5C518">
+<animate attributeName="y" values="150;150;196;196;242;242;288;288;382;382;428;428;522;522;568;568;614;614" keyTimes="0.0000;0.0868;0.1111;0.1979;0.2222;0.3090;0.3333;0.4201;0.4444;0.5312;0.5556;0.6424;0.6667;0.7535;0.7778;0.8646;0.8889;1.0000" dur="14.4s" repeatCount="indefinite" calcMode="linear"/></rect>
+</g>
+<text x="64" y="118" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="2.2" fill="#8a8a8a">SITE · FRONT-END</text>
+<line x1="64" x2="1136" y1="128" y2="128" stroke="#1f1f1f"/>
+<text x="64" y="350" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="2.2" fill="#8a8a8a">HOSPEDAGEM · IMAGENS</text>
+<line x1="64" x2="1136" y1="360" y2="360" stroke="#1f1f1f"/>
+<text x="64" y="490" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="2.2" fill="#8a8a8a">BANCO · SERVIDOR</text>
+<line x1="64" x2="1136" y1="500" y2="500" stroke="#1f1f1f"/>
+<g>
+<animate attributeName="opacity" from="0" to="1" begin="0.30s" dur=".5s" fill="freeze"/>
+<animateTransform attributeName="transform" type="translate" from="-18 0" to="0 0" begin="0.30s" dur=".5s" fill="freeze"/>
+<rect x="64" y="149" width="46" height="26" rx="7" fill="#ff8a3d" fill-opacity=".14" stroke="#ff8a3d" stroke-opacity=".55"/>
+<text x="87.0" y="167" text-anchor="middle" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="12" font-weight="700" fill="#ff8a3d">&lt;/&gt;</text>
+<text x="128" y="169" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="18" font-weight="700" fill="#ffffff">index.html</text>
+<text x="470" y="169" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="17" fill="#a9a9a9">estrutura da página</text>
+</g>
+<g>
+<animate attributeName="opacity" from="0" to="1" begin="0.52s" dur=".5s" fill="freeze"/>
+<animateTransform attributeName="transform" type="translate" from="-18 0" to="0 0" begin="0.52s" dur=".5s" fill="freeze"/>
+<rect x="64" y="195" width="46" height="26" rx="7" fill="#F5C518" fill-opacity=".14" stroke="#F5C518" stroke-opacity=".55"/>
+<text x="87.0" y="213" text-anchor="middle" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="12" font-weight="700" fill="#F5C518">JS</text>
+<text x="128" y="215" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="18" font-weight="700" fill="#ffffff">script.js</text>
+<text x="470" y="215" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="17" fill="#a9a9a9">telas e chamadas ao banco</text>
+</g>
+<g>
+<animate attributeName="opacity" from="0" to="1" begin="0.74s" dur=".5s" fill="freeze"/>
+<animateTransform attributeName="transform" type="translate" from="-18 0" to="0 0" begin="0.74s" dur=".5s" fill="freeze"/>
+<rect x="64" y="241" width="46" height="26" rx="7" fill="#4aa3ff" fill-opacity=".14" stroke="#4aa3ff" stroke-opacity=".55"/>
+<text x="87.0" y="259" text-anchor="middle" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="12" font-weight="700" fill="#4aa3ff">CSS</text>
+<text x="128" y="261" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="18" font-weight="700" fill="#ffffff">style.css</text>
+<text x="470" y="261" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="17" fill="#a9a9a9">visual (tema preto e amarelo)</text>
+</g>
+<g>
+<animate attributeName="opacity" from="0" to="1" begin="0.96s" dur=".5s" fill="freeze"/>
+<animateTransform attributeName="transform" type="translate" from="-18 0" to="0 0" begin="0.96s" dur=".5s" fill="freeze"/>
+<rect x="64" y="287" width="46" height="26" rx="7" fill="#3ECF8E" fill-opacity=".14" stroke="#3ECF8E" stroke-opacity=".55"/>
+<text x="87.0" y="305" text-anchor="middle" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="12" font-weight="700" fill="#3ECF8E">KEY</text>
+<text x="128" y="307" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="18" font-weight="700" fill="#ffffff">config.js</text>
+<text x="470" y="307" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="17" fill="#a9a9a9">URL e chave pública do Supabase</text>
+</g>
+<g>
+<animate attributeName="opacity" from="0" to="1" begin="1.18s" dur=".5s" fill="freeze"/>
+<animateTransform attributeName="transform" type="translate" from="-18 0" to="0 0" begin="1.18s" dur=".5s" fill="freeze"/>
+<rect x="64" y="381" width="46" height="26" rx="7" fill="#F38020" fill-opacity=".14" stroke="#F38020" stroke-opacity=".55"/>
+<text x="87.0" y="399" text-anchor="middle" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="12" font-weight="700" fill="#F38020">CF</text>
+<text x="128" y="401" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="18" font-weight="700" fill="#ffffff">wrangler.jsonc</text>
+<text x="470" y="401" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="17" fill="#a9a9a9">configuração da hospedagem</text>
+</g>
+<g>
+<animate attributeName="opacity" from="0" to="1" begin="1.40s" dur=".5s" fill="freeze"/>
+<animateTransform attributeName="transform" type="translate" from="-18 0" to="0 0" begin="1.40s" dur=".5s" fill="freeze"/>
+<rect x="64" y="427" width="46" height="26" rx="7" fill="#b48cff" fill-opacity=".14" stroke="#b48cff" stroke-opacity=".55"/>
+<text x="87.0" y="445" text-anchor="middle" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="12" font-weight="700" fill="#b48cff">IMG</text>
+<text x="128" y="447" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="18" font-weight="700" fill="#ffffff">assets/</text>
+<text x="470" y="447" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="17" fill="#a9a9a9">imagens do README (hero, fluxo, manete, arquitetura)</text>
+</g>
+<g>
+<animate attributeName="opacity" from="0" to="1" begin="1.62s" dur=".5s" fill="freeze"/>
+<animateTransform attributeName="transform" type="translate" from="-18 0" to="0 0" begin="1.62s" dur=".5s" fill="freeze"/>
+<rect x="64" y="521" width="46" height="26" rx="7" fill="#3ECF8E" fill-opacity=".14" stroke="#3ECF8E" stroke-opacity=".55"/>
+<text x="87.0" y="539" text-anchor="middle" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="12" font-weight="700" fill="#3ECF8E">SQL</text>
+<text x="128" y="541" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="18" font-weight="700" fill="#ffffff">supabase.sql</text>
+<text x="470" y="541" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="17" fill="#a9a9a9">banco completo (fica fora do GitHub, ver Segurança)</text>
+</g>
+<g>
+<animate attributeName="opacity" from="0" to="1" begin="1.84s" dur=".5s" fill="freeze"/>
+<animateTransform attributeName="transform" type="translate" from="-18 0" to="0 0" begin="1.84s" dur=".5s" fill="freeze"/>
+<rect x="64" y="567" width="46" height="26" rx="7" fill="#3ECF8E" fill-opacity=".14" stroke="#3ECF8E" stroke-opacity=".55"/>
+<text x="87.0" y="585" text-anchor="middle" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="12" font-weight="700" fill="#3ECF8E">MIG</text>
+<text x="128" y="587" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="18" font-weight="700" fill="#ffffff">migracao_*.sql</text>
+<text x="470" y="587" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="17" fill="#a9a9a9">migrações para bancos que já estão em uso</text>
+</g>
+<g>
+<animate attributeName="opacity" from="0" to="1" begin="2.06s" dur=".5s" fill="freeze"/>
+<animateTransform attributeName="transform" type="translate" from="-18 0" to="0 0" begin="2.06s" dur=".5s" fill="freeze"/>
+<rect x="64" y="613" width="46" height="26" rx="7" fill="#ffd54a" fill-opacity=".14" stroke="#ffd54a" stroke-opacity=".55"/>
+<text x="87.0" y="631" text-anchor="middle" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="12" font-weight="700" fill="#ffd54a">FN</text>
+<text x="128" y="633" font-family="'JetBrains Mono','Fira Code',Consolas,'Courier New',monospace" font-size="18" font-weight="700" fill="#ffffff">backend/edge-function/</text>
+<text x="470" y="633" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="17" fill="#a9a9a9">função “logar-como” (Supabase Edge Function)</text>
+</g>
+<rect x="64" y="670" width="9" height="3" rx="1.5" fill="#F5C518"><animate attributeName="opacity" values="1;0;1" dur="1.1s" repeatCount="indefinite"/></rect>
+</g></svg>

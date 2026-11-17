@@ -24,7 +24,7 @@ Cada peça física tem **código próprio** (ex.: `PED-0001-01`) e um **rastro c
 
 <br>
 
-<img src="assets/stats.svg" alt="6 locais de estoque, 3 perfis de acesso, 29 funções no Postgres, 0 etapas de build" width="100%">
+<img src="assets/destaques.svg" alt="Tudo o que a oficina precisa num lugar só: módulos do sistema, regras de acesso e tecnologias" width="100%">
 
 <br>
 
@@ -173,18 +173,7 @@ As regras valem **dentro do banco de dados** (Row Level Security e funções do 
 
 ### Estrutura do projeto
 
-```
-index.html                       estrutura da página
-script.js                        telas e chamadas ao banco
-style.css                        visual (tema preto e amarelo)
-config.js                        URL e chave pública do Supabase
-wrangler.jsonc                   configuração da hospedagem
-assets/                          imagens do README (hero, fluxo, transferência, print)
-
-supabase.sql                     banco completo (fica fora do GitHub, ver Segurança)
-migracao_*.sql                   migrações para bancos que já estão em uso
-backend/edge-function/           função "logar-como" (Supabase Edge Function)
-```
+<img src="assets/estrutura.svg" alt="Estrutura do projeto: arquivos do site, hospedagem e banco de dados" width="100%">
 
 > `gestpecas.html`, `app.js`, `app.css`, `supabase.js` e as pastas `web/` e `backend/` (exceto `edge-function/`) são de versões antigas e não são usados pelo site.
 
