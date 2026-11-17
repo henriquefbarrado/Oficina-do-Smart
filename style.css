@@ -69,7 +69,7 @@ h1{font-size:24px;font-weight:700;letter-spacing:-.015em;margin-bottom:4px}
 .cards .card:nth-child(n+6),.grid .box:nth-child(n+6){animation-delay:.3s}
 @keyframes up{from{opacity:0;transform:translateY(12px) scale(.98)}}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin-bottom:18px}
 .box h3{font-size:14px;font-weight:600;margin-bottom:12px}
 
 /* Barras do dashboard */
@@ -150,7 +150,34 @@ label input,label select{margin-top:4px}
 
 .trail{border-left:2px solid var(--a);padding-left:12px;margin:8px 0;font-size:13px}
 
-@media(max-width:800px){#app{flex-direction:column}aside{width:100%;height:auto;position:static;flex-direction:row;flex-wrap:wrap}aside h2{width:100%}aside a.on::before{top:auto;bottom:0;left:10px;right:10px;width:auto;height:3px}.me{width:100%;margin:0}main{padding:16px}}
+/* ---------- Celular: mesmo menu do PC, em gaveta que abre pelo botão ---------- */
+.tb,.sc{display:none}
+@media(max-width:800px){
+  #app{display:block}
+  .tb{display:flex;align-items:center;gap:6px;position:sticky;top:0;z-index:7;height:54px;padding:0 12px 0 8px;background:var(--p);border-bottom:1px solid var(--b)}
+  .tb b{font-size:17px;font-weight:700;letter-spacing:-.01em}.tb b span{color:var(--a)}
+  .tb .hb{width:40px;height:40px;margin:0;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border-color:transparent;box-shadow:none;color:var(--a)}
+  .tb .hb:hover{background:var(--p2)}
+  .tb .hb .ic{width:22px;height:22px;margin:0}
+  aside{position:fixed;top:0;left:0;bottom:0;z-index:20;width:min(284px,84vw);height:100vh;height:100dvh;padding-bottom:max(18px,env(safe-area-inset-bottom));overscroll-behavior:contain;transform:translateX(-102%);visibility:hidden;transition:transform .32s var(--e),visibility 0s .32s}
+  aside a{padding-top:11px;padding-bottom:11px}
+  body.mo aside{transform:none;visibility:visible;transition:transform .32s var(--e);box-shadow:0 0 70px rgba(0,0,0,.9)}
+  .sc{display:block;position:fixed;inset:0;z-index:19;background:rgba(0,0,0,.62);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .3s}
+  body.mo .sc{opacity:1;pointer-events:auto}
+  body.mo{overflow:hidden}
+  main{padding:16px 14px 28px}
+  h1{font-size:21px}
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .card{padding:13px}.card strong{font-size:19px}
+  .br{grid-template-columns:86px 1fr 30px}
+  input,select{font-size:16px}
+  .bar>*{flex:1 1 140px}.bar input,.bar select{width:100%}
+  .bar button{margin:0}
+  .md{padding:18px}
+  #t{left:14px;right:14px;bottom:14px;max-width:none}
+  th,td{padding:9px 10px}
+}
+@media(max-width:380px){.cards{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 
 button.dg{color:var(--r);border-color:rgba(239,68,68,.45)}button.dg:hover{border-color:var(--r);background:rgba(239,68,68,.12)}
