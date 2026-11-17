@@ -57,7 +57,7 @@ async function load(){
  {const gr=await all(()=>sb.from('glass_repairs').select('*').order('created_at',{ascending:false}).order('id',{ascending:false})).catch(()=>[]);
   S.gr=gr.map(x=>({id:x.id,os:x.os_number,store:x.store_id,dev:x.device,st:x.status,nt:x.note,by:x.created_by_name,ub:x.updated_by_name,ut:Date.parse(x.updated_at),t:Date.parse(x.created_at)}))}
  if(me.admin){S.sup=ok(await sb.from('suppliers').select('*').order('name'));
-  S.users=ok(await sb.from('profiles').select('*').order('name')).map(x=>({id:x.id,n:x.name,email:x.email,store:x.store_id,adm:x.is_admin,dev:!!x.is_dev,tech:x.is_technician,on:x.active}))}
+  S.users=ok(await sb.from('profiles').select('*').order('name')).map(x=>({id:x.id,n:x.name,email:x.email,store:x.store_id,adm:x.is_admin,dev:!!x.is_dev,tech:x.is_technician,gl:!!x.is_glass_editor,on:x.active}))}
  if(me.dev){try{const r=await sb.from('error_log').select('id',{count:'exact',head:true}).eq('resolved',false).eq('level','erro');D.ne=r.error?0:(r.count||0)}catch(_){D.ne=0}
   if(DT.includes(tab)&&!D.ld)await devFetch(tab)}}
 
@@ -369,7 +369,7 @@ function usrAdm(id){const u=S.users.find(x=>x.id===id);if(!u)return;
  ask(u.adm?'Remover administrador':'Tornar administrador',u.adm?u.n+' deixa de ser administrador e passa a ser funcionário da primeira loja (depois você pode trocar a unidade em Editar).':u.n+' passa a ter acesso total: todas as lojas, estoque central, usuários e exclusões.',()=>rpc('admin_set_admin',{p_user:id,p_on:!u.adm}),'Confirmar')}
 function usrEdit(id){const u=S.users.find(x=>x.id===id);if(!u)return;const self=u.id===me.id,B=(f,t,c)=>`<button${c?' class='+c:''} onclick="cl();${f}('${id}')">${t}</button>`;
  $('#m').innerHTML=`<div class=md><h3>Editar — ${esc(u.n)}</h3><p class=mu style="margin:4px 0 0">${esc(u.email)} · ${u.dev?'Desenvolvedor':u.adm?'Administrador':u.tech?'Técnico':'Funcionário'}${u.adm?'':' · '+esc(sn(u.store))}</p>
- <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">${u.dev&&!me.dev?'<p class=mu style="margin:0">Somente o desenvolvedor pode alterar este usuário.</p>':B('usrPass','Redefinir senha')+(self?'':B('usrAdm',u.adm?'Remover admin':'Tornar admin'))+(me.dev&&!self?B('usrDev',u.dev?'Remover dev':'Tornar dev'):'')}${u.adm?'':B('usrTec',u.tech?'Remover técnico':'Tornar técnico')+B('usrStore','Trocar loja')+B('usrTog',u.on?'Desativar':'Ativar')}${self||(u.dev&&!me.dev)?'':B('usrDel','Excluir usuário','dg')}<button onclick=cl()>Fechar</button></div></div>`;$('#m').className='ov on'}
+ <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">${u.dev&&!me.dev?'<p class=mu style="margin:0">Somente o desenvolvedor pode alterar este usuário.</p>':B('usrPass','Redefinir senha')+(self?'':B('usrAdm',u.adm?'Remover admin':'Tornar admin'))+(me.dev&&!self?B('usrDev',u.dev?'Remover dev':'Tornar dev'):'')}${u.adm?'':B('usrTec',u.tech?'Remover técnico':'Tornar técnico')+B('usrGlass',u.gl?'Remover acesso ao Reparo em Vidro':'Dar acesso ao Reparo em Vidro (Paola)')+B('usrStore','Trocar loja')+B('usrTog',u.on?'Desativar':'Ativar')}${self||(u.dev&&!me.dev)?'':B('usrDel','Excluir usuário','dg')}<button onclick=cl()>Fechar</button></div></div>`;$('#m').className='ov on'}
 function usrDel(id){const u=S.users.find(x=>x.id===id);if(!u)return;
  ask('Excluir usuário','Excluir o acesso de '+u.n+' ('+u.email+')?\nEle não vai mais conseguir entrar. Se tiver histórico no sistema, use Desativar em vez de excluir. Esta ação não pode ser desfeita.',()=>rpc('admin_delete_user',{p_user:id}))}
 /* Logar como outro usuário (só admin; a troca é feita por uma Edge Function, sem digitar senha) */
@@ -388,6 +388,7 @@ async function backAdmin(){if(!AS)return;const a=AS;AS=null;booting=true;render(
 function usrDev(id){const u=S.users.find(x=>x.id===id);if(!u)return;
  ask(u.dev?'Remover dev':'Tornar dev',u.dev?u.n+' deixa de ser dev, mas continua administrador.':u.n+' passa a ser dev: acesso total de administrador, e só devs podem alterar, redefinir senha ou excluir outro dev.',()=>rpc('admin_set_dev',{p_user:id,p_on:!u.dev}),'Confirmar')}
 function usrTec(id){const u=S.users.find(x=>x.id===id);run(()=>rpc('admin_set_technician',{p_user:id,p_on:!u.tech}))}
+function usrGlass(id){const u=S.users.find(x=>x.id===id);run(()=>rpc('admin_set_glass_editor',{p_user:id,p_on:!u.gl}))}
 function usrPass(id){const u=S.users.find(x=>x.id===id);modal('Nova senha de '+esc(u.n),[{n:'p',l:'Nova senha (mín. 6 caracteres)',t:'password',r:1}],d=>rpc('admin_set_password',{p_user:id,p_password:d.p}))}
 function usrStore(id){const u=S.users.find(x=>x.id===id);modal('Trocar loja de '+esc(u.n),[{n:'s',l:'Nova loja',v:u.store,o:lopt()}],d=>rpc('admin_set_store',{p_user:id,p_store:+d.s}))}
 function usrTog(id){const u=S.users.find(x=>x.id===id);run(()=>rpc('admin_set_active',{p_user:id,p_on:!u.on}))}
@@ -536,22 +537,22 @@ function errRes(id,on){run(()=>rpc('dev_error_resolve',{p_id:id,p_on:on}))}
 function errClear(){ask('Limpar erros resolvidos','Apaga de vez os erros marcados como resolvidos. Os pendentes ficam. Esta ação fica registrada na Auditoria.',()=>rpc('dev_error_clear',{p_days:0}),'Limpar')}
 
 /* ---------- Reparo em Vidro (todos veem; só a Paola cadastra, edita, atualiza e exclui) ---------- */
-const GS=['Aguardando peças','Em reparo','Pronto','Sem reparo','Entregue'];
+const GS=['Pronto','Em manutenção','Display danificado'];
 let GF={s:'',q:''};
-const gbadge=s=>`<span class="tg ${s==='Aguardando peças'?'w':s==='Sem reparo'?'r':s==='Pronto'||s==='Entregue'?'g':''}">${esc(s)}</span>`;
+const gbadge=s=>`<span class="tg ${s==='Em manutenção'?'w':s==='Display danificado'?'r':s==='Pronto'?'g':''}">${esc(s)}</span>`;
 const gvl=()=>S.gr.filter(x=>(!GF.s||x.st===GF.s)&&(!GF.q||[x.os,x.dev,x.nt,sn(x.store),x.by].join(' ').toLowerCase().includes(GF.q.toLowerCase())));
 const grows=()=>tbl(['OS','Loja de origem','Aparelho','Status','Observação','Cadastrado em','Última atualização',...(me.glass?['Ações']:[])],gvl().map(x=>[esc(x.os),esc(sn(x.store)),esc(x.dev||'—'),gbadge(x.st),x.nt?wrapTxt(esc(x.nt)):'—',dt(x.t),dt(x.ut)+' · '+esc(x.ub),...(me.glass?[`<button onclick="vidSt(${x.id})">Atualizar status</button><button onclick="vidEdit(${x.id})">Editar</button><button class=dg onclick="vidDel(${x.id})">Excluir</button>`]:[])]));
 function pVid(){
  return `<h1>Reparo em Vidro</h1><p class="mu sub">Acompanhe os reparos em vidro de cada loja. Todos visualizam; somente a Paola cadastra e atualiza.</p>
-<div class=bar>${me.glass?`<button class=pr onclick="vidForm()">+ Novo reparo</button>`:''}<input placeholder="Buscar OS, aparelho, loja, observação…" value="${esc(GF.q)}" oninput="GF.q=this.value;$('#gb').innerHTML=grows()"><select onchange="GF.s=this.value;$('#gb').innerHTML=grows()"><option value="">Todos os status</option>${GS.map(s=>`<option ${GF.s===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div>
+<div class=bar>${me.glass?`<button class=pr onclick="vidForm()">+ Cadastrar serviço</button>`:''}<input placeholder="Buscar OS, aparelho, loja, observação…" value="${esc(GF.q)}" oninput="GF.q=this.value;$('#gb').innerHTML=grows()"><select onchange="GF.s=this.value;$('#gb').innerHTML=grows()"><option value="">Todos os status</option>${GS.map(s=>`<option ${GF.s===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div>
 <div class=cards>${GS.map(s=>`<div class=card><small>${ic('phone')} ${esc(s)}</small><strong>${S.gr.filter(x=>x.st===s).length}</strong></div>`).join('')}</div>
 <div id=gb>${grows()}</div>`}
 const vidOk=()=>me.glass||(toast('Somente a Paola pode alterar os reparos em vidro.'),false);
 function vidForm(){if(!vidOk())return;
- modal('Novo reparo em vidro',[{n:'os',l:'Número da OS',r:1},{n:'s',l:'Loja de origem',o:lopt()},{n:'dv',l:'Aparelho (modelo)'},{n:'st',l:'Status',o:GS.map(x=>[x,x])},{n:'nt',l:'Observação'}],
+ modal('Cadastrar serviço — Reparo em Vidro',[{n:'os',l:'OS',r:1},{n:'s',l:'Loja',o:lopt()},{n:'dv',l:'Modelo do aparelho',r:1},{n:'st',l:'Status',o:GS.map(x=>[x,x])},{n:'nt',l:'Observação'}],
   d=>rpc('glass_new',{p_os:d.os,p_store:+d.s,p_device:d.dv,p_status:d.st,p_note:d.nt}))}
 function vidEdit(id){const x=S.gr.find(v=>v.id===id);if(!x||!vidOk())return;
- modal('Editar reparo — OS '+esc(x.os),[{n:'os',l:'Número da OS',v:x.os,r:1},{n:'s',l:'Loja de origem',v:x.store,o:lopt()},{n:'dv',l:'Aparelho (modelo)',v:x.dev},{n:'st',l:'Status',v:x.st,o:GS.map(s=>[s,s])},{n:'nt',l:'Observação',v:x.nt}],
+ modal('Editar reparo — OS '+esc(x.os),[{n:'os',l:'OS',v:x.os,r:1},{n:'s',l:'Loja',v:x.store,o:lopt()},{n:'dv',l:'Modelo do aparelho',v:x.dev,r:1},{n:'st',l:'Status',v:x.st,o:GS.map(s=>[s,s])},{n:'nt',l:'Observação',v:x.nt}],
   d=>rpc('glass_update',{p_id:id,p_os:d.os,p_store:+d.s,p_device:d.dv,p_status:d.st,p_note:d.nt}))}
 function vidSt(id){const x=S.gr.find(v=>v.id===id);if(!x||!vidOk())return;
  modal('Status do reparo — OS '+esc(x.os),[{n:'st',l:'Status (atual: '+x.st+')',v:x.st,o:GS.map(s=>[s,s])}],d=>rpc('glass_set_status',{p_id:id,p_status:d.st}))}

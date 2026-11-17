@@ -67,7 +67,7 @@ Ordens de serviço com **número da OS, cliente, serviço, peça utilizada, valo
 Registro diário dos serviços dos técnicos: **OS, cliente, serviço, valor da peça, valor cobrado e fornecedor**. Cada preenchimento vira um **registro individual** com a **data salva automaticamente**. Todos consultam (busca, período e totais); o técnico pode filtrar **só os seus**.
 
 ### 🪟 Reparo em Vidro
-Controle dos reparos em vidro: **OS, loja de origem, aparelho, status** (*Aguardando peças*, *Em reparo*, *Pronto*, *Sem reparo* ou *Entregue*) e **observação**. **Todos veem**; **só a Paola** (marca `is_glass_editor` no perfil) cadastra, atualiza, edita e exclui.
+Controle dos reparos em vidro: **OS, loja, modelo do aparelho e status** (*Pronto*, *Em manutenção* ou *Display danificado*) e **observação**; o botão **+ Cadastrar serviço** só aparece para quem tem a marca da Paola (admin dá em Usuários > Editar). **Todos veem**; **só a Paola** (marca `is_glass_editor` no perfil) cadastra, atualiza, edita e exclui.
 
 ### 🎮 Manutenção de Manetes
 Controle das manetes em reparo: **OS, loja de origem e status** (*Aguardando peças*, *Sem reparo*, *Pronta* ou *Enviada para reparo em placa*). **Todos veem**; **só o técnico** cadastra, atualiza, edita e exclui.
