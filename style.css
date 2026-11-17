@@ -153,3 +153,8 @@ button.dg{color:var(--r);border-color:rgba(239,68,68,.45)}button.dg:hover{border
 .boot{text-align:center}
 .boot i{display:block;width:34px;height:34px;margin:0 auto 14px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--a);border-radius:50%;animation:bootspin .8s linear infinite}
 @keyframes bootspin{to{transform:rotate(360deg)}}
+
+/* ---------- Painel do desenvolvedor ---------- */
+.sp{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--m);padding:14px 14px 4px}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+details.dtl{margin:6px 0 18px}details.dtl summary{cursor:pointer;color:var(--m);padding:6px 0;margin-bottom:8px}

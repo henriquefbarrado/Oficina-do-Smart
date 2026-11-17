@@ -2,6 +2,7 @@
 'use strict';
 const $=q=>document.querySelector(q);
 const IC={"phone":"<rect width=\"14\" height=\"20\" x=\"5\" y=\"2\" rx=\"2\" ry=\"2\"/><path d=\"M12 18h.01\"/>","dashboard":"<rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/>","clipboard":"<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\"/><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\"/><path d=\"M12 11h4\"/><path d=\"M12 16h4\"/><path d=\"M8 11h.01\"/><path d=\"M8 16h.01\"/>","cpu":"<rect width=\"16\" height=\"16\" x=\"4\" y=\"4\" rx=\"2\"/><rect width=\"6\" height=\"6\" x=\"9\" y=\"9\" rx=\"1\"/><path d=\"M15 2v2\"/><path d=\"M15 20v2\"/><path d=\"M2 15h2\"/><path d=\"M2 9h2\"/><path d=\"M20 15h2\"/><path d=\"M20 9h2\"/><path d=\"M9 2v2\"/><path d=\"M9 20v2\"/>","undo":"<path d=\"M9 14 4 9l5-5\"/><path d=\"M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11\"/>","circle-check":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/>","check":"<path d=\"M20 6 9 17l-5-5\"/>","wrench":"<path d=\"M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z\"/>","book":"<path d=\"M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z\"/><path d=\"M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z\"/>","factory":"<path d=\"M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z\"/><path d=\"M17 18h1\"/><path d=\"M12 18h1\"/><path d=\"M7 18h1\"/>","warehouse":"<path d=\"M22 8.35V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8.35A2 2 0 0 1 3.26 6.5l8-3.2a2 2 0 0 1 1.48 0l8 3.2A2 2 0 0 1 22 8.35Z\"/><path d=\"M6 18h12\"/><path d=\"M6 14h12\"/><rect width=\"12\" height=\"12\" x=\"6\" y=\"10\"/>","swap":"<path d=\"M8 3 4 7l4 4\"/><path d=\"M4 7h16\"/><path d=\"m16 21 4-4-4-4\"/><path d=\"M20 17H4\"/>","history":"<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"/><path d=\"M3 3v5h5\"/><path d=\"M12 7v5l4 2\"/>","file":"<path d=\"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z\"/><path d=\"M14 2v4a2 2 0 0 0 2 2h4\"/><path d=\"M10 9H8\"/><path d=\"M16 13H8\"/><path d=\"M16 17H8\"/>","users":"<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>","eye":"<path d=\"M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>","refresh":"<path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/><path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\"/><path d=\"M8 16H3v5\"/>","receipt":"<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 17.5v-11\"/>","banknote":"<rect width=\"20\" height=\"12\" x=\"2\" y=\"6\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M6 12h.01M18 12h.01\"/>","truck":"<path d=\"M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2\"/><path d=\"M15 18H9\"/><path d=\"M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14\"/><circle cx=\"17\" cy=\"18\" r=\"2\"/><circle cx=\"7\" cy=\"18\" r=\"2\"/>","download":"<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"m7 10 5 5 5-5\"/><path d=\"M12 15V3\"/>","package":"<path d=\"m7.5 4.27 9 5.15\"/><path d=\"M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z\"/><path d=\"m3.3 7 8.7 5 8.7-5\"/><path d=\"M12 22V12\"/>","clock":"<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 6v6l4 2\"/>","gamepad":"<line x1='6' x2='10' y1='11' y2='11'/><line x1='8' x2='8' y1='9' y2='13'/><line x1='15' x2='15.01' y1='12' y2='12'/><line x1='18' x2='18.01' y1='10' y2='10'/><path d='M17.32 5H6.68a4 4 0 0 0-3.978 3.59C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258A4 4 0 0 0 17.32 5z'/>"};
+Object.assign(IC,{"shield":'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',"activity":'<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>',"database":'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/>',"bug":'<path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/>'});
 const ic=n=>`<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${IC[n]||''}</svg>`;
 const brl=v=>(+v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const dt=t=>new Date(t).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
@@ -19,11 +20,23 @@ const cAv=u=>u.loc===CE&&['Recebida','Devolvida','Disponível'].includes(u.statu
 const inM=u=>['Aguardando manutenção','Em manutenção'].includes(u.status);
 
 /* ---------- Acesso ao banco (toda regra de verdade está no Postgres) ---------- */
-async function rpc(fn,a){const{data,error}=await sb.rpc(fn,a||{});if(error)throw new Error(error.message);return data}
-const ok=r=>{if(r.error)throw new Error(r.error.message);return r.data};
-const dbx=async q=>{const{error}=await q;if(error)throw new Error(error.code==='23505'?'Já existe um cadastro igual.':error.message)};
+async function rpc(fn,a){const{data,error}=await sb.rpc(fn,a||{});if(error){const x=new Error(error.message);x.fn=fn;x.code=error.code;throw x}return data}
+const ok=r=>{if(r.error){const x=new Error(r.error.message);x.code=r.error.code;throw x}return r.data};
+const dbx=async q=>{const{error}=await q;if(error){const x=new Error(error.code==='23505'?'Já existe um cadastro igual.':error.message);x.code=error.code;throw x}};
 async function all(q,pages=50){let out=[];for(let i=0;i<pages;i++){const d=ok(await q().range(i*1000,i*1000+999));out=out.concat(d);if(d.length<1000)break}return out}
-const run=async f=>{try{await f();await load();render()}catch(e){toast(e.message||String(e))}};
+/* Erros viram aviso na tela e também vão para a aba "Erros do sistema" (só o dev lê). */
+const EL={seen:{},n:0};
+function logErr(e,src){try{
+ if(!sb||!me)return;const msg=String(e&&e.message||e||'').slice(0,500);
+ if(!msg||/ResizeObserver|^Script error/i.test(msg)||EL.n>=20)return;
+ const k=((e&&e.fn)||'')+'|'+msg,now=Date.now();if(EL.seen[k]&&now-EL.seen[k]<30000)return;EL.seen[k]=now;EL.n++;
+ const code=String(e&&e.code||'');
+ sb.rpc('log_client_error',{p_level:code==='P0001'?'aviso':'erro',p_source:src||(e&&e.fn?'rpc':'js'),p_fn:(e&&e.fn)||'',p_code:code,p_message:msg,p_page:tab,p_extra:{v:typeof APP_V==='string'?APP_V:'',ua:navigator.userAgent.slice(0,120)}}).then(()=>{},()=>{})
+}catch(_){}}
+const terr=(e,src)=>{toast(e.message||String(e));logErr(e,src)};
+addEventListener('error',ev=>logErr(ev.error||new Error(ev.message),'js'));
+addEventListener('unhandledrejection',ev=>logErr(ev.reason||new Error('Promise rejeitada'),'js'));
+const run=async f=>{try{await f();await load();render()}catch(e){terr(e)}};
 async function load(){
  const[st,cat,o,u,h,tr,mn,sv]=await Promise.all([sb.from('stores').select('*').order('id'),sb.from('catalog_view').select('*').order('name'),
   all(()=>sb.from('orders').select('*').order('created_at',{ascending:false}).order('id')),all(()=>sb.from('units').select('*').order('id')),
@@ -42,20 +55,22 @@ async function load(){
   S.tc=tc.map(x=>({id:x.id,d:x.closing_date,store:x.store_id,os:x.os_number,cu:x.customer,sv:x.service,pc:+x.part_cost,ch:+x.charged,sup:x.supplier,by:x.created_by_name,uid:x.created_by,t:Date.parse(x.created_at)}));
   S.cr=cr.map(x=>({id:x.id,os:x.os_number,store:x.store_id,st:x.status,by:x.created_by_name,ub:x.updated_by_name,ut:Date.parse(x.updated_at),t:Date.parse(x.created_at)}))}
  if(me.admin){S.sup=ok(await sb.from('suppliers').select('*').order('name'));
-  S.users=ok(await sb.from('profiles').select('*').order('name')).map(x=>({id:x.id,n:x.name,email:x.email,store:x.store_id,adm:x.is_admin,dev:!!x.is_dev,tech:x.is_technician,on:x.active}))}}
+  S.users=ok(await sb.from('profiles').select('*').order('name')).map(x=>({id:x.id,n:x.name,email:x.email,store:x.store_id,adm:x.is_admin,dev:!!x.is_dev,tech:x.is_technician,on:x.active}))}
+ if(me.dev){try{const r=await sb.from('error_log').select('id',{count:'exact',head:true}).eq('resolved',false).eq('level','erro');D.ne=r.error?0:(r.count||0)}catch(_){D.ne=0}
+  if(DT.includes(tab)&&!D.ld)await devFetch(tab)}}
 
 /* ---------- UI utilitários ---------- */
 function cl(){$('#m').className='ov'}
 function ask(title,msg,fn,label){
  $('#m').innerHTML=`<div class=md><h3>${esc(title)}</h3><p class=mu style="margin:6px 0 20px;line-height:1.55">${esc(msg).replace(/\n/g,'<br>')}</p><div class=bt><button type=button id=ask-no onclick=cl()>Cancelar</button><button type=button class=dg id=ask-ok>${label||'Excluir'}</button></div></div>`;
  $('#m').className='ov on';$('#ask-no').focus();
- $('#ask-ok').onclick=async e=>{const b=e.currentTarget;b.disabled=true;try{await fn();await load();cl();render()}catch(x){toast(x.message||String(x));b.disabled=false}}}
+ $('#ask-ok').onclick=async e=>{const b=e.currentTarget;b.disabled=true;try{await fn();await load();cl();render()}catch(x){terr(x);b.disabled=false}}}
 function modal(title,fields,fn,ch){
  $('#m').innerHTML=`<div class=md><h3>${title}</h3><form>${fields.map(f=>`<label>${f.l}${f.o?`<select name=${f.n}>${f.o.map(o=>`<option value="${esc(o[0])}" ${String(o[0])===String(f.v)?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`:`<input name=${f.n} type=${f.t||'text'} value="${esc(f.v)}" ${f.r?'required':''} ${f.min!=null?'min='+f.min:''} step=any>`}</label>`).join('')}<div class=bt><button type=button onclick=cl()>Cancelar</button><button class=pr>Confirmar</button></div></form></div>`;
  $('#m').className='ov on';
  {const fm=$('#m form');if(ch){fm.elements[fields[0].n].onchange=()=>ch(fm.elements);ch(fm.elements)}}
  $('#m form').onsubmit=async e=>{e.preventDefault();const b=e.target.querySelector('.pr');b.disabled=true;const d=Object.fromEntries(new FormData(e.target));
-  try{await fn(d);await load();cl();render()}catch(x){toast(x.message||String(x));b.disabled=false}}}
+  try{await fn(d);await load();cl();render()}catch(x){terr(x);b.disabled=false}}}
 const badge=s=>`<span class="tg ${/Aguard|Solic/.test(s)?'w':/Rejeit|Descart|Sem /.test(s)?'r':/Utiliz|Entreg|Receb|estoque|Dispon|Conclu/.test(s)?'g':''}">${esc(s)}</span>`;
 const tbl=(h,r)=>`<div class=tw><table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${r.length?r.map(x=>`<tr>${x.map(c=>`<td>${c}</td>`).join('')}</tr>`).join(''):`<tr><td colspan=${h.length} class=mu>Nenhum registro.</td></tr>`}</table></div>`;
 const cnt=(a,f,w=()=>1)=>{const m={};a.forEach(x=>{const k=f(x);m[k]=(m[k]||0)+w(x)});return m};
@@ -76,11 +91,11 @@ async function lgin(e){e.preventDefault();const b=e.target.querySelector('.pr');
  const{error}=await sb.auth.signInWithPassword({email:$('#le').value.trim(),password:$('#lp').value});
  if(error){b.disabled=false;return toast('E-mail ou senha incorretos.')}
  await enter()}
-async function enter(){booting=true;render();try{const{data:{session}}=await sb.auth.getSession();if(!session)return;
+async function enter(){D=D0();booting=true;render();try{const{data:{session}}=await sb.auth.getSession();if(!session)return;
  const{data:p,error}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();if(error)throw error;
  if(!p||!p.active){await sb.auth.signOut();toast('Usuário sem acesso ou desativado.');return}
- me={id:p.id,name:p.name,admin:p.is_admin,dev:!!p.is_dev,store:p.store_id,view:null,tech:!!p.is_technician};tab='dash';await load()}catch(e){toast(e.message||String(e))}finally{booting=false;render()}}
-async function logout(){const imp=!!AS;AS=null;await sb.auth.signOut(imp?{scope:'local'}:undefined);me=null;booting=false;S={cu:[],st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[],tc:[],cr:[]};render()}
+ me={id:p.id,name:p.name,admin:p.is_admin,dev:!!p.is_dev,store:p.store_id,view:null,tech:!!p.is_technician};tab='dash';await load()}catch(e){terr(e)}finally{booting=false;render()}}
+async function logout(){const imp=!!AS;AS=null;await sb.auth.signOut(imp?{scope:'local'}:undefined);me=null;booting=false;S={cu:[],st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[],tc:[],cr:[]};D=D0();render()}
 
 /* ---------- Páginas ---------- */
 function pDash(){const{o,u,h}=vis(),p=v=>u.filter(x=>x.status===v).length;
@@ -408,15 +423,122 @@ function manDel(id){const x=S.cr.find(v=>v.id===id);if(!x)return;
 function manSt(id){const x=S.cr.find(v=>v.id===id);if(!x)return;
  modal('Status da manete — OS '+esc(x.os),[{n:'st',l:'Status (atual: '+x.st+')',v:x.st,o:MS.map(s=>[s,s])}],d=>rpc('controller_set_status',{p_id:id,p_status:d.st}))}
 
+/* ---------- Painel do desenvolvedor (só dev): Auditoria, Diagnóstico, Backup e Erros ---------- */
+const DT=['aud','dia','bkp','err'],APP_V='20261117a';
+const D0=()=>({aud:[],err:[],diag:null,diagMs:0,miss:'',ld:false,ne:0});
+let D=D0();
+const AU={q:'',k:'',a:'',b:''},ER={lvl:'erro',res:'0',q:''};
+async function devFetch(t){
+ if(!me||!me.dev)return;
+ try{
+  if(t==='aud')D.aud=await all(()=>sb.from('audit_log').select('*').order('at',{ascending:false}).order('id',{ascending:false}),10);
+  if(t==='err')D.err=await all(()=>sb.from('error_log').select('*').order('at',{ascending:false}).order('id',{ascending:false}),5);
+  if(t==='dia'||t==='bkp'){const t0=performance.now();D.diag=await rpc('dev_diagnostics');D.diagMs=Math.round(performance.now()-t0)}
+  D.miss=''}
+ catch(e){D.miss=e.message||String(e);if(t==='dia'||t==='bkp')D.diag=null}}
+async function go(t){tab=t;if(me&&me.dev&&DT.includes(t)){D.ld=true;render();await devFetch(t);D.ld=false}render()}
+const needMig=m=>/audit_log|error_log|dev_diagnostics|dev_error|log_client|schema cache|does not exist|Could not find/i.test(m||'');
+const devBox=()=>`<div class=box style="border-color:var(--w)"><h3>Não foi possível carregar</h3><p class=mu style="line-height:1.55">${esc(D.miss)}${needMig(D.miss)?'<br><br>Provavelmente falta rodar o <b>migracao_dev_painel.sql</b> no Supabase (SQL Editor). Depois clique em <b>Atualizar dados</b>.':''}</p></div>`;
+const devWrap=(title,sub,body)=>`<h1>${title}</h1><p class="mu sub">${sub}</p>${D.ld?'<div class=box><p class=mu>Carregando…</p></div>':D.miss?devBox():body()}`;
+const wrapTxt=h=>`<div style="white-space:normal;min-width:240px;max-width:480px">${h}</div>`;
+
+/* --- Auditoria --- */
+const AK={user_create:'Usuário criado',user_delete:'Usuário excluído',admin_on:'Virou administrador',admin_off:'Deixou de ser administrador',dev_on:'Virou dev',dev_off:'Deixou de ser dev',tech_on:'Virou técnico',tech_off:'Deixou de ser técnico',user_on:'Usuário ativado',user_off:'Usuário desativado',store_change:'Troca de loja',password_reset:'Senha redefinida',impersonate:'Logar como',backup_export:'Backup exportado',errors_clear:'Erros limpos'};
+const AT={user_create:'g',user_on:'g',admin_on:'w',admin_off:'w',dev_on:'w',dev_off:'w',password_reset:'w',impersonate:'w',user_off:'r',user_delete:'r'};
+const adet=x=>{const d=x.details||{};
+ if(x.action==='store_change')return (d.de||'—')+' → '+(d.para||'—');
+ if(x.action==='user_create')return [d.email,d.loja].filter(Boolean).join(' · ');
+ if(x.action==='backup_export')return (d.fmt||'')+' · '+(d.n||0)+' tabelas · '+(d.rows||0)+' linhas';
+ if(x.action==='errors_clear')return (d.n||0)+' removidos';
+ if(d.email&&Object.keys(d).length===1)return d.email;
+ return Object.keys(d).length?JSON.stringify(d):''};
+const aufil=()=>D.aud.filter(x=>{const t=Date.parse(x.at);return(!AU.k||x.action===AU.k)&&(!AU.a||t>=new Date(AU.a).getTime())&&(!AU.b||t<=new Date(AU.b).getTime()+864e5)&&(!AU.q||[x.actor_name,x.target_name,AK[x.action]||x.action,adet(x)].join(' ').toLowerCase().includes(AU.q.toLowerCase()))});
+const aurows=()=>{const l=aufil();return tbl(['Data','Quem fez','Ação','Alvo','Detalhes'],l.slice(0,500).map(x=>[dt(x.at),esc(x.actor_name||'—'),`<span class="tg ${AT[x.action]||''}">${esc(AK[x.action]||x.action)}</span>`,esc(x.target_name||'—'),esc(adet(x))]))+(l.length>500?`<p class=mu style="margin:-8px 0 14px">Mostrando 500 de ${l.length}. Use os filtros ou exporte o CSV.</p>`:'')};
+function pAud(){return devWrap('Auditoria','Quem mudou acessos e senhas, quem usou o Logar como e quem exportou dados. O registro só recebe inclusão: nem o dev apaga pela tela.',()=>{
+ const now=Date.now(),n30=a=>D.aud.filter(x=>x.action===a&&now-Date.parse(x.at)<2592e6).length;
+ return `<div class=cards><div class=card><small>${ic('history')} Eventos registrados</small><strong>${D.aud.length}</strong></div><div class=card><small>${ic('clock')} Últimos 7 dias</small><strong>${D.aud.filter(x=>now-Date.parse(x.at)<6048e5).length}</strong></div><div class=card><small>${ic('eye')} Logar como (30 dias)</small><strong>${n30('impersonate')}</strong></div><div class=card><small>${ic('users')} Senhas redefinidas (30 dias)</small><strong>${n30('password_reset')}</strong></div></div>
+<div class=bar><input placeholder="Buscar pessoa, ação ou detalhe…" value="${esc(AU.q)}" oninput="AU.q=this.value;$('#ab').innerHTML=aurows()"><select onchange="AU.k=this.value;$('#ab').innerHTML=aurows()"><option value="">Todas as ações</option>${Object.entries(AK).map(([k,v])=>`<option value="${k}" ${AU.k===k?'selected':''}>${esc(v)}</option>`).join('')}</select><input type=date value="${AU.a}" onchange="AU.a=this.value;$('#ab').innerHTML=aurows()"><input type=date value="${AU.b}" onchange="AU.b=this.value;$('#ab').innerHTML=aurows()"><button onclick="audCsv()">${ic('download')} CSV</button></div><div id=ab>${aurows()}</div>`})}
+function audCsv(){csv('auditoria',aufil().map(x=>({Data:dt(x.at),Quem:x.actor_name,Acao:AK[x.action]||x.action,Alvo:x.target_name,Detalhes:adet(x)})))}
+
+/* --- Diagnóstico do sistema --- */
+const fixTxt=f=>f?(/^[\w]+\.sql/.test(f)?'Rodar '+f+' no SQL Editor':f):'';
+function pDia(){return devWrap('Diagnóstico do sistema','Confere se o banco tem tudo o que o site espera. Migração esquecida aparece aqui como pendência, e não como erro solto na tela dos usuários.',()=>{
+ const g=D.diag;if(!g)return '<p class=mu>Sem dados.</p>';
+ const ck=g.checks||[],bad=ck.filter(c=>!c.ok),n=g.numbers||{},v=k=>+n[k]||0;
+ const num=[
+  ['Devs ativos',v('devs'),v('devs')>0,'Precisa haver pelo menos 1.'],
+  ['Administradores ativos (inclui devs)',v('admins'),v('admins')>0,'Precisa haver pelo menos 1.'],
+  ['Usuários ativos / inativos',v('active')+' / '+v('inactive'),true,''],
+  ['Usuários de loja sem loja',v('no_store'),!v('no_store'),'Ativos, não admin e sem loja: não enxergam nada. Use Usuários → Trocar loja.'],
+  ['Técnicos que também são admin',v('tech_admin'),!v('tech_admin'),'Não deveria existir (regra tecnico_nao_admin).'],
+  ['Devs que não são admin',v('dev_not_admin'),!v('dev_not_admin'),'O dev deve ser administrador também.'],
+  ['Logins sem perfil',v('auth_no_profile'),!v('auth_no_profile'),'Existem no Auth, mas entram como "sem acesso". Crie o perfil ou exclua o login.'],
+  ['Erros pendentes (24 h)',v('errors_24h'),!v('errors_24h'),'Veja em Erros do sistema.']];
+ return `<div class=bar><button class=pr onclick="go('dia')">${ic('refresh')} Executar de novo</button></div>
+<div class=cards><div class=card><small>${ic('check')} Verificações</small><strong>${ck.length}</strong></div><div class=card><small>${ic('circle-check')} Passaram</small><strong>${ck.length-bad.length}</strong></div><div class=card><small>${ic('activity')} Pendências</small><strong>${bad.length}</strong></div><div class=card><small>${ic('clock')} Resposta do banco</small><strong>${D.diagMs} ms</strong></div></div>
+${bad.length?`<h3 style="margin-bottom:10px">Pendências</h3>${tbl(['Item','Tipo','Como corrigir'],bad.map(c=>[`<span class=mono>${esc(c.name)}</span>`,esc(c.grp),esc(fixTxt(c.fix))]))}`:`<div class=box style="margin-bottom:18px"><h3>Tudo certo</h3><p class=mu>As ${ck.length} verificações passaram.</p></div>`}
+<h3 style="margin-bottom:10px">Usuários e acessos</h3>${tbl(['Verificação','Resultado','Situação','Observação'],num.map(x=>[x[0],`<b>${esc(x[1])}</b>`,`<span class="tg ${x[2]?'g':'r'}">${x[2]?'OK':'Atenção'}</span>`,x[2]?'':wrapTxt(esc(x[3]))]))}
+<details class=dtl><summary>Ver as ${ck.length} verificações</summary>${tbl(['Item','Tipo','Situação'],ck.map(c=>[`<span class=mono>${esc(c.name)}</span>`,esc(c.grp),`<span class="tg ${c.ok?'g':'r'}">${c.ok?'OK':'Pendente'}</span>`]))}</details>
+<p class=mu style="max-width:75ch;line-height:1.55">O banco não enxerga a Edge Function <b>smooth-service</b> (Logar como). Se ela não foi republicada com o código novo de <code>backend/edge-function/logar-como.ts</code>, o botão funciona, mas o uso dele não aparece na Auditoria.</p>`})}
+
+/* --- Backup e dados --- */
+const BK=[['stores','Lojas'],['profiles','Usuarios'],['suppliers','Fornecedores'],['catalog','Catalogo'],['orders','Pedidos'],['units','Pecas'],['unit_trail','Rastro_das_pecas'],['history','Historico'],['transfers','Transferencias'],['maintenances','Manutencoes'],['tech_closings','Fechamento_tecnico'],['controller_repairs','Manetes'],['audit_log','Auditoria',1],['error_log','Erros',1]];
+const BKS={busy:false,msg:''};
+const bkMsg=m=>{BKS.msg=m;const e=$('#bkm');if(e)e.textContent=m};
+const bkBtn=on=>['#bk1','#bk2'].forEach(s=>{const b=$(s);if(b)b.disabled=on});
+const flat=r=>{const o={};for(const k in r){const v=r[k];o[k]=v!==null&&typeof v==='object'?JSON.stringify(v):v}return o};
+const stamp=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes())};
+function pBkp(){const r=(D.diag&&D.diag.rows)||{};
+ return `<h1>Backup e dados</h1><p class="mu sub">Baixa uma cópia de todas as tabelas do sistema para guardar fora do Supabase.</p>${D.ld?'<div class=box><p class=mu>Carregando…</p></div>':`
+<div class=bar><button class=pr id=bk1 onclick="bkExport('xlsx')">${ic('download')} Exportar tudo (.xlsx)</button><button id=bk2 onclick="bkExport('json')">${ic('download')} Exportar tudo (.json)</button></div>
+<p class=mu id=bkm style="margin-bottom:16px">${esc(BKS.msg)}</p>
+${D.miss?`<p class=tg style="display:inline-block;margin-bottom:14px">Não foi possível contar as linhas (${esc(D.miss)}). A exportação continua funcionando, só sem a conferência de totais.</p>`:''}
+<div class=cards>${BK.map(b=>`<div class=card><small>${ic('database')} ${esc(b[1].replace(/_/g,' '))}</small><strong>${r[b[0]]??'—'}</strong></div>`).join('')}</div>
+<div class=box><h3>Antes de guardar</h3><p class=mu style="line-height:1.6;max-width:75ch">O arquivo tem nomes, e-mails e contatos de fornecedores: guarde em lugar seguro. Não inclui senhas nem a tabela de logins do Supabase. É uma cópia de consulta, não um restore automático; para restaurar o banco inteiro, use também o backup do próprio Supabase (Database → Backups).</p></div>`}`}
+async function bkExport(fmt){
+ if(BKS.busy||!me||!me.dev)return;BKS.busy=true;bkBtn(true);
+ const data={},notes=[];let total=0;
+ try{
+  const rows=(D.diag&&D.diag.rows)||{};
+  for(const[t,sheet,opt]of BK){
+   bkMsg('Lendo '+sheet.replace(/_/g,' ')+'…');
+   try{data[t]=await all(()=>sb.from(t).select('*').order('id'),400)}
+   catch(e){if(!opt)throw new Error('Falha ao ler '+t+': '+(e.message||e));notes.push(t+': não exportada ('+(e.message||e)+')');continue}
+   total+=data[t].length;
+   if(rows[t]!=null&&rows[t]!==data[t].length)notes.push(t+': leu '+data[t].length+' de '+rows[t]+' linhas');
+  }
+  const meta={gerado_em:new Date().toISOString(),gerado_por:me.name,versao_site:APP_V,linhas:Object.fromEntries(Object.entries(data).map(([k,v])=>[k,v.length])),avisos:notes},name='oficina-do-smart_backup_'+stamp();
+  if(fmt==='json'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({...meta,tabelas:data},null,1)],{type:'application/json'}));a.download=name+'.json';a.click()}
+  else{const wb=XLSX.utils.book_new();
+   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([{info:'Gerado em',valor:dt(meta.gerado_em)},{info:'Gerado por',valor:me.name},...Object.entries(meta.linhas).map(([k,v])=>({info:k,valor:v+' linhas'})),...notes.map(x=>({info:'AVISO',valor:x}))]),'LEIA-ME');
+   BK.forEach(([t,sheet])=>{if(data[t])XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data[t].map(flat)),sheet)});
+   XLSX.writeFile(wb,name+'.xlsx')}
+  try{await rpc('dev_audit_note',{p_action:'backup_export',p_details:{fmt,n:Object.keys(data).length,rows:total}})}catch(_){}
+  bkMsg('Backup concluído: '+Object.keys(data).length+' tabelas, '+total.toLocaleString('pt-BR')+' linhas.'+(notes.length?' Atenção: '+notes.join(' · '):''));
+  if(notes.length)toast('Backup gerado com avisos. Veja a mensagem na tela.');
+ }catch(e){bkMsg('Falhou: '+(e.message||e));terr(e)}
+ finally{BKS.busy=false;bkBtn(false)}}
+
+/* --- Erros do sistema --- */
+const erfil=()=>D.err.filter(x=>(ER.lvl==='all'||x.level===ER.lvl)&&(ER.res==='all'||(ER.res==='1')===!!x.resolved)&&(!ER.q||[x.user_name,x.fn,x.code,x.message,x.page].join(' ').toLowerCase().includes(ER.q.toLowerCase())));
+const errows=()=>{const l=erfil();return tbl(['Data','Usuário','Loja','Onde','Mensagem','Tela','Ações'],l.slice(0,300).map(x=>[dt(x.at),esc(x.user_name||'—'),esc(sn(x.store_id)),`<span class=mono>${esc(x.fn||x.source)}</span>${x.code?' <span class=mu>'+esc(x.code)+'</span>':''}`,wrapTxt(`<span class="tg ${x.level==='aviso'?'w':'r'}">${x.level==='aviso'?'Aviso':'Erro'}</span> ${esc(x.message)}`),esc(x.page),x.resolved?`<button onclick="errRes(${x.id},false)">Reabrir</button>`:`<button class=pr onclick="errRes(${x.id},true)">Resolvido</button>`]))+(l.length>300?`<p class=mu style="margin:-8px 0 14px">Mostrando 300 de ${l.length}. Use os filtros.</p>`:'')};
+function pErr(){return devWrap('Erros do sistema','Tudo o que falhou na tela dos usuários e sumiria com o aviso. Erro = problema do sistema (função faltando, permissão, rede, script). Aviso = regra de negócio, como "Informe a OS".',()=>{
+ const now=Date.now(),pe=D.err.filter(x=>!x.resolved&&x.level==='erro');
+ return `<div class=cards><div class=card><small>${ic('bug')} Erros pendentes</small><strong>${pe.length}</strong></div><div class=card><small>${ic('clock')} Erros nas últimas 24 h</small><strong>${D.err.filter(x=>x.level==='erro'&&now-Date.parse(x.at)<864e5).length}</strong></div><div class=card><small>${ic('clipboard')} Avisos pendentes</small><strong>${D.err.filter(x=>!x.resolved&&x.level==='aviso').length}</strong></div></div>
+<div class=bar><input placeholder="Buscar usuário, função, mensagem…" value="${esc(ER.q)}" oninput="ER.q=this.value;$('#eb2').innerHTML=errows()"><select onchange="ER.lvl=this.value;$('#eb2').innerHTML=errows()"><option value=erro ${ER.lvl==='erro'?'selected':''}>Só erros</option><option value=aviso ${ER.lvl==='aviso'?'selected':''}>Só avisos de regra</option><option value=all ${ER.lvl==='all'?'selected':''}>Erros e avisos</option></select><select onchange="ER.res=this.value;$('#eb2').innerHTML=errows()"><option value=0 ${ER.res==='0'?'selected':''}>Pendentes</option><option value=1 ${ER.res==='1'?'selected':''}>Resolvidos</option><option value=all ${ER.res==='all'?'selected':''}>Todos</option></select><button class=dg onclick="errClear()">Limpar resolvidos</button></div><div id=eb2>${errows()}</div>`})}
+function errRes(id,on){run(()=>rpc('dev_error_resolve',{p_id:id,p_on:on}))}
+function errClear(){ask('Limpar erros resolvidos','Apaga de vez os erros marcados como resolvidos. Os pendentes ficam. Esta ação fica registrada na Auditoria.',()=>rpc('dev_error_clear',{p_days:0}),'Limpar')}
+
 /* ---------- Shell ---------- */
 function render(){
  if(!me){$('#app').innerHTML=booting?'<div class=lg><div class=boot><i></i><p class=mu>Carregando…</p></div></div>':login();return}
  if(!me.admin&&['cat','sup','stk','rep','usr'].includes(tab))tab='dash';
+ if(!me.dev&&DT.includes(tab))tab='dash';
  const pn=S.tr.filter(x=>me.admin?x.status===TS[1]:x.status===TS[0]&&x.from===me.store).length;
- const N=[['dash','dashboard','Dashboard',1],['ord','clipboard',me.admin?'Pedidos':'Solicitar Peças',1],['pcs','cpu','Controle de Peças',1],['cen','warehouse','Estoque Central',1],['ret','undo','Devoluções',1],['use','circle-check','Peças Utilizadas',1],['mnt','wrench','Manutenção',1],['fec','banknote','Fechamento Técnico',1],['man','gamepad','Manutenção de Manetes',1],['cat','book','Catálogo de Peças',2],['sup','factory','Fornecedores',2],['stk','warehouse','Estoques',2],['tra','swap','Transferências'+(pn?' ('+pn+')':''),1],['his','history','Histórico',1],['rep','file','Relatórios',2],['usr','users','Usuários',2]].filter(n=>n[3]===1||me.admin);
- const P={dash:pDash,cen:pCen,ord:pOrd,pcs:pUnits,ret:pUnits,use:pUnits,mnt:pMnt,cat:pCat,tra:pTra,usr:pUsr,sup:pSup,stk:pStk,his:pHis,rep:pRep,fec:pFec,man:pMan};
+ const N=[['dash','dashboard','Dashboard',1],['ord','clipboard',me.admin?'Pedidos':'Solicitar Peças',1],['pcs','cpu','Controle de Peças',1],['cen','warehouse','Estoque Central',1],['ret','undo','Devoluções',1],['use','circle-check','Peças Utilizadas',1],['mnt','wrench','Manutenção',1],['fec','banknote','Fechamento Técnico',1],['man','gamepad','Manutenção de Manetes',1],['cat','book','Catálogo de Peças',2],['sup','factory','Fornecedores',2],['stk','warehouse','Estoques',2],['tra','swap','Transferências'+(pn?' ('+pn+')':''),1],['his','history','Histórico',1],['rep','file','Relatórios',2],['usr','users','Usuários',2],['aud','shield','Auditoria',3],['dia','activity','Diagnóstico do sistema',3],['bkp','database','Backup e dados',3],['err','bug','Erros do sistema'+(D.ne?' ('+D.ne+')':''),3]].filter(n=>n[3]===1||(n[3]===2&&me.admin)||(n[3]===3&&me.dev));
+ const P={dash:pDash,cen:pCen,ord:pOrd,pcs:pUnits,ret:pUnits,use:pUnits,mnt:pMnt,cat:pCat,tra:pTra,usr:pUsr,sup:pSup,stk:pStk,his:pHis,rep:pRep,fec:pFec,man:pMan,aud:pAud,dia:pDia,bkp:pBkp,err:pErr};
  const sy=document.querySelector('aside')?.scrollTop||0;
- $('#app').innerHTML=`<aside><h2>${ic('phone')} Oficina do <span>Smart</span></h2>${N.map(n=>`<a class="${n[0]===tab?'on':''}" onclick="tab='${n[0]}';render()">${ic(n[1])} ${n[2]}</a>`).join('')}
+ $('#app').innerHTML=`<aside><h2>${ic('phone')} Oficina do <span>Smart</span></h2>${N.map(n=>(n[0]==='aud'?'<p class=sp>Desenvolvedor</p>':'')+`<a class="${n[0]===tab?'on':''}" onclick="go('${n[0]}')">${ic(n[1])} ${n[2]}</a>`).join('')}
 
  ${me.admin?`<label style="padding:8px 12px;margin:6px 0">${ic('eye')} Ver unidade<select onchange="me.view=this.value===''?null:+this.value;render()"><option value="">Todas as unidades</option>${LJ().map(s=>`<option value=${s.id} ${me.view===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>`:''}
  <a onclick="run(async()=>{})">${ic('refresh')} Atualizar dados</a>

@@ -154,9 +154,25 @@ As regras valem **dentro do banco de dados** (Row Level Security e funções do 
 | Exclui pedidos, manutenções e peças do catálogo | ✅ | — | — |
 | Gerencia usuários e usa **Logar como** | ✅ | — | — |
 
+- 🛠️ **Desenvolvedor**: tem tudo do administrador e, no fim do menu, as abas **Auditoria**, **Diagnóstico do sistema**, **Backup e dados** e **Erros do sistema** (veja abaixo). Só o dev lê essas tabelas, e o banco recusa qualquer outro usuário.
 - Pode haver **mais de um administrador**. Funcionário só vira admin se outro admin promover; o técnico é definido em **Usuários → Tornar técnico**.
 - 🚫 **Usuário desativado** perde o acesso na hora.
 - O cadastro público fica **desligado**: **só o administrador cria acessos**.
+
+<br>
+
+## 🛠️ Painel do desenvolvedor
+
+Visível só para o **dev** (seção *Desenvolvedor* no fim do menu). Requer rodar o `migracao_dev_painel.sql` uma vez.
+
+| Aba | Para que serve |
+|---|---|
+| **Auditoria** | Quem promoveu ou rebaixou admin, dev e técnico, redefiniu senha, ativou, desativou, trocou de loja, criou ou excluiu usuário, usou o **Logar como** e exportou backup. Filtros por pessoa, ação e data, com CSV. O registro só recebe inclusão. |
+| **Diagnóstico do sistema** | Confere funções, tabelas, colunas, gatilhos e RLS esperados pelo site e diz **qual arquivo `.sql` rodar** quando algo falta. Também mostra devs e admins ativos, usuários sem loja e técnicos que são admin. |
+| **Backup e dados** | **Exportar tudo** (`.xlsx` com uma aba por tabela, ou `.json`). Confere o total lido contra o total do banco e avisa se faltar linha. |
+| **Erros do sistema** | O que falhou na tela dos usuários (função faltando, permissão, rede, erro de script) com quem, onde e quando. Avisos de regra, como "Informe a OS", ficam separados. Dá para marcar como resolvido e limpar. |
+
+> **Como a auditoria funciona:** gatilhos na tabela `profiles` (e em `auth.users` para senha) gravam em `audit_log`, então vale para qualquer função `admin_*`, inclusive a que mexe com dev. O **Logar como** é gravado pela Edge Function: **republique** `backend/edge-function/logar-como.ts` para ele aparecer.
 
 <br>
 
@@ -200,6 +216,7 @@ As regras valem **dentro do banco de dados** (Row Level Security e funções do 
 | `migracao_excluir_usuario.sql` | Administrador exclui usuários |
 | `migracao_excluir_peca.sql` | Botão **Excluir** da aba Estoques (a peça sai do catálogo e das lojas; o histórico fica) |
 | `migracao_tecnico.sql` | Perfil de técnico, **Fechamento Técnico** e **Manutenção de Manetes** (cadastrar, editar, atualizar status e excluir) |
+| `migracao_dev_painel.sql` | **Painel do desenvolvedor**: Auditoria, Diagnóstico do sistema, Backup e dados e Erros do sistema |
 
 </details>
 

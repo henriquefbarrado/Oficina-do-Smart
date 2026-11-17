@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       callerId = r2.data.user.id;
     }
 
-    const { data: me, error: e0 } = await admin.from('profiles').select('is_admin, active').eq('id', callerId).maybeSingle();
+    const { data: me, error: e0 } = await admin.from('profiles').select('name, is_admin, active').eq('id', callerId).maybeSingle();
     if (e0) return reply(500, { error: 'Erro ao consultar o perfil: ' + e0.message });
     if (!me?.is_admin || !me.active) return reply(403, { error: 'Somente administradores podem usar esta função.' });
 
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     const { user_id } = await req.json();
     if (!user_id) return reply(400, { error: 'Usuário não informado.' });
     if (user_id === callerId) return reply(400, { error: 'Você já está nesta conta.' });
-    const { data: t, error: e3 } = await admin.from('profiles').select('email, active, is_admin').eq('id', user_id).maybeSingle();
+    const { data: t, error: e3 } = await admin.from('profiles').select('name, email, active, is_admin').eq('id', user_id).maybeSingle();
     if (e3) return reply(500, { error: 'Erro ao consultar o usuário: ' + e3.message });
     if (!t) return reply(404, { error: 'Usuário não encontrado.' });
     if (t.is_admin) return reply(403, { error: 'Não é possível entrar como outro administrador.' });
@@ -58,6 +58,17 @@ Deno.serve(async (req) => {
     const { data, error: e2 } = await admin.auth.admin.generateLink({ type: 'magiclink', email: t.email });
     if (e2 || !data?.properties?.hashed_token) {
       return reply(500, { error: 'Não foi possível gerar o acesso: ' + (e2?.message ?? 'sem código retornado') });
+    }
+    // 4) Auditoria: registra quem entrou na conta de quem (aba Auditoria do dev).
+    //    Se a tabela ainda não existir (migracao_dev_painel.sql não rodou), só avisa no log e segue.
+    try {
+      const { error: ea } = await admin.from('audit_log').insert({
+        actor_id: callerId, actor_name: me.name ?? '', action: 'impersonate',
+        target_id: user_id, target_name: t.name ?? '', details: { email: t.email },
+      });
+      if (ea) console.error('logar-como: não gravou a auditoria: ' + ea.message);
+    } catch (e) {
+      console.error('logar-como: falha na auditoria: ' + String((e as Error).message ?? e));
     }
     console.log(`logar-como: admin ${callerId} entrou como ${user_id}`);
     return reply(200, { token_hash: data.properties.hashed_token });
