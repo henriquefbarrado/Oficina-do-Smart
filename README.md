@@ -44,18 +44,7 @@ A manete chega da loja de origem com o número da OS, o **técnico** cadastra e 
 
 E quando a peça foge do caminho feliz, tudo continua registrado:
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#1b1b1b','primaryTextColor':'#ffffff','primaryBorderColor':'#F5C518','lineColor':'#8a8a8a','fontFamily':'Inter, Segoe UI, sans-serif'}}}%%
-flowchart LR
-  A(["📝 Solicitada"]) --> B(["🛒 Comprada"]) --> C(["📦 Estoque Central"]) --> D(["🏬 Na loja"]) --> E(["✅ Utilizada"])
-  D -- devolver --> C
-  D -- defeito --> M(["🔧 Em manutenção"])
-  M -- consertada --> C
-  M -- volta à origem --> D
-  M -- sem reparo --> X(["🗑️ Descartada"])
-  classDef ok fill:#F5C518,stroke:#0a0a0a,color:#0a0a0a,font-weight:bold
-  class E ok
-```
+<img src="assets/fluxo-excecoes.svg" alt="Fluxo da peça com exceções: devolver, defeito, manutenção, consertada, volta à origem e sem reparo" width="100%">
 
 <br>
 
@@ -173,22 +162,7 @@ As regras valem **dentro do banco de dados** (Row Level Security e funções do 
 
 ## 🧱 Arquitetura
 
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'primaryColor':'#1b1b1b','primaryTextColor':'#ffffff','primaryBorderColor':'#F5C518','lineColor':'#8a8a8a','fontFamily':'Inter, Segoe UI, sans-serif'}}}%%
-flowchart LR
-  U["👤 Navegador<br/>HTML · CSS · JS puros"]
-  CF["☁️ Cloudflare<br/>serve o site estático"]
-  AU["🔑 Supabase Auth<br/>login e sessão"]
-  PG[("🐘 Postgres<br/>RLS + funções")]
-  EF["⚡ Edge Function<br/>logar-como"]
-
-  CF -- "index.html · script.js" --> U
-  U -- "login" --> AU
-  U -- "consultas + RPC" --> PG
-  AU -. "identidade (JWT)" .-> PG
-  U -. "Logar como" .-> EF
-  EF -- "service_role<br/>só no servidor" --> AU
-```
+<img src="assets/arquitetura.svg" alt="Arquitetura: Cloudflare serve o site, o navegador fala com Supabase Auth e Postgres, e a Edge Function logar-como usa a service_role só no servidor" width="100%">
 
 | | |
 |---|---|

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400" role="img" aria-label="Fluxo da peça com exceções: devolver, defeito, manutenção, consertada, volta à origem e sem reparo">
+<defs><linearGradient id="y" x1="0" x2="1"><stop offset="0" stop-color="#F5C518"/><stop offset="1" stop-color="#FFE082"/></linearGradient>
+<pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#161616" stroke-width="1"/></pattern>
+<marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#6a6a6a"/></marker>
+<clipPath id="card"><rect width="1200" height="400" rx="18"/></clipPath></defs>
+<g clip-path="url(#card)"><rect width="1200" height="400" fill="#0a0a0a"/><rect width="1200" height="400" fill="url(#g)"/>
+<path d="M200 110H250" stroke="#5a5a5a" stroke-width="3" fill="none" marker-end="url(#ar)"></path>
+<path d="M420 110H470" stroke="#5a5a5a" stroke-width="3" fill="none" marker-end="url(#ar)"></path>
+<path d="M670 110H745" stroke="#5a5a5a" stroke-width="3" fill="none" marker-end="url(#ar)"></path>
+<path d="M915 110H965" stroke="#5a5a5a" stroke-width="3" fill="none" marker-end="url(#ar)"></path>
+<path d="M830 82C830 20 570 20 570 82" stroke="#5a5a5a" stroke-width="3" fill="none" marker-end="url(#ar)"></path>
+<text x="700" y="34" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="14" font-weight="600" fill="#d8d8d8" paint-order="stroke" stroke="#0a0a0a" stroke-width="6" stroke-linejoin="round">devolver</text>
+<path d="M795 138V272" stroke="#5a5a5a" stroke-width="3" fill="none" marker-end="url(#ar)"></path>
+<text x="787" y="212" text-anchor="end" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="14" font-weight="600" fill="#d8d8d8" paint-order="stroke" stroke="#0a0a0a" stroke-width="6" stroke-linejoin="round">defeito</text>
+<path d="M865 272V138" stroke="#5a5a5a" stroke-width="3" fill="none" marker-end="url(#ar)"></path>
+<text x="873" y="212" text-anchor="start" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="14" font-weight="600" fill="#d8d8d8" paint-order="stroke" stroke="#0a0a0a" stroke-width="6" stroke-linejoin="round">volta à origem</text>
+<path d="M700 310C610 310 570 260 570 144" stroke="#5a5a5a" stroke-width="3" fill="none" marker-end="url(#ar)"></path>
+<text x="590" y="300" text-anchor="end" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="14" font-weight="600" fill="#d8d8d8" paint-order="stroke" stroke="#0a0a0a" stroke-width="6" stroke-linejoin="round">consertada</text>
+<path d="M920 310H985" stroke="#5a5a5a" stroke-width="3" fill="none" marker-end="url(#ar)"></path>
+<text x="952" y="298" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="14" font-weight="600" fill="#d8d8d8" paint-order="stroke" stroke="#0a0a0a" stroke-width="6" stroke-linejoin="round">sem reparo</text>
+<circle r="6" fill="url(#y)" opacity="0"><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.01;0.3746;0.3846;1" dur="13s" begin="0s" repeatCount="indefinite"/><animateMotion dur="13s" begin="0s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;0.3846;1" path="M115 110H1050"/></circle>
+<circle r="6" fill="url(#y)" opacity="0"><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.01;0.1131;0.1231;1" dur="13s" begin="5.4s" repeatCount="indefinite"/><animateMotion dur="13s" begin="5.4s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;0.1231;1" path="M830 82C830 20 570 20 570 82"/></circle>
+<circle r="6" fill="url(#y)" opacity="0"><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.01;0.0823;0.0923;1" dur="13s" begin="7.2s" repeatCount="indefinite"/><animateMotion dur="13s" begin="7.2s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;0.0923;1" path="M795 138V272"/></circle>
+<circle r="6" fill="url(#y)" opacity="0"><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.01;0.1131;0.1231;1" dur="13s" begin="8.6s" repeatCount="indefinite"/><animateMotion dur="13s" begin="8.6s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;0.1231;1" path="M700 310C610 310 570 260 570 144"/></circle>
+<circle r="6" fill="url(#y)" opacity="0"><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.01;0.0823;0.0923;1" dur="13s" begin="10.4s" repeatCount="indefinite"/><animateMotion dur="13s" begin="10.4s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;0.0923;1" path="M865 272V138"/></circle>
+<circle r="6" fill="url(#y)" opacity="0"><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.01;0.0592;0.0692;1" dur="13s" begin="11.8s" repeatCount="indefinite"/><animateMotion dur="13s" begin="11.8s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;0.0692;1" path="M920 310H985"/></circle>
+<rect x="30" y="82" width="170" height="56" rx="28.0" fill="#111" stroke="#F5C518" stroke-width="2" stroke-opacity=".3"><animate attributeName="stroke-opacity" values=".15;1;.15;.15" keyTimes="0;.08;.2;1" dur="13s" begin="0.3s" repeatCount="indefinite"/></rect>
+<text x="115.0" y="117.0" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="20" font-weight="700" fill="#fff">Solicitada</text>
+<rect x="250" y="82" width="170" height="56" rx="28.0" fill="#111" stroke="#F5C518" stroke-width="2" stroke-opacity=".3"><animate attributeName="stroke-opacity" values=".15;1;.15;.15" keyTimes="0;.08;.2;1" dur="13s" begin="1.2s" repeatCount="indefinite"/></rect>
+<text x="335.0" y="117.0" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="20" font-weight="700" fill="#fff">Comprada</text>
+<rect x="470" y="82" width="200" height="56" rx="28.0" fill="#111" stroke="#F5C518" stroke-width="2" stroke-opacity=".3"><animate attributeName="stroke-opacity" values=".15;1;.15;.15" keyTimes="0;.08;.2;1" dur="13s" begin="2.2s" repeatCount="indefinite"/></rect>
+<text x="570.0" y="117.0" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="20" font-weight="700" fill="#fff">Estoque Central</text>
+<rect x="745" y="82" width="170" height="56" rx="28.0" fill="#111" stroke="#F5C518" stroke-width="2" stroke-opacity=".3"><animate attributeName="stroke-opacity" values=".15;1;.15;.15" keyTimes="0;.08;.2;1" dur="13s" begin="3.2s" repeatCount="indefinite"/></rect>
+<text x="830.0" y="117.0" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="20" font-weight="700" fill="#fff">Na loja</text>
+<rect x="965" y="82" width="170" height="56" rx="28.0" fill="url(#y)" stroke="#FFE082" stroke-width="2" stroke-opacity=".3"><animate attributeName="stroke-opacity" values=".15;1;.15;.15" keyTimes="0;.08;.2;1" dur="13s" begin="4.2s" repeatCount="indefinite"/></rect>
+<text x="1050.0" y="117.0" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="20" font-weight="700" fill="#0a0a0a">Utilizada</text>
+<rect x="700" y="282" width="200" height="56" rx="28.0" fill="#111" stroke="#F5C518" stroke-width="2" stroke-opacity=".3"><animate attributeName="stroke-opacity" values=".15;1;.15;.15" keyTimes="0;.08;.2;1" dur="13s" begin="8.0s" repeatCount="indefinite"/></rect>
+<text x="800.0" y="317.0" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="20" font-weight="700" fill="#fff">Em manutenção</text>
+<rect x="985" y="282" width="150" height="56" rx="28.0" fill="#111" stroke="#F5C518" stroke-width="2" stroke-opacity=".3"><animate attributeName="stroke-opacity" values=".15;1;.15;.15" keyTimes="0;.08;.2;1" dur="13s" begin="12s" repeatCount="indefinite"/></rect>
+<text x="1060.0" y="317.0" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="20" font-weight="700" fill="#fff">Descartada</text>
+<text x="600" y="372" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="15" fill="#8a8a8a">tudo o que acontece com a peça fica registrado no Histórico</text>
+</g></svg>
