@@ -42,7 +42,7 @@ async function load(){
   S.tc=tc.map(x=>({id:x.id,d:x.closing_date,store:x.store_id,os:x.os_number,cu:x.customer,sv:x.service,pc:+x.part_cost,ch:+x.charged,sup:x.supplier,by:x.created_by_name,uid:x.created_by,t:Date.parse(x.created_at)}));
   S.cr=cr.map(x=>({id:x.id,os:x.os_number,store:x.store_id,st:x.status,by:x.created_by_name,ub:x.updated_by_name,ut:Date.parse(x.updated_at),t:Date.parse(x.created_at)}))}
  if(me.admin){S.sup=ok(await sb.from('suppliers').select('*').order('name'));
-  S.users=ok(await sb.from('profiles').select('*').order('name')).map(x=>({id:x.id,n:x.name,email:x.email,store:x.store_id,adm:x.is_admin,tech:x.is_technician,on:x.active}))}}
+  S.users=ok(await sb.from('profiles').select('*').order('name')).map(x=>({id:x.id,n:x.name,email:x.email,store:x.store_id,adm:x.is_admin,dev:!!x.is_dev,tech:x.is_technician,on:x.active}))}}
 
 /* ---------- UI utilitários ---------- */
 function cl(){$('#m').className='ov'}
@@ -79,7 +79,7 @@ async function lgin(e){e.preventDefault();const b=e.target.querySelector('.pr');
 async function enter(){booting=true;render();try{const{data:{session}}=await sb.auth.getSession();if(!session)return;
  const{data:p,error}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();if(error)throw error;
  if(!p||!p.active){await sb.auth.signOut();toast('Usuário sem acesso ou desativado.');return}
- me={id:p.id,name:p.name,admin:p.is_admin,store:p.store_id,view:null,tech:!!p.is_technician};tab='dash';await load()}catch(e){toast(e.message||String(e))}finally{booting=false;render()}}
+ me={id:p.id,name:p.name,admin:p.is_admin,dev:!!p.is_dev,store:p.store_id,view:null,tech:!!p.is_technician};tab='dash';await load()}catch(e){toast(e.message||String(e))}finally{booting=false;render()}}
 async function logout(){const imp=!!AS;AS=null;await sb.auth.signOut(imp?{scope:'local'}:undefined);me=null;booting=false;S={cu:[],st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[],tc:[],cr:[]};render()}
 
 /* ---------- Páginas ---------- */
@@ -341,15 +341,15 @@ function trForm(){if(!S.cat.length)return toast('Nenhuma peça cadastrada ainda.
 
 /* Usuários: o admin cria, redefine senha, troca de loja e ativa/desativa (sem precisar pedir) */
 function pUsr(){return `<h1>Usuários</h1><p class="mu sub">Crie o acesso de funcionários, técnicos e administradores. Funcionários e técnicos entram só na própria loja e só movimentam o que é dela. Administradores veem e gerenciam todas as unidades.</p><div class=bar><button class=pr onclick="usrForm()">+ Novo usuário</button></div>
-${tbl(['Nome','E-mail','Acesso','Unidade','Status','Ações'],S.users.map(u=>[esc(u.n),esc(u.email),u.adm?'Administrador':u.tech?'Técnico':'Funcionário',u.adm?'Todas':esc(sn(u.store)),`<span class="tg ${u.on?'g':'r'}">${u.on?'Ativo':'Inativo'}</span>`,`<button onclick="usrEdit('${u.id}')">Editar</button>`+(u.id!==me.id&&!u.adm&&u.on&&!AS?`<button onclick="usrAs('${u.id}')">Logar como</button>`:'')]))}`}
-function usrForm(){modal('Novo usuário',[{n:'n',l:'Nome do funcionário',r:1},{n:'e',l:'E-mail (será o login)',t:'email',r:1},{n:'s',l:'Unidade (loja)',o:lopt()},{n:'r',l:'Perfil',o:[['f','Funcionário (vendedor)'],['t','Técnico'],['a','Administrador (acesso total)']]},{n:'p',l:'Senha (mín. 6 caracteres)',t:'password',r:1}],
+${tbl(['Nome','E-mail','Acesso','Unidade','Status','Ações'],S.users.map(u=>[esc(u.n),esc(u.email),u.dev?'Desenvolvedor':u.adm?'Administrador':u.tech?'Técnico':'Funcionário',u.adm?'Todas':esc(sn(u.store)),`<span class="tg ${u.on?'g':'r'}">${u.on?'Ativo':'Inativo'}</span>`,`<button onclick="usrEdit('${u.id}')">Editar</button>`+(u.id!==me.id&&!u.adm&&u.on&&!AS?`<button onclick="usrAs('${u.id}')">Logar como</button>`:'')]))}`}
+function usrForm(){modal('Novo usuário',[{n:'n',l:'Nome do funcionário',r:1},{n:'e',l:'E-mail (será o login)',t:'email',r:1},{n:'s',l:'Unidade (loja)',o:lopt()},{n:'r',l:'Perfil',o:[['f','Funcionário (vendedor)'],['t','Técnico'],['a','Administrador (acesso total)'],...(me.dev?[['d','Desenvolvedor (acesso total + gerencia devs)']]:[])]},{n:'p',l:'Senha (mín. 6 caracteres)',t:'password',r:1}],
  async d=>{const id=await rpc('admin_create_user',{p_email:d.e,p_password:d.p,p_name:d.n,p_store:+d.s});if(d.r==='t')await rpc('admin_set_technician',{p_user:id,p_on:true});
-  if(d.r==='a'){try{await rpc('admin_set_admin',{p_user:id,p_on:true})}catch(e){toast('Usuário criado, mas não foi possível torná-lo administrador: '+e.message+' Use o botão "Tornar admin" na lista.')}}})}
+  if(d.r==='a'||d.r==='d'){try{await rpc(d.r==='d'?'admin_set_dev':'admin_set_admin',{p_user:id,p_on:true})}catch(e){toast('Usuário criado, mas não foi possível torná-lo '+(d.r==='d'?'dev':'administrador')+': '+e.message+' Use o botão "'+(d.r==='d'?'Tornar dev':'Tornar admin')+'" na lista.')}}})}
 function usrAdm(id){const u=S.users.find(x=>x.id===id);if(!u)return;
  ask(u.adm?'Remover administrador':'Tornar administrador',u.adm?u.n+' deixa de ser administrador e passa a ser funcionário da primeira loja (depois você pode trocar a unidade em Editar).':u.n+' passa a ter acesso total: todas as lojas, estoque central, usuários e exclusões.',()=>rpc('admin_set_admin',{p_user:id,p_on:!u.adm}),'Confirmar')}
 function usrEdit(id){const u=S.users.find(x=>x.id===id);if(!u)return;const self=u.id===me.id,B=(f,t,c)=>`<button${c?' class='+c:''} onclick="cl();${f}('${id}')">${t}</button>`;
- $('#m').innerHTML=`<div class=md><h3>Editar — ${esc(u.n)}</h3><p class=mu style="margin:4px 0 0">${esc(u.email)} · ${u.adm?'Administrador':u.tech?'Técnico':'Funcionário'}${u.adm?'':' · '+esc(sn(u.store))}</p>
- <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">${B('usrPass','Redefinir senha')}${self?'':B('usrAdm',u.adm?'Remover admin':'Tornar admin')}${u.adm?'':B('usrTec',u.tech?'Remover técnico':'Tornar técnico')+B('usrStore','Trocar loja')+B('usrTog',u.on?'Desativar':'Ativar')}${self?'':B('usrDel','Excluir usuário','dg')}<button onclick=cl()>Fechar</button></div></div>`;$('#m').className='ov on'}
+ $('#m').innerHTML=`<div class=md><h3>Editar — ${esc(u.n)}</h3><p class=mu style="margin:4px 0 0">${esc(u.email)} · ${u.dev?'Desenvolvedor':u.adm?'Administrador':u.tech?'Técnico':'Funcionário'}${u.adm?'':' · '+esc(sn(u.store))}</p>
+ <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">${u.dev&&!me.dev?'<p class=mu style="margin:0">Somente o desenvolvedor pode alterar este usuário.</p>':B('usrPass','Redefinir senha')+(self?'':B('usrAdm',u.adm?'Remover admin':'Tornar admin'))+(me.dev&&!self?B('usrDev',u.dev?'Remover dev':'Tornar dev'):'')}${u.adm?'':B('usrTec',u.tech?'Remover técnico':'Tornar técnico')+B('usrStore','Trocar loja')+B('usrTog',u.on?'Desativar':'Ativar')}${self||(u.dev&&!me.dev)?'':B('usrDel','Excluir usuário','dg')}<button onclick=cl()>Fechar</button></div></div>`;$('#m').className='ov on'}
 function usrDel(id){const u=S.users.find(x=>x.id===id);if(!u)return;
  ask('Excluir usuário','Excluir o acesso de '+u.n+' ('+u.email+')?\nEle não vai mais conseguir entrar. Se tiver histórico no sistema, use Desativar em vez de excluir. Esta ação não pode ser desfeita.',()=>rpc('admin_delete_user',{p_user:id}))}
 /* Logar como outro usuário (só admin; a troca é feita por uma Edge Function, sem digitar senha) */
@@ -365,6 +365,8 @@ function usrAs(id){const u=S.users.find(x=>x.id===id);if(!u)return;
 async function backAdmin(){if(!AS)return;const a=AS;AS=null;booting=true;render();
  try{await sb.auth.signOut({scope:'local'});const{error}=await sb.auth.setSession(a);if(error)throw error;await enter()}
  catch(e){booting=false;me=null;try{await sb.auth.signOut({scope:'local'})}catch(_){}render();toast('Sua sessão de administrador expirou. Entre novamente.')}}
+function usrDev(id){const u=S.users.find(x=>x.id===id);if(!u)return;
+ ask(u.dev?'Remover dev':'Tornar dev',u.dev?u.n+' deixa de ser dev, mas continua administrador.':u.n+' passa a ser dev: acesso total de administrador, e só devs podem alterar, redefinir senha ou excluir outro dev.',()=>rpc('admin_set_dev',{p_user:id,p_on:!u.dev}),'Confirmar')}
 function usrTec(id){const u=S.users.find(x=>x.id===id);run(()=>rpc('admin_set_technician',{p_user:id,p_on:!u.tech}))}
 function usrPass(id){const u=S.users.find(x=>x.id===id);modal('Nova senha de '+esc(u.n),[{n:'p',l:'Nova senha (mín. 6 caracteres)',t:'password',r:1}],d=>rpc('admin_set_password',{p_user:id,p_password:d.p}))}
 function usrStore(id){const u=S.users.find(x=>x.id===id);modal('Trocar loja de '+esc(u.n),[{n:'s',l:'Nova loja',v:u.store,o:lopt()}],d=>rpc('admin_set_store',{p_user:id,p_store:+d.s}))}
@@ -418,7 +420,7 @@ function render(){
 
  ${me.admin?`<label style="padding:8px 12px;margin:6px 0">${ic('eye')} Ver unidade<select onchange="me.view=this.value===''?null:+this.value;render()"><option value="">Todas as unidades</option>${LJ().map(s=>`<option value=${s.id} ${me.view===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}</select></label>`:''}
  <a onclick="run(async()=>{})">${ic('refresh')} Atualizar dados</a>
- <div class=me><b>${esc(me.name)}</b>${me.admin?'Administrador · todas as lojas':(me.tech?'Técnico · ':'')+esc(sn(me.store))}<br><a style="padding:4px 0;display:inline-block;color:var(--a)" onclick="logout()">Sair</a></div></aside><main>${AS?`<div class=tg style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px">${ic('eye')} Você está logado como <b>${esc(me.name)}</b><button class=pr onclick="backAdmin()">Voltar para minha conta</button></div>`:''}${me.admin&&me.view!=null?`<p class=tg style="display:inline-block;margin-bottom:12px">${ic('eye')} Visualizando: ${esc(sn(me.view))}</p>`:''}${P[tab]()}</main>`;
+ <div class=me><b>${esc(me.name)}</b>${me.admin?(me.dev?'Desenvolvedor':'Administrador')+' · todas as lojas':(me.tech?'Técnico · ':'')+esc(sn(me.store))}<br><a style="padding:4px 0;display:inline-block;color:var(--a)" onclick="logout()">Sair</a></div></aside><main>${AS?`<div class=tg style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px">${ic('eye')} Você está logado como <b>${esc(me.name)}</b><button class=pr onclick="backAdmin()">Voltar para minha conta</button></div>`:''}${me.admin&&me.view!=null?`<p class=tg style="display:inline-block;margin-bottom:12px">${ic('eye')} Visualizando: ${esc(sn(me.view))}</p>`:''}${P[tab]()}</main>`;
  const as=document.querySelector('aside');if(as)as.scrollTop=sy}
 
 /* ---------- Início ---------- */
