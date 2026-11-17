@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="1200" height="420" role="img" aria-label="Manutenção de manetes: a manete chega da loja de origem, o técnico atualiza o status e todos acompanham">
+<defs><linearGradient id="y" x1="0" x2="1"><stop offset="0" stop-color="#F5C518"/><stop offset="1" stop-color="#FFE082"/></linearGradient>
+<pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#161616" stroke-width="1"/></pattern>
+<marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5a5a5a"/></marker>
+<clipPath id="card"><rect width="1200" height="420" rx="18"/></clipPath></defs>
+<g clip-path="url(#card)"><rect width="1200" height="420" fill="#0a0a0a"/><rect width="1200" height="420" fill="url(#g)"/>
+<text x="600" y="48" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="28" font-weight="800" fill="#fff">Manutenção de Manetes</text>
+<text x="600" y="74" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="15" fill="#8a8a8a">da loja ao reparo, com o status à vista de todos</text>
+<g>
+<rect x="60" y="150" width="240" height="100" rx="16" fill="#111" stroke="#3a3a3a" stroke-width="2"/>
+<text x="180" y="190" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="22" font-weight="700" fill="#fff">Loja de origem</text>
+<text x="180" y="214" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="14" fill="#8a8a8a">Buritis, Castelo…</text>
+<text x="180" y="234" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="14" fill="#8a8a8a">chega com o nº da OS</text></g>
+<path d="M300 200H474" stroke="#5a5a5a" stroke-width="3" stroke-dasharray="6 8" fill="none" marker-end="url(#ar)"><animate attributeName="stroke-dashoffset" values="28;0" dur="1.6s" repeatCount="indefinite"/></path>
+<g>
+<rect x="480" y="150" width="240" height="100" rx="16" fill="#111" stroke="#F5C518" stroke-width="2"><animate attributeName="stroke-opacity" values=".35;1;.35" dur="3s" repeatCount="indefinite"/></rect>
+<text x="600" y="190" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="22" font-weight="700" fill="#F5C518">Técnico</text>
+<text x="600" y="214" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="14" fill="#cfcfcf">cadastra, edita e</text>
+<text x="600" y="234" text-anchor="middle" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="14" fill="#cfcfcf">atualiza o status</text></g>
+<circle r="6" fill="url(#y)"><animateMotion dur="3s" repeatCount="indefinite" path="M300 200H480"/></circle>
+<path d="M720 200C800 200 800 120 880 120" stroke="#2f2f2f" stroke-width="3" fill="none"/>
+<rect x="880" y="95" width="280" height="50" rx="14" fill="#111" stroke="#F5A623" stroke-width="2" stroke-opacity=".25"><animate attributeName="stroke-opacity" values=".25;1;.25;.25" keyTimes="0;.1;.25;1" dur="12s" begin="0.6s" repeatCount="indefinite"/></rect>
+<circle cx="906" cy="120" r="6" fill="#F5A623"/>
+<text x="926" y="126" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="17" font-weight="600" fill="#fff">Aguardando peças</text>
+<circle r="6" fill="url(#y)" opacity="0"><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.02;.2;.22;1" dur="12s" begin="0s" repeatCount="indefinite"/><animateMotion dur="12s" begin="0s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;.22;1" path="M720 200C800 200 800 120 880 120"/></circle>
+<path d="M720 200C800 200 800 190 880 190" stroke="#2f2f2f" stroke-width="3" fill="none"/>
+<rect x="880" y="165" width="280" height="50" rx="14" fill="#111" stroke="#ef5350" stroke-width="2" stroke-opacity=".25"><animate attributeName="stroke-opacity" values=".25;1;.25;.25" keyTimes="0;.1;.25;1" dur="12s" begin="3.6s" repeatCount="indefinite"/></rect>
+<circle cx="906" cy="190" r="6" fill="#ef5350"/>
+<text x="926" y="196" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="17" font-weight="600" fill="#fff">Sem reparo</text>
+<circle r="6" fill="url(#y)" opacity="0"><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.02;.2;.22;1" dur="12s" begin="3s" repeatCount="indefinite"/><animateMotion dur="12s" begin="3s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;.22;1" path="M720 200C800 200 800 190 880 190"/></circle>
+<path d="M720 200C800 200 800 260 880 260" stroke="#2f2f2f" stroke-width="3" fill="none"/>
+<rect x="880" y="235" width="280" height="50" rx="14" fill="#111" stroke="#4caf50" stroke-width="2" stroke-opacity=".25"><animate attributeName="stroke-opacity" values=".25;1;.25;.25" keyTimes="0;.1;.25;1" dur="12s" begin="6.6s" repeatCount="indefinite"/></rect>
+<circle cx="906" cy="260" r="6" fill="#4caf50"/>
+<text x="926" y="266" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="17" font-weight="600" fill="#fff">Pronta</text>
+<circle r="6" fill="url(#y)" opacity="0"><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.02;.2;.22;1" dur="12s" begin="6s" repeatCount="indefinite"/><animateMotion dur="12s" begin="6s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;.22;1" path="M720 200C800 200 800 260 880 260"/></circle>
+<path d="M720 200C800 200 800 330 880 330" stroke="#2f2f2f" stroke-width="3" fill="none"/>
+<rect x="880" y="305" width="280" height="50" rx="14" fill="#111" stroke="#9a9a9a" stroke-width="2" stroke-opacity=".25"><animate attributeName="stroke-opacity" values=".25;1;.25;.25" keyTimes="0;.1;.25;1" dur="12s" begin="9.6s" repeatCount="indefinite"/></rect>
+<circle cx="906" cy="330" r="6" fill="#9a9a9a"/>
+<text x="926" y="336" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="17" font-weight="600" fill="#fff">Enviada para reparo em placa</text>
+<circle r="6" fill="url(#y)" opacity="0"><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.02;.2;.22;1" dur="12s" begin="9s" repeatCount="indefinite"/><animateMotion dur="12s" begin="9s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;.22;1" path="M720 200C800 200 800 330 880 330"/></circle>
+<g>
+<rect x="60" y="330" width="250" height="44" rx="22" fill="#111" stroke="#3a3a3a" stroke-width="2"/><circle cx="86" cy="352" r="6" fill="#4caf50"/>
+<text x="104" y="358" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="16" font-weight="600" fill="#fff">Todos veem os status</text>
+<rect x="330" y="330" width="250" height="44" rx="22" fill="#111" stroke="#3a3a3a" stroke-width="2"/><circle cx="356" cy="352" r="6" fill="#F5C518"/>
+<text x="374" y="358" font-family="'Outfit','Segoe UI',system-ui,-apple-system,Arial,sans-serif" font-size="16" font-weight="600" fill="#fff">Só o técnico atualiza</text></g>
+</g></svg>

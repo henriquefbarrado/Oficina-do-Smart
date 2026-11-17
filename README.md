@@ -12,7 +12,7 @@
 
 ### Do pedido ao balcão, com rastro de cada peça.
 
-**[Visual](#-visual)** · **[Fluxo](#-fluxo-da-peça)** · **[Funcionalidades](#-funcionalidades)** · **[Planilhas](#-importar-e-exportar-planilhas)** · **[Acesso](#-regras-de-acesso)** · **[Arquitetura](#-arquitetura)** · **[Como colocar no ar](#-como-colocar-no-ar)** · **[Segurança](#-segurança)**
+**[Manetes](#-fluxo-da-manete)** · **[Fluxo](#-fluxo-da-peça)** · **[Funcionalidades](#-funcionalidades)** · **[Planilhas](#-importar-e-exportar-planilhas)** · **[Acesso](#-regras-de-acesso)** · **[Arquitetura](#-arquitetura)** · **[Como colocar no ar](#-como-colocar-no-ar)** · **[Segurança](#-segurança)**
 
 </div>
 
@@ -28,11 +28,13 @@ Cada peça física tem **código próprio** (ex.: `PED-0001-01`) e um **rastro c
 
 <br>
 
-## 📸 Visual
+## 🎮 Fluxo da manete
 
-Tema preto e amarelo, tabelas rápidas e tudo a um clique. Aqui, a aba **Estoques**: quantidade por peça em cada local, com **cadastro, exclusão, importação e exportação** de planilha.
+A manete chega da loja de origem com o número da OS, o **técnico** cadastra e atualiza o status, e **todos acompanham** em **Manutenção de Manetes**.
 
-<img src="assets/estoques.png" alt="Tela de Estoques: peças por local com botões Cadastrar peça, Editar, Importar planilha e Exportar planilha" width="100%">
+<img src="assets/manete.svg" alt="A manete chega da loja de origem, o técnico atualiza o status e todos acompanham" width="100%">
+
+> **Novidade:** perfil **Técnico**, aba **Fechamento Técnico** e **Manutenção de Manetes** (cadastrar, editar, atualizar status e excluir).
 
 <br>
 
@@ -235,6 +237,7 @@ backend/edge-function/           função "logar-como" (Supabase Edge Function)
 | `migracao_visibilidade.sql` | Todo usuário novo enxerga os dados da própria loja e o histórico do central |
 | `migracao_excluir_usuario.sql` | Administrador exclui usuários |
 | `migracao_excluir_peca.sql` | Botão **Excluir** da aba Estoques (a peça sai do catálogo e das lojas; o histórico fica) |
+| `migracao_tecnico.sql` | Perfil de técnico, **Fechamento Técnico** e **Manutenção de Manetes** (cadastrar, editar, atualizar status e excluir) |
 
 </details>
 
