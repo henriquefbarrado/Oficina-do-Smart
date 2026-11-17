@@ -1,14 +1,8 @@
 backend
-web
 assets
 *.sql
 .git
 .wrangler
 README.md
-app.js
-app.css
-env.example.js
-supabase.js
-gestpecas.html
 vercel.json
 wrangler.jsonc

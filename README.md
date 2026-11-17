@@ -175,7 +175,6 @@ As regras valem **dentro do banco de dados** (Row Level Security e funções do 
 
 <img src="assets/estrutura.svg" alt="Estrutura do projeto: arquivos do site, hospedagem e banco de dados" width="100%">
 
-> `gestpecas.html`, `app.js`, `app.css`, `supabase.js` e as pastas `web/` e `backend/` (exceto `edge-function/`) são de versões antigas e não são usados pelo site.
 
 <br>
 
@@ -318,7 +317,7 @@ As linhas que já foram lançadas ficam lançadas, e o resultado final lista cad
 
 - A **segurança está no banco** (RLS e funções do Postgres). A `publishable/anon` no `config.js` é feita para ser pública; o que protege os dados são as regras do banco.
 - **Não deixe o `supabase.sql` em repositório público.** Ele contém a senha inicial do administrador. O `.gitignore` já o bloqueia; guarde-o fora do GitHub.
-- Mantenha o `.assetsignore` para a Cloudflare **não publicar** arquivos que o site não usa (`*.sql`, `backend/`, `web/` etc.).
+- Mantenha o `.assetsignore` para a Cloudflare **não publicar** arquivos que o site não usa (`*.sql`, `backend/` etc.).
 - Nunca versione tokens de API, a chave `service_role` ou senhas.
 
 <br>
