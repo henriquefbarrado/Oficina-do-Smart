@@ -126,3 +126,23 @@ grant select on public.activity_log to authenticated;
 revoke all on function public._lg_val(text, jsonb), public._activity_trg() from public, anon, authenticated;
 
 notify pgrst, 'reload schema';
+
+-- 6) ÚLTIMO LOGIN DOS USUÁRIOS (só o DEV; aparece em Usuários) ---------
+-- last_sign_in_at vem do Supabase Auth. O "Logar como" também gera um login do alvo,
+-- então devolvemos junto a última vez que alguém usou o "Logar como" nele (audit_log).
+create or replace function public.dev_last_logins()
+returns table(user_id uuid, last_sign_in_at timestamptz, last_impersonated_at timestamptz)
+language plpgsql stable security definer set search_path = public, auth, pg_temp as $$
+begin
+  perform public._need(public.is_dev(), 'Somente o desenvolvedor vê o último login.');
+  return query
+    select u.id, u.last_sign_in_at,
+           (select max(a.at) from public.audit_log a where a.action = 'impersonate' and a.target_id = u.id)
+    from auth.users u
+    join public.profiles p on p.id = u.id;
+end $$;
+
+revoke all on function public.dev_last_logins() from public, anon;
+grant execute on function public.dev_last_logins() to authenticated;
+
+notify pgrst, 'reload schema';
