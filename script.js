@@ -53,7 +53,7 @@ async function load(){
  {const[tc,cr]=await Promise.all([all(()=>sb.from('tech_closings').select('*').order('closing_date',{ascending:false}).order('id',{ascending:false})).catch(()=>[]),
    all(()=>sb.from('controller_repairs').select('*').order('created_at',{ascending:false}).order('id',{ascending:false})).catch(()=>[])]);
   S.tc=tc.map(x=>({id:x.id,d:x.closing_date,store:x.store_id,os:x.os_number,cu:x.customer,sv:x.service,pc:+x.part_cost,ch:+x.charged,sup:x.supplier,by:x.created_by_name,uid:x.created_by,t:Date.parse(x.created_at)}));
-  S.cr=cr.map(x=>({id:x.id,os:x.os_number,store:x.store_id,st:x.status,by:x.created_by_name,ub:x.updated_by_name,ut:Date.parse(x.updated_at),t:Date.parse(x.created_at)}))}
+  S.cr=cr.map(x=>({id:x.id,os:x.os_number,store:x.store_id,st:x.status,cb:x.created_by,by:x.created_by_name,ub:x.updated_by_name,ut:Date.parse(x.updated_at),t:Date.parse(x.created_at)}))}
  {const gr=await all(()=>sb.from('glass_repairs').select('*').order('created_at',{ascending:false}).order('id',{ascending:false})).catch(()=>[]);
   S.gr=gr.map(x=>({id:x.id,os:x.os_number,store:x.store_id,dev:x.device,st:x.status,nt:x.note,by:x.created_by_name,ub:x.updated_by_name,ut:Date.parse(x.updated_at),t:Date.parse(x.created_at)}))}
  if(me.admin){S.sup=ok(await sb.from('suppliers').select('*').order('name'));
@@ -439,11 +439,13 @@ function fecForm(){
 const MS=['Aguardando peças','Sem reparo','Pronta','Enviada para reparo em placa'];
 let MF='';
 const mbadge=s=>`<span class="tg ${s==='Aguardando peças'?'w':s==='Sem reparo'?'r':s==='Pronta'?'g':''}">${esc(s)}</span>`;
+/* Editar/Excluir manete: só quem cadastrou (técnico) ou o administrador */
+const manOwn=x=>me.admin||(me.tech&&x.cb===me.id);
 function pMan(){const l=S.cr.filter(x=>!MF||x.st===MF);
  return `<h1>Manutenção de Manetes</h1><p class="mu sub">Acompanhe o status de cada manete. Todos visualizam; somente o técnico atualiza.</p>
 <div class=bar>${me.tech?`<button class=pr onclick="manForm()">+ Nova manete</button>`:''}<select onchange="MF=this.value;render()"><option value="">Todos os status</option>${MS.map(s=>`<option ${MF===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div>
 <div class=cards>${MS.map(s=>`<div class=card><small>${ic('gamepad')} ${esc(s)}</small><strong>${S.cr.filter(x=>x.st===s).length}</strong></div>`).join('')}</div>
-${tbl(['OS','Loja de origem','Status','Cadastrado em','Última atualização',...(me.tech?['Ações']:[])],l.map(x=>[esc(x.os),esc(sn(x.store)),mbadge(x.st),dt(x.t),dt(x.ut)+' · '+esc(x.ub),...(me.tech?[`<button onclick="manSt(${x.id})">Atualizar status</button><button onclick="manEdit(${x.id})">Editar</button><button class=dg onclick="manDel(${x.id})">Excluir</button>`]:[])]))}`}
+${tbl(['OS','Loja de origem','Status','Cadastrado em','Última atualização',...(me.tech||me.admin?['Ações']:[])],l.map(x=>[esc(x.os),esc(sn(x.store)),mbadge(x.st),dt(x.t),dt(x.ut)+' · '+esc(x.ub),...(me.tech||me.admin?[(me.tech?`<button onclick="manSt(${x.id})">Atualizar status</button>`:'')+(manOwn(x)?`<button onclick="manEdit(${x.id})">Editar</button><button class=dg onclick="manDel(${x.id})">Excluir</button>`:'')]:[])]))}`}
 function manForm(){modal('Nova manete',[{n:'os',l:'Número da OS',r:1},{n:'s',l:'Loja de origem',o:lopt()},{n:'st',l:'Status',o:MS.map(x=>[x,x])}],
  d=>rpc('controller_new',{p_os:d.os,p_store:+d.s,p_status:d.st}))}
 function manEdit(id){const x=S.cr.find(v=>v.id===id);if(!x)return;
