@@ -141,6 +141,12 @@ label input,label select{margin-top:4px}
   background:radial-gradient(circle at 0 100%,transparent 6px,var(--a) 7px 9px,transparent 10px 14px,var(--a) 15px 17px,transparent 18px);animation:sig 2.4s ease-in-out infinite}
 @keyframes sig{0%,100%{opacity:.25}50%{opacity:1}}
 .lg h1{margin-bottom:2px}.lg p{margin-bottom:18px}.lg button{width:100%;padding:10px}
+.lg .pw{position:relative;display:block;margin-top:4px}
+.lg .pw input{margin-top:0;padding-right:42px}
+.lg .eye{position:absolute;top:50%;right:4px;transform:translateY(-50%);width:34px;height:30px;margin:0;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border:0;color:var(--m)}
+.lg .eye:hover{background:transparent;color:var(--a)}.lg .eye:active{transform:translateY(-50%)}
+.lg label.rm{display:flex;align-items:center;gap:8px;margin:2px 0 14px;cursor:pointer}
+.lg label.rm input{width:auto;margin:0;box-shadow:none;accent-color:var(--a);cursor:pointer}
 
 .trail{border-left:2px solid var(--a);padding-left:12px;margin:8px 0;font-size:13px}
 

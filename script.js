@@ -86,12 +86,24 @@ function csv(name,rows){if(!rows.length)return toast('Nada para exportar.');cons
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download=name+'.csv';a.click()}
 
 /* ---------- Login ---------- */
-function login(){return `<div class=lg><form onsubmit="lgin(event)"><h1>Oficina do Smart</h1><p class=mu>Gestão de peças, estoque e rastreabilidade</p>
-<label>E-mail<input id=le type=email autocomplete=username autocapitalize=off required></label><label>Senha<input id=lp type=password autocomplete=current-password required></label>
+/* Lembrar login: guarda só o e-mail neste navegador (a senha nunca é salva por aqui). */
+const LK='oficina_login_email';
+function lgGet(){try{return localStorage.getItem(LK)||''}catch(e){return ''}}
+function lgSet(v){try{v?localStorage.setItem(LK,v):localStorage.removeItem(LK)}catch(e){}}
+const EYE_ON='<svg viewBox="0 0 24 24" width=18 height=18 fill=none stroke=currentColor stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx=12 cy=12 r=3 /></svg>';
+const EYE_OFF='<svg viewBox="0 0 24 24" width=18 height=18 fill=none stroke=currentColor stroke-width=2 stroke-linecap=round stroke-linejoin=round><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19c-6.4 0-10-7-10-7a18.5 18.5 0 0 1 5.1-5.9M9.9 4.2A10.6 10.6 0 0 1 12 4c6.4 0 10 7 10 7a18.6 18.6 0 0 1-2.2 3.2M1 1l22 22"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+function verSenha(b){const i=$('#lp'),on=i.type==='password';i.type=on?'text':'password';
+ b.innerHTML=on?EYE_OFF:EYE_ON;b.setAttribute('aria-label',on?'Ocultar senha':'Mostrar senha');b.title=on?'Ocultar senha':'Mostrar senha';b.setAttribute('aria-pressed',on)}
+function login(){const sv=lgGet();return `<div class=lg><form onsubmit="lgin(event)"><h1>Oficina do Smart</h1><p class=mu>Gestão de peças, estoque e rastreabilidade</p>
+<label>E-mail<input id=le type=email autocomplete=username autocapitalize=off value="${esc(sv)}" required></label>
+<label>Senha<span class=pw><input id=lp type=password autocomplete=current-password required><button type=button class=eye onclick="verSenha(this)" aria-label="Mostrar senha" title="Mostrar senha" aria-pressed=false>${EYE_ON}</button></span></label>
+<label class=rm><input id=lr type=checkbox ${sv?'checked':''}><span>Lembrar meu e-mail neste dispositivo</span></label>
 <button class=pr>Entrar</button></form></div>`}
 async function lgin(e){e.preventDefault();const b=e.target.querySelector('.pr');b.disabled=true;
- const{error}=await sb.auth.signInWithPassword({email:$('#le').value.trim(),password:$('#lp').value});
+ const em=$('#le').value.trim();
+ const{error}=await sb.auth.signInWithPassword({email:em,password:$('#lp').value});
  if(error){b.disabled=false;return toast('E-mail ou senha incorretos.')}
+ lgSet($('#lr').checked?em:'');
  await enter()}
 async function enter(){D=D0();booting=true;render();try{const{data:{session}}=await sb.auth.getSession();if(!session)return;
  const{data:p,error}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();if(error)throw error;
