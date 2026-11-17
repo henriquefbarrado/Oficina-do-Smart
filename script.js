@@ -356,7 +356,7 @@ function pTra(){const t=me.admin?S.tr.filter(x=>me.view==null||x.from===me.view|
 ${tbl(['Código','Data','Origem','Destino','Peça','Qtd','Solicitante','OK da origem','Status','Ações'],t.map(x=>[x.id,dt(x.t),esc(sn(x.from)),esc(sn(x.to)),esc(x.pn),x.qty,esc(x.by),x.okBy?esc(x.okBy):'—',badge(x.status),act(x)]))}`}
 function ts(id,k){run(()=>rpc(k==='ok'?'transfer_ok':k==='rj'?'transfer_reject':'transfer_approve',{p_id:id}))}
 function trForm(){if(!S.cat.length)return toast('Nenhuma peça cadastrada ainda.');
- modal('Solicitar transferência',[...(me.admin?[{n:'t',l:'Loja de destino (quem recebe)',o:lopt()}]:[]),{n:'f',l:'Loja de origem (quem envia)',o:lopt().filter(x=>me.admin||x[0]!==me.store)},{n:'p',l:'Peça',o:S.cat.map(c=>[c.name+' '+c.model,c.name+' '+c.model])},{n:'qty',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'m',l:'Motivo'}],
+ modal('Solicitar transferência',[...(me.admin?[{n:'t',l:'Loja de destino (quem recebe)',o:lopt()}]:[]),{n:'f',l:'Loja de origem (quem envia)',o:[[CE,'Estoque Central'],...lopt().filter(x=>me.admin||x[0]!==me.store)]},{n:'p',l:'Peça',o:S.cat.map(c=>[c.name+' '+c.model,c.name+' '+c.model])},{n:'qty',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'m',l:'Motivo'}],
  d=>rpc('transfer_new',{p_from:+d.f,p_part:d.p,p_qty:+d.qty,p_to:me.admin?+d.t:null,p_note:d.m}))}
 
 /* Usuários: o admin cria, redefine senha, troca de loja e ativa/desativa (sem precisar pedir) */
