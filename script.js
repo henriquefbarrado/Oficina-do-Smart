@@ -11,7 +11,7 @@ const toast=m=>{const t=$('#t');t.textContent=m;t.className='on';setTimeout(()=>
 const nm=x=>x.prod+' '+x.model,sum=(a,f)=>a.reduce((t,x)=>t+f(x),0);
 const CE=0,TS=['Aguardando OK da loja de origem','Aguardando aprovação do admin','Concluída','Rejeitada'];
 let sb,me=null,booting=true,tab='dash',H={q:'',s:'',a:'',b:''};
-let S={cu:[],st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[],tc:[],cr:[]};
+let S={cu:[],st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[],tc:[],cr:[],gr:[]};
 const sn=id=>(S.st.find(s=>s.id===id)||{}).name||'—';
 const LJ=()=>S.st.filter(s=>s.kind==='loja'),lopt=()=>LJ().map(s=>[s.id,s.name]);
 const supOpt=()=>S.sup.map(s=>[s.id,s.name+(s.company?' ('+s.company+')':'')]);
@@ -54,6 +54,8 @@ async function load(){
    all(()=>sb.from('controller_repairs').select('*').order('created_at',{ascending:false}).order('id',{ascending:false})).catch(()=>[])]);
   S.tc=tc.map(x=>({id:x.id,d:x.closing_date,store:x.store_id,os:x.os_number,cu:x.customer,sv:x.service,pc:+x.part_cost,ch:+x.charged,sup:x.supplier,by:x.created_by_name,uid:x.created_by,t:Date.parse(x.created_at)}));
   S.cr=cr.map(x=>({id:x.id,os:x.os_number,store:x.store_id,st:x.status,by:x.created_by_name,ub:x.updated_by_name,ut:Date.parse(x.updated_at),t:Date.parse(x.created_at)}))}
+ {const gr=await all(()=>sb.from('glass_repairs').select('*').order('created_at',{ascending:false}).order('id',{ascending:false})).catch(()=>[]);
+  S.gr=gr.map(x=>({id:x.id,os:x.os_number,store:x.store_id,dev:x.device,st:x.status,nt:x.note,by:x.created_by_name,ub:x.updated_by_name,ut:Date.parse(x.updated_at),t:Date.parse(x.created_at)}))}
  if(me.admin){S.sup=ok(await sb.from('suppliers').select('*').order('name'));
   S.users=ok(await sb.from('profiles').select('*').order('name')).map(x=>({id:x.id,n:x.name,email:x.email,store:x.store_id,adm:x.is_admin,dev:!!x.is_dev,tech:x.is_technician,on:x.active}))}
  if(me.dev){try{const r=await sb.from('error_log').select('id',{count:'exact',head:true}).eq('resolved',false).eq('level','erro');D.ne=r.error?0:(r.count||0)}catch(_){D.ne=0}
@@ -94,8 +96,8 @@ async function lgin(e){e.preventDefault();const b=e.target.querySelector('.pr');
 async function enter(){D=D0();booting=true;render();try{const{data:{session}}=await sb.auth.getSession();if(!session)return;
  const{data:p,error}=await sb.from('profiles').select('*').eq('id',session.user.id).maybeSingle();if(error)throw error;
  if(!p||!p.active){await sb.auth.signOut();toast('Usuário sem acesso ou desativado.');return}
- me={id:p.id,name:p.name,admin:p.is_admin,dev:!!p.is_dev,store:p.store_id,view:null,tech:!!p.is_technician};tab='dash';await load()}catch(e){terr(e)}finally{booting=false;render()}}
-async function logout(){const imp=!!AS;AS=null;await sb.auth.signOut(imp?{scope:'local'}:undefined);me=null;booting=false;S={cu:[],st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[],tc:[],cr:[]};D=D0();render()}
+ me={id:p.id,name:p.name,admin:p.is_admin,dev:!!p.is_dev,store:p.store_id,view:null,tech:!!p.is_technician,glass:!!p.is_glass_editor};tab='dash';await load()}catch(e){terr(e)}finally{booting=false;render()}}
+async function logout(){const imp=!!AS;AS=null;await sb.auth.signOut(imp?{scope:'local'}:undefined);me=null;booting=false;S={cu:[],st:[],sup:[],cat:[],orders:[],units:[],hist:[],tr:[],users:[],mn:[],supv:[],tc:[],cr:[],gr:[]};D=D0();render()}
 
 /* ---------- Páginas ---------- */
 function pDash(){const{o,u,h}=vis(),p=v=>u.filter(x=>x.status===v).length;
@@ -136,7 +138,7 @@ const ALL_ST=['Solicitada','Recebida','Em estoque da unidade','Utilizada','Devol
 const AC={use:['Utilizar',inStock],ret:['Devolver',inStock],tr:['Enviar à loja',cAv],mnt:['Manutenção',u=>inStock(u)||cAv(u)],mn2:['Atualizar manut.',inM],ds:['Descartar',u=>cAv(u)||inM(u)],st:['Editar status',u=>me.admin||inStock(u)||u.status==='Utilizada']};
 function pUnits(){const T={pcs:['Controle de Peças',()=>1],ret:['Devoluções',u=>u.status==='Devolvida'],use:['Peças Utilizadas',u=>u.status==='Utilizada'],mnt:['Manutenção',inM]}[tab];
  const us=vis().u.filter(T[1]);
- return `<h1>${T[0]}</h1><p class="mu sub">Cada peça tem identificação própria, ligada ao pedido de origem. Clique no código para ver o rastro completo.</p>
+ return `<h1>${T[0]}</h1><p class="mu sub">Cada peça tem identificação própria, ligada ao pedido de origem. Clique no código para ver o rastro completo.</p>${tab==='pcs'&&me.tech?`<div class=bar><button class=pr onclick="partForm()">+ Cadastrar peça</button></div>`:''}
 <div class=cards><div class=card><small>${ic('package')} Peças</small><strong>${us.length}</strong></div><div class=card><small>${ic('banknote')} Valor total</small><strong>${brl(sum(us,u=>u.cost))}</strong></div></div>
 ${tbl(['Código','Peça','Pedido','Local','Status','Valor',...(tab==='ret'?[]:['Ações'])],us.map(u=>[`<a style="color:var(--a);cursor:pointer" onclick="trail('${u.id}')">${u.id}</a>`,esc(nm(u)),u.order,esc(sn(u.loc)),badge(u.status),brl(u.cost),...(tab==='ret'?[]:[Object.entries(AC).filter(([k,a])=>a[1](u)&&(me.admin||u.loc===me.store)).map(([k,a])=>`<button onclick="ua('${u.id}','${k}')">${a[0]}</button>`).join('')])]))}`}
 async function trail(id){const u=S.units.find(x=>x.id===id);try{const r=ok(await sb.from('unit_trail').select('*').eq('unit_id',id).order('at').order('id'));
@@ -427,7 +429,7 @@ function manSt(id){const x=S.cr.find(v=>v.id===id);if(!x)return;
  modal('Status da manete — OS '+esc(x.os),[{n:'st',l:'Status (atual: '+x.st+')',v:x.st,o:MS.map(s=>[s,s])}],d=>rpc('controller_set_status',{p_id:id,p_status:d.st}))}
 
 /* ---------- Painel do desenvolvedor (só dev): Auditoria, Diagnóstico, Backup e Erros ---------- */
-const DT=['aud','dia','bkp','err'],APP_V='20261117a';
+const DT=['aud','dia','bkp','err'],APP_V='20261117e';
 const D0=()=>({aud:[],err:[],diag:null,diagMs:0,miss:'',ld:false,ne:0});
 let D=D0();
 const AU={q:'',k:'',a:'',b:''},ER={lvl:'erro',res:'0',q:''};
@@ -476,7 +478,8 @@ function pDia(){return devWrap('Diagnóstico do sistema','Confere se o banco tem
   ['Técnicos que também são admin',v('tech_admin'),!v('tech_admin'),'Não deveria existir (regra tecnico_nao_admin).'],
   ['Devs que não são admin',v('dev_not_admin'),!v('dev_not_admin'),'O dev deve ser administrador também.'],
   ['Logins sem perfil',v('auth_no_profile'),!v('auth_no_profile'),'Existem no Auth, mas entram como "sem acesso". Crie o perfil ou exclua o login.'],
-  ['Erros pendentes (24 h)',v('errors_24h'),!v('errors_24h'),'Veja em Erros do sistema.']];
+  ['Erros pendentes (24 h)',v('errors_24h'),!v('errors_24h'),'Veja em Erros do sistema.'],
+  ...('glass_editors' in n?[['Quem edita Reparo em Vidro',v('glass_editors'),v('glass_editors')>0,'Ninguém tem a marca: nem a Paola consegue editar. Veja o fim do migracao_reparo_vidro.sql.']]:[])];
  return `<div class=bar><button class=pr onclick="go('dia')">${ic('refresh')} Executar de novo</button></div>
 <div class=cards><div class=card><small>${ic('check')} Verificações</small><strong>${ck.length}</strong></div><div class=card><small>${ic('circle-check')} Passaram</small><strong>${ck.length-bad.length}</strong></div><div class=card><small>${ic('activity')} Pendências</small><strong>${bad.length}</strong></div><div class=card><small>${ic('clock')} Resposta do banco</small><strong>${D.diagMs} ms</strong></div></div>
 ${bad.length?`<h3 style="margin-bottom:10px">Pendências</h3>${tbl(['Item','Tipo','Como corrigir'],bad.map(c=>[`<span class=mono>${esc(c.name)}</span>`,esc(c.grp),esc(fixTxt(c.fix))]))}`:`<div class=box style="margin-bottom:18px"><h3>Tudo certo</h3><p class=mu>As ${ck.length} verificações passaram.</p></div>`}
@@ -485,7 +488,7 @@ ${bad.length?`<h3 style="margin-bottom:10px">Pendências</h3>${tbl(['Item','Tipo
 <p class=mu style="max-width:75ch;line-height:1.55">O banco não enxerga a Edge Function <b>smooth-service</b> (Logar como). Se ela não foi republicada com o código novo de <code>backend/edge-function/logar-como.ts</code>, o botão funciona, mas o uso dele não aparece na Auditoria.</p>`})}
 
 /* --- Backup e dados --- */
-const BK=[['stores','Lojas'],['profiles','Usuarios'],['suppliers','Fornecedores'],['catalog','Catalogo'],['orders','Pedidos'],['units','Pecas'],['unit_trail','Rastro_das_pecas'],['history','Historico'],['transfers','Transferencias'],['maintenances','Manutencoes'],['tech_closings','Fechamento_tecnico'],['controller_repairs','Manetes'],['audit_log','Auditoria',1],['error_log','Erros',1]];
+const BK=[['stores','Lojas'],['profiles','Usuarios'],['suppliers','Fornecedores'],['catalog','Catalogo'],['orders','Pedidos'],['units','Pecas'],['unit_trail','Rastro_das_pecas'],['history','Historico'],['transfers','Transferencias'],['maintenances','Manutencoes'],['tech_closings','Fechamento_tecnico'],['controller_repairs','Manetes'],['glass_repairs','Reparo_em_vidro',1],['audit_log','Auditoria',1],['error_log','Erros',1]];
 const BKS={busy:false,msg:''};
 const bkMsg=m=>{BKS.msg=m;const e=$('#bkm');if(e)e.textContent=m};
 const bkBtn=on=>['#bk1','#bk2'].forEach(s=>{const b=$(s);if(b)b.disabled=on});
@@ -532,14 +535,50 @@ function pErr(){return devWrap('Erros do sistema','Tudo o que falhou na tela dos
 function errRes(id,on){run(()=>rpc('dev_error_resolve',{p_id:id,p_on:on}))}
 function errClear(){ask('Limpar erros resolvidos','Apaga de vez os erros marcados como resolvidos. Os pendentes ficam. Esta ação fica registrada na Auditoria.',()=>rpc('dev_error_clear',{p_days:0}),'Limpar')}
 
+/* ---------- Reparo em Vidro (todos veem; só a Paola cadastra, edita, atualiza e exclui) ---------- */
+const GS=['Aguardando peças','Em reparo','Pronto','Sem reparo','Entregue'];
+let GF={s:'',q:''};
+const gbadge=s=>`<span class="tg ${s==='Aguardando peças'?'w':s==='Sem reparo'?'r':s==='Pronto'||s==='Entregue'?'g':''}">${esc(s)}</span>`;
+const gvl=()=>S.gr.filter(x=>(!GF.s||x.st===GF.s)&&(!GF.q||[x.os,x.dev,x.nt,sn(x.store),x.by].join(' ').toLowerCase().includes(GF.q.toLowerCase())));
+const grows=()=>tbl(['OS','Loja de origem','Aparelho','Status','Observação','Cadastrado em','Última atualização',...(me.glass?['Ações']:[])],gvl().map(x=>[esc(x.os),esc(sn(x.store)),esc(x.dev||'—'),gbadge(x.st),x.nt?wrapTxt(esc(x.nt)):'—',dt(x.t),dt(x.ut)+' · '+esc(x.ub),...(me.glass?[`<button onclick="vidSt(${x.id})">Atualizar status</button><button onclick="vidEdit(${x.id})">Editar</button><button class=dg onclick="vidDel(${x.id})">Excluir</button>`]:[])]));
+function pVid(){
+ return `<h1>Reparo em Vidro</h1><p class="mu sub">Acompanhe os reparos em vidro de cada loja. Todos visualizam; somente a Paola cadastra e atualiza.</p>
+<div class=bar>${me.glass?`<button class=pr onclick="vidForm()">+ Novo reparo</button>`:''}<input placeholder="Buscar OS, aparelho, loja, observação…" value="${esc(GF.q)}" oninput="GF.q=this.value;$('#gb').innerHTML=grows()"><select onchange="GF.s=this.value;$('#gb').innerHTML=grows()"><option value="">Todos os status</option>${GS.map(s=>`<option ${GF.s===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div>
+<div class=cards>${GS.map(s=>`<div class=card><small>${ic('phone')} ${esc(s)}</small><strong>${S.gr.filter(x=>x.st===s).length}</strong></div>`).join('')}</div>
+<div id=gb>${grows()}</div>`}
+const vidOk=()=>me.glass||(toast('Somente a Paola pode alterar os reparos em vidro.'),false);
+function vidForm(){if(!vidOk())return;
+ modal('Novo reparo em vidro',[{n:'os',l:'Número da OS',r:1},{n:'s',l:'Loja de origem',o:lopt()},{n:'dv',l:'Aparelho (modelo)'},{n:'st',l:'Status',o:GS.map(x=>[x,x])},{n:'nt',l:'Observação'}],
+  d=>rpc('glass_new',{p_os:d.os,p_store:+d.s,p_device:d.dv,p_status:d.st,p_note:d.nt}))}
+function vidEdit(id){const x=S.gr.find(v=>v.id===id);if(!x||!vidOk())return;
+ modal('Editar reparo — OS '+esc(x.os),[{n:'os',l:'Número da OS',v:x.os,r:1},{n:'s',l:'Loja de origem',v:x.store,o:lopt()},{n:'dv',l:'Aparelho (modelo)',v:x.dev},{n:'st',l:'Status',v:x.st,o:GS.map(s=>[s,s])},{n:'nt',l:'Observação',v:x.nt}],
+  d=>rpc('glass_update',{p_id:id,p_os:d.os,p_store:+d.s,p_device:d.dv,p_status:d.st,p_note:d.nt}))}
+function vidSt(id){const x=S.gr.find(v=>v.id===id);if(!x||!vidOk())return;
+ modal('Status do reparo — OS '+esc(x.os),[{n:'st',l:'Status (atual: '+x.st+')',v:x.st,o:GS.map(s=>[s,s])}],d=>rpc('glass_set_status',{p_id:id,p_status:d.st}))}
+function vidDel(id){const x=S.gr.find(v=>v.id===id);if(!x||!vidOk())return;
+ ask('Excluir reparo','Excluir o reparo em vidro da OS '+x.os+' ('+sn(x.store)+')? Esta ação não pode ser desfeita.',()=>rpc('glass_delete',{p_id:id}))}
+
+/* ---------- Técnico cadastra peça (vai direto para o estoque da própria loja) ---------- */
+function partForm(){if(!me.tech)return toast('Somente o técnico cadastra peças por aqui.');
+ const key=(n,m)=>(n||'').trim().toLowerCase()+'|'+(m||'').trim().toLowerCase(),find=(n,m)=>S.cat.find(c=>key(c.name,c.model)===key(n,m));
+ modal('Cadastrar peça — '+esc(sn(me.store)),[{n:'n',l:'Nome da peça',r:1},{n:'m',l:'Modelo do aparelho',r:1},{n:'q',l:'Quantidade',t:'number',v:1,min:1,r:1},{n:'s',l:'Fornecedor',o:supV()},{n:'v',l:'Valor unitário (R$)',t:'number',min:0.01,r:1}],
+  d=>{if(!d.s){const e=new Error('Escolha o fornecedor.');e.code='P0001';throw e}
+   return rpc('part_register',{p_name:d.n,p_model:d.m,p_qty:+d.q,p_supplier_id:+d.s,p_price:+d.v})});
+ const f=$('#m form').elements,uniq=a=>[...new Set(a)].sort((x,y)=>x.localeCompare(y,'pt-BR'));
+ f.n.setAttribute('list','dln');f.m.setAttribute('list','dlm');f.n.setAttribute('autocomplete','off');f.m.setAttribute('autocomplete','off');
+ f.n.insertAdjacentHTML('afterend',`<datalist id=dln>${uniq(S.cat.map(c=>c.name)).map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`);
+ f.m.insertAdjacentHTML('afterend',`<datalist id=dlm>${uniq(S.cat.map(c=>c.model)).map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`);
+ const fill=()=>{const c=find(f.n.value,f.m.value);if(c){if(!f.s.value)f.s.value=c.supplier_id||'';if(!f.v.value&&c.unit_price)f.v.value=c.unit_price}};
+ f.n.onchange=fill;f.m.onchange=fill}
+
 /* ---------- Shell ---------- */
 function render(){
  if(!me){$('#app').innerHTML=booting?'<div class=lg><div class=boot><i></i><p class=mu>Carregando…</p></div></div>':login();return}
  if(!me.admin&&['cat','sup','stk','rep','usr'].includes(tab))tab='dash';
  if(!me.dev&&DT.includes(tab))tab='dash';
  const pn=S.tr.filter(x=>me.admin?x.status===TS[1]:x.status===TS[0]&&x.from===me.store).length;
- const N=[['dash','dashboard','Dashboard',1],['ord','clipboard',me.admin?'Pedidos':'Solicitar Peças',1],['pcs','cpu','Controle de Peças',1],['cen','warehouse','Estoque Central',1],['ret','undo','Devoluções',1],['use','circle-check','Peças Utilizadas',1],['mnt','wrench','Manutenção',1],['fec','banknote','Fechamento Técnico',1],['man','gamepad','Manutenção de Manetes',1],['cat','book','Catálogo de Peças',2],['sup','factory','Fornecedores',2],['stk','warehouse','Estoques',2],['tra','swap','Transferências'+(pn?' ('+pn+')':''),1],['his','history','Histórico',1],['rep','file','Relatórios',2],['usr','users','Usuários',2],['aud','shield','Auditoria',3],['dia','activity','Diagnóstico do sistema',3],['bkp','database','Backup e dados',3],['err','bug','Erros do sistema'+(D.ne?' ('+D.ne+')':''),3]].filter(n=>n[3]===1||(n[3]===2&&me.admin)||(n[3]===3&&me.dev));
- const P={dash:pDash,cen:pCen,ord:pOrd,pcs:pUnits,ret:pUnits,use:pUnits,mnt:pMnt,cat:pCat,tra:pTra,usr:pUsr,sup:pSup,stk:pStk,his:pHis,rep:pRep,fec:pFec,man:pMan,aud:pAud,dia:pDia,bkp:pBkp,err:pErr};
+ const N=[['dash','dashboard','Dashboard',1],['ord','clipboard',me.admin?'Pedidos':'Solicitar Peças',1],['pcs','cpu','Controle de Peças',1],['cen','warehouse','Estoque Central',1],['ret','undo','Devoluções',1],['use','circle-check','Peças Utilizadas',1],['mnt','wrench','Manutenção',1],['fec','banknote','Fechamento Técnico',1],['man','gamepad','Manutenção de Manetes',1],['vid','phone','Reparo em Vidro',1],['cat','book','Catálogo de Peças',2],['sup','factory','Fornecedores',2],['stk','warehouse','Estoques',2],['tra','swap','Transferências'+(pn?' ('+pn+')':''),1],['his','history','Histórico',1],['rep','file','Relatórios',2],['usr','users','Usuários',2],['aud','shield','Auditoria',3],['dia','activity','Diagnóstico do sistema',3],['bkp','database','Backup e dados',3],['err','bug','Erros do sistema'+(D.ne?' ('+D.ne+')':''),3]].filter(n=>n[3]===1||(n[3]===2&&me.admin)||(n[3]===3&&me.dev));
+ const P={dash:pDash,cen:pCen,ord:pOrd,pcs:pUnits,ret:pUnits,use:pUnits,mnt:pMnt,cat:pCat,tra:pTra,usr:pUsr,sup:pSup,stk:pStk,his:pHis,rep:pRep,fec:pFec,man:pMan,vid:pVid,aud:pAud,dia:pDia,bkp:pBkp,err:pErr};
  const sy=document.querySelector('aside')?.scrollTop||0;
  $('#app').innerHTML=`<aside><h2>${ic('phone')} Oficina do <span>Smart</span></h2>${N.map(n=>(n[0]==='aud'?'<p class=sp>Desenvolvedor</p>':'')+`<a class="${n[0]===tab?'on':''}" onclick="go('${n[0]}')">${ic(n[1])} ${n[2]}</a>`).join('')}
 

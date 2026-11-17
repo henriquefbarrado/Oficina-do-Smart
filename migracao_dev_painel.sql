@@ -194,6 +194,7 @@ begin
     ('is_active_user','migracao_tecnico.sql'),('is_technician','migracao_tecnico.sql'),('admin_set_technician','migracao_tecnico.sql'),
     ('closing_new','migracao_tecnico.sql'),('controller_new','migracao_tecnico.sql'),('controller_set_status','migracao_tecnico.sql'),
     ('controller_update','migracao_tecnico.sql'),('controller_delete','migracao_tecnico.sql'),
+    ('part_register','migracao_peca_tecnico.sql'),('glass_new','migracao_reparo_vidro.sql'),('glass_update','migracao_reparo_vidro.sql'),('glass_set_status','migracao_reparo_vidro.sql'),('glass_delete','migracao_reparo_vidro.sql'),
     ('admin_set_dev','SQL do cargo de dev (não está no repositório)'),
     ('is_dev','migracao_dev_painel.sql'),('dev_diagnostics','migracao_dev_painel.sql'),('log_client_error','migracao_dev_painel.sql'),
     ('dev_error_resolve','migracao_dev_painel.sql'),('dev_error_clear','migracao_dev_painel.sql'),('dev_audit_note','migracao_dev_painel.sql')
@@ -206,7 +207,7 @@ begin
   for r in select * from (values
     ('stores','supabase.sql'),('profiles','supabase.sql'),('suppliers','supabase.sql'),('catalog','supabase.sql'),('orders','supabase.sql'),
     ('units','supabase.sql'),('unit_trail','supabase.sql'),('history','supabase.sql'),('transfers','supabase.sql'),('maintenances','supabase.sql'),
-    ('tech_closings','migracao_tecnico.sql'),('controller_repairs','migracao_tecnico.sql'),
+    ('tech_closings','migracao_tecnico.sql'),('controller_repairs','migracao_tecnico.sql'),('glass_repairs','migracao_reparo_vidro.sql'),
     ('audit_log','migracao_dev_painel.sql'),('error_log','migracao_dev_painel.sql')
   ) as v(n, f) loop
     ok := to_regclass('public.' || r.n) is not null;
@@ -224,7 +225,7 @@ begin
   for r in select * from (values ('catalog_view','supabase.sql'),('suppliers_view','supabase.sql')) as v(n, f) loop
     ck := ck || jsonb_build_array(jsonb_build_object('grp', 'View', 'name', r.n, 'ok', to_regclass('public.' || r.n) is not null, 'fix', r.f));
   end loop;
-  for r in select * from (values ('is_technician','migracao_tecnico.sql'),('is_dev','migracao_dev_painel.sql')) as v(n, f) loop
+  for r in select * from (values ('is_technician','migracao_tecnico.sql'),('is_dev','migracao_dev_painel.sql'),('is_glass_editor','migracao_reparo_vidro.sql')) as v(n, f) loop
     ck := ck || jsonb_build_array(jsonb_build_object('grp', 'Coluna', 'name', 'profiles.' || r.n, 'ok',
       exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = r.n), 'fix', r.f));
   end loop;
@@ -248,6 +249,11 @@ begin
     'auth_no_profile',(select count(*) from auth.users u where not exists (select 1 from public.profiles p where p.id = u.id)),
     'errors_24h',     (select count(*) from public.error_log where level = 'erro' and not resolved and at > now() - interval '24 hours')
   );
+
+  if exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles' and column_name = 'is_glass_editor') then
+    execute 'select count(*) from public.profiles where is_glass_editor and active' into cnt;
+    nums := nums || jsonb_build_object('glass_editors', cnt);
+  end if;
 
   return jsonb_build_object('checks', ck, 'numbers', nums, 'rows', rw, 'at', now());
 end $$;

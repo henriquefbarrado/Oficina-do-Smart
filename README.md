@@ -66,6 +66,9 @@ Ordens de serviço com **número da OS, cliente, serviço, peça utilizada, valo
 ### 🧾 Fechamento Técnico
 Registro diário dos serviços dos técnicos: **OS, cliente, serviço, valor da peça, valor cobrado e fornecedor**. Cada preenchimento vira um **registro individual** com a **data salva automaticamente**. Todos consultam (busca, período e totais); o técnico pode filtrar **só os seus**.
 
+### 🪟 Reparo em Vidro
+Controle dos reparos em vidro: **OS, loja de origem, aparelho, status** (*Aguardando peças*, *Em reparo*, *Pronto*, *Sem reparo* ou *Entregue*) e **observação**. **Todos veem**; **só a Paola** (marca `is_glass_editor` no perfil) cadastra, atualiza, edita e exclui.
+
 ### 🎮 Manutenção de Manetes
 Controle das manetes em reparo: **OS, loja de origem e status** (*Aguardando peças*, *Sem reparo*, *Pronta* ou *Enviada para reparo em placa*). **Todos veem**; **só o técnico** cadastra, atualiza, edita e exclui.
 
@@ -149,8 +152,10 @@ As regras valem **dentro do banco de dados** (Row Level Security e funções do 
 | Aprova transferência | ✅ | — | — |
 | **Consulta** o Estoque Central | ✅ | ✅ | ✅ |
 | Cadastra/exclui peça, importa/exporta planilha, dá saída do central | ✅ | — | — |
-| Vê Fechamento Técnico e Manetes (todas as lojas) | ✅ | ✅ | ✅ |
+| Cadastra peça no estoque **da própria loja** (Controle de Peças) | — | — | ✅ |
+| Vê Fechamento Técnico, Manetes e Reparo em Vidro (todas as lojas) | ✅ | ✅ | ✅ |
 | **Escreve** no Fechamento Técnico e nas Manetes | — | — | ✅ |
+| **Escreve** no Reparo em Vidro | só a Paola | só a Paola | só a Paola |
 | Exclui pedidos, manutenções e peças do catálogo | ✅ | — | — |
 | Gerencia usuários e usa **Logar como** | ✅ | — | — |
 
@@ -216,6 +221,8 @@ Visível só para o **dev** (seção *Desenvolvedor* no fim do menu). Requer rod
 | `migracao_excluir_usuario.sql` | Administrador exclui usuários |
 | `migracao_excluir_peca.sql` | Botão **Excluir** da aba Estoques (a peça sai do catálogo e das lojas; o histórico fica) |
 | `migracao_tecnico.sql` | Perfil de técnico, **Fechamento Técnico** e **Manutenção de Manetes** (cadastrar, editar, atualizar status e excluir) |
+| `migracao_peca_tecnico.sql` | **Técnico cadastra peça** direto no estoque da própria loja (aba Controle de Peças) |
+| `migracao_reparo_vidro.sql` | Aba **Reparo em Vidro** (todos veem; só a Paola cadastra, edita, atualiza o status e exclui) |
 | `migracao_dev_painel.sql` | **Painel do desenvolvedor**: Auditoria, Diagnóstico do sistema, Backup e dados e Erros do sistema |
 
 </details>
