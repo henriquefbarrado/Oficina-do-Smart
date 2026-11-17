@@ -442,14 +442,15 @@ function manSt(id){const x=S.cr.find(v=>v.id===id);if(!x)return;
  modal('Status da manete — OS '+esc(x.os),[{n:'st',l:'Status (atual: '+x.st+')',v:x.st,o:MS.map(s=>[s,s])}],d=>rpc('controller_set_status',{p_id:id,p_status:d.st}))}
 
 /* ---------- Painel do desenvolvedor (só dev): Auditoria, Diagnóstico, Backup e Erros ---------- */
-const DT=['aud','dia','bkp','err'],APP_V='20261117e';
-const D0=()=>({aud:[],err:[],diag:null,diagMs:0,miss:'',ld:false,ne:0});
+const DT=['aud','log','dia','bkp','err'],APP_V='20261117g';
+const D0=()=>({aud:[],log:[],err:[],diag:null,diagMs:0,miss:'',ld:false,ne:0});
 let D=D0();
 const AU={q:'',k:'',a:'',b:''},ER={lvl:'erro',res:'0',q:''};
 async function devFetch(t){
  if(!me||!me.dev)return;
  try{
   if(t==='aud')D.aud=await all(()=>sb.from('audit_log').select('*').order('at',{ascending:false}).order('id',{ascending:false}),10);
+  if(t==='log')D.log=await all(()=>sb.from('activity_log').select('*').order('at',{ascending:false}).order('id',{ascending:false}),10);
   if(t==='err')D.err=await all(()=>sb.from('error_log').select('*').order('at',{ascending:false}).order('id',{ascending:false}),5);
   if(t==='dia'||t==='bkp'){const t0=performance.now();D.diag=await rpc('dev_diagnostics');D.diagMs=Math.round(performance.now()-t0)}
   D.miss=''}
@@ -457,8 +458,8 @@ async function devFetch(t){
 function mn(o){document.body.classList.toggle('mo',o)}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')mn(false)});
 async function go(t){mn(false);tab=t;if(me&&me.dev&&DT.includes(t)){D.ld=true;render();await devFetch(t);D.ld=false}render()}
-const needMig=m=>/audit_log|error_log|dev_diagnostics|dev_error|log_client|schema cache|does not exist|Could not find/i.test(m||'');
-const devBox=()=>`<div class=box style="border-color:var(--w)"><h3>Não foi possível carregar</h3><p class=mu style="line-height:1.55">${esc(D.miss)}${needMig(D.miss)?'<br><br>Provavelmente falta rodar o <b>migracao_dev_painel.sql</b> no Supabase (SQL Editor). Depois clique em <b>Atualizar dados</b>.':''}</p></div>`;
+const needMig=m=>/audit_log|activity_log|error_log|dev_diagnostics|dev_error|log_client|schema cache|does not exist|Could not find/i.test(m||'');
+const devBox=()=>`<div class=box style="border-color:var(--w)"><h3>Não foi possível carregar</h3><p class=mu style="line-height:1.55">${esc(D.miss)}${needMig(D.miss)?`<br><br>Provavelmente falta rodar o <b>${/activity_log/.test(D.miss)?'migracao_logs_dev.sql':'migracao_dev_painel.sql'}</b> no Supabase (SQL Editor). Depois clique em <b>Atualizar dados</b>.`:''}</p></div>`;
 const devWrap=(title,sub,body)=>`<h1>${title}</h1><p class="mu sub">${sub}</p>${D.ld?'<div class=box><p class=mu>Carregando…</p></div>':D.miss?devBox():body()}`;
 const wrapTxt=h=>`<div style="white-space:normal;min-width:240px;max-width:480px">${h}</div>`;
 
@@ -479,6 +480,29 @@ function pAud(){return devWrap('Auditoria','Quem mudou acessos e senhas, quem us
  return `<div class=cards><div class=card><small>${ic('history')} Eventos registrados</small><strong>${D.aud.length}</strong></div><div class=card><small>${ic('clock')} Últimos 7 dias</small><strong>${D.aud.filter(x=>now-Date.parse(x.at)<6048e5).length}</strong></div><div class=card><small>${ic('eye')} Logar como (30 dias)</small><strong>${n30('impersonate')}</strong></div><div class=card><small>${ic('users')} Senhas redefinidas (30 dias)</small><strong>${n30('password_reset')}</strong></div></div>
 <div class=bar><input placeholder="Buscar pessoa, ação ou detalhe…" value="${esc(AU.q)}" oninput="AU.q=this.value;$('#ab').innerHTML=aurows()"><select onchange="AU.k=this.value;$('#ab').innerHTML=aurows()"><option value="">Todas as ações</option>${Object.entries(AK).map(([k,v])=>`<option value="${k}" ${AU.k===k?'selected':''}>${esc(v)}</option>`).join('')}</select><input type=date value="${AU.a}" onchange="AU.a=this.value;$('#ab').innerHTML=aurows()"><input type=date value="${AU.b}" onchange="AU.b=this.value;$('#ab').innerHTML=aurows()"><button onclick="audCsv()">${ic('download')} CSV</button></div><div id=ab>${aurows()}</div>`})}
 function audCsv(){csv('auditoria',aufil().map(x=>({Data:dt(x.at),Quem:x.actor_name,Acao:AK[x.action]||x.action,Alvo:x.target_name,Detalhes:adet(x)})))}
+
+/* --- Logs: quem cadastrou / editou / excluiu o quê (junta activity_log + history) --- */
+const LG={q:'',u:'',s:'',c:'',a:'',b:'',all:[]};
+const LE={catalog:'Catálogo de peças',supplier:'Fornecedor',user:'Usuário',closing:'Fechamento técnico',controller:'Manete',glass:'Reparo em vidro'};
+const LA={create:'Cadastro',update:'Edição',delete:'Exclusão'};
+const LT={create:'g',update:'w',delete:'r'};
+function lgBuild(){
+ const a=D.log.map(x=>({t:Date.parse(x.at),u:x.actor_name||'—',sid:x.store_id,c:LE[x.entity]||x.entity,a:LA[x.action]||x.action,k:x.action,i:x.target||'—',d:x.summary||''}));
+ const h=S.hist.filter(x=>x.tipo!=='Exclusão do catálogo').map(x=>({t:x.t,u:x.u||'—',sid:x.sid,c:x.tipo==='Manutenção'?'Manutenção (OS)':'Peças e estoque',a:x.tipo||'Movimentação',
+  k:/Exclu|Descarte|Rejeit/i.test((x.tipo||'')+' '+(x.para||''))?'delete':'',i:x.prod||'—',
+  d:[x.qtd>1?x.qtd+' un.':'',(x.de||x.para)?(x.de||'—')+' → '+(x.para||'—'):'',x.ref||'',x.forn?'Forn.: '+x.forn:''].filter(Boolean).join(' · ')}));
+ LG.all=a.concat(h).sort((x,y)=>y.t-x.t)}
+const lgfil=()=>LG.all.filter(x=>(!LG.u||x.u===LG.u)&&(!LG.s||String(x.sid)===LG.s)&&(!LG.c||x.c===LG.c)&&(!LG.a||x.t>=new Date(LG.a).getTime())&&(!LG.b||x.t<=new Date(LG.b).getTime()+864e5)&&(!LG.q||[x.u,x.c,x.a,x.i,x.d,x.sid==null?'':sn(x.sid)].join(' ').toLowerCase().includes(LG.q.toLowerCase())));
+const lgrows=()=>{const l=lgfil();return tbl(['Data','Quem','Loja','Categoria','Ação','Item','Detalhes'],l.slice(0,500).map(x=>[dt(x.t),esc(x.u),esc(x.sid==null?'—':sn(x.sid)),esc(x.c),`<span class="tg ${LT[x.k]||''}">${esc(x.a)}</span>`,esc(x.i),wrapTxt(esc(x.d))]))+(l.length>500?`<p class=mu style="margin:-8px 0 14px">Mostrando 500 de ${l.length}. Use os filtros ou exporte o CSV.</p>`:'')};
+function pLog(){return devWrap('Logs','Quem cadastrou, editou ou excluiu peças, fornecedores, usuários, OS e movimentações de estoque. Só o dev vê esta aba e o registro só recebe inclusão.',()=>{
+ lgBuild();const now=Date.now(),L=LG.all,us=[...new Set(L.map(x=>x.u))].sort((x,y)=>x.localeCompare(y,'pt-BR')),cs=[...new Set(L.map(x=>x.c))].sort((x,y)=>x.localeCompare(y,'pt-BR'));
+ return `<div class=cards><div class=card><small>${ic('history')} Eventos registrados</small><strong>${L.length}</strong></div><div class=card><small>${ic('clock')} Últimas 24 horas</small><strong>${L.filter(x=>now-x.t<864e5).length}</strong></div><div class=card><small>${ic('users')} Pessoas ativas (7 dias)</small><strong>${new Set(L.filter(x=>now-x.t<6048e5).map(x=>x.u)).size}</strong></div><div class=card><small>${ic('cpu')} Peças cadastradas (30 dias)</small><strong>${L.filter(x=>x.c==='Catálogo de peças'&&x.k==='create'&&now-x.t<2592e6).length}</strong></div></div>
+<div class=bar><input placeholder="Buscar pessoa, peça ou detalhe…" value="${esc(LG.q)}" oninput="LG.q=this.value;$('#lb').innerHTML=lgrows()">
+<select onchange="LG.u=this.value;$('#lb').innerHTML=lgrows()"><option value="">Todas as pessoas</option>${us.map(v=>`<option ${LG.u===v?'selected':''}>${esc(v)}</option>`).join('')}</select>
+<select onchange="LG.s=this.value;$('#lb').innerHTML=lgrows()"><option value="">Todas as unidades</option>${S.st.map(v=>`<option value="${v.id}" ${LG.s===String(v.id)?'selected':''}>${esc(v.name)}</option>`).join('')}</select>
+<select onchange="LG.c=this.value;$('#lb').innerHTML=lgrows()"><option value="">Todas as categorias</option>${cs.map(v=>`<option ${LG.c===v?'selected':''}>${esc(v)}</option>`).join('')}</select>
+<input type=date value="${LG.a}" onchange="LG.a=this.value;$('#lb').innerHTML=lgrows()"><input type=date value="${LG.b}" onchange="LG.b=this.value;$('#lb').innerHTML=lgrows()"><button onclick="lgCsv()">${ic('download')} CSV</button></div><div id=lb>${lgrows()}</div>`})}
+function lgCsv(){csv('logs',lgfil().map(x=>({Data:dt(x.t),Quem:x.u,Loja:x.sid==null?'':sn(x.sid),Categoria:x.c,Acao:x.a,Item:x.i,Detalhes:x.d})))}
 
 /* --- Diagnóstico do sistema --- */
 const fixTxt=f=>f?(/^[\w]+\.sql/.test(f)?'Rodar '+f+' no SQL Editor':f):'';
@@ -592,8 +616,8 @@ function render(){
  if(!me.admin&&['cat','sup','stk','rep','usr'].includes(tab))tab='dash';
  if(!me.dev&&DT.includes(tab))tab='dash';
  const pn=S.tr.filter(x=>me.admin?x.status===TS[1]:x.status===TS[0]&&x.from===me.store).length;
- const N=[['dash','dashboard','Dashboard',1],['ord','clipboard',me.admin?'Pedidos':'Solicitar Peças',1],['pcs','cpu','Controle de Peças',1],['cen','warehouse','Estoque Central',1],['ret','undo','Devoluções',1],['use','circle-check','Peças Utilizadas',1],['mnt','wrench','Manutenção',1],['fec','banknote','Fechamento Técnico',1],['man','gamepad','Manutenção de Manetes',1],['vid','phone','Reparo em Vidro',1],['cat','book','Catálogo de Peças',2],['sup','factory','Fornecedores',2],['stk','warehouse','Estoques',2],['tra','swap','Transferências'+(pn?' ('+pn+')':''),1],['his','history','Histórico',1],['rep','file','Relatórios',2],['usr','users','Usuários',2],['aud','shield','Auditoria',3],['dia','activity','Diagnóstico do sistema',3],['bkp','database','Backup e dados',3],['err','bug','Erros do sistema'+(D.ne?' ('+D.ne+')':''),3]].filter(n=>n[3]===1||(n[3]===2&&me.admin)||(n[3]===3&&me.dev));
- const P={dash:pDash,cen:pCen,ord:pOrd,pcs:pUnits,ret:pUnits,use:pUnits,mnt:pMnt,cat:pCat,tra:pTra,usr:pUsr,sup:pSup,stk:pStk,his:pHis,rep:pRep,fec:pFec,man:pMan,vid:pVid,aud:pAud,dia:pDia,bkp:pBkp,err:pErr};
+ const N=[['dash','dashboard','Dashboard',1],['ord','clipboard',me.admin?'Pedidos':'Solicitar Peças',1],['pcs','cpu','Controle de Peças',1],['cen','warehouse','Estoque Central',1],['ret','undo','Devoluções',1],['use','circle-check','Peças Utilizadas',1],['mnt','wrench','Manutenção',1],['fec','banknote','Fechamento Técnico',1],['man','gamepad','Manutenção de Manetes',1],['vid','phone','Reparo em Vidro',1],['cat','book','Catálogo de Peças',2],['sup','factory','Fornecedores',2],['stk','warehouse','Estoques',2],['tra','swap','Transferências'+(pn?' ('+pn+')':''),1],['his','history','Histórico',1],['rep','file','Relatórios',2],['usr','users','Usuários',2],['aud','shield','Auditoria',3],['log','file','Logs',3],['dia','activity','Diagnóstico do sistema',3],['bkp','database','Backup e dados',3],['err','bug','Erros do sistema'+(D.ne?' ('+D.ne+')':''),3]].filter(n=>n[3]===1||(n[3]===2&&me.admin)||(n[3]===3&&me.dev));
+ const P={dash:pDash,cen:pCen,ord:pOrd,pcs:pUnits,ret:pUnits,use:pUnits,mnt:pMnt,cat:pCat,tra:pTra,usr:pUsr,sup:pSup,stk:pStk,his:pHis,rep:pRep,fec:pFec,man:pMan,vid:pVid,aud:pAud,log:pLog,dia:pDia,bkp:pBkp,err:pErr};
  const sy=document.querySelector('aside')?.scrollTop||0;
  $('#app').innerHTML=`<header class=tb><button class=hb onclick="mn()" aria-label="Abrir menu">${ic('menu')}</button><b>Oficina do <span>Smart</span></b></header><div class=sc onclick="mn(false)"></div><aside><h2>${ic('phone')} Oficina do <span>Smart</span></h2>${N.map(n=>(n[0]==='aud'?'<p class=sp>Desenvolvedor</p>':'')+`<a class="${n[0]===tab?'on':''}" onclick="go('${n[0]}')">${ic(n[1])} ${n[2]}</a>`).join('')}
 

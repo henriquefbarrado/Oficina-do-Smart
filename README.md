@@ -159,7 +159,7 @@ As regras valem **dentro do banco de dados** (Row Level Security e funções do 
 | Exclui pedidos, manutenções e peças do catálogo | ✅ | — | — |
 | Gerencia usuários e usa **Logar como** | ✅ | — | — |
 
-- 🛠️ **Desenvolvedor**: tem tudo do administrador e, no fim do menu, as abas **Auditoria**, **Diagnóstico do sistema**, **Backup e dados** e **Erros do sistema** (veja abaixo). Só o dev lê essas tabelas, e o banco recusa qualquer outro usuário.
+- 🛠️ **Desenvolvedor**: tem tudo do administrador e, no fim do menu, as abas **Auditoria**, **Logs**, **Diagnóstico do sistema**, **Backup e dados** e **Erros do sistema** (veja abaixo). Só o dev lê essas tabelas, e o banco recusa qualquer outro usuário.
 - Pode haver **mais de um administrador**. Funcionário só vira admin se outro admin promover; o técnico é definido em **Usuários → Tornar técnico**.
 - 🚫 **Usuário desativado** perde o acesso na hora.
 - O cadastro público fica **desligado**: **só o administrador cria acessos**.
@@ -224,6 +224,7 @@ Visível só para o **dev** (seção *Desenvolvedor* no fim do menu). Requer rod
 | `migracao_peca_tecnico.sql` | **Técnico cadastra peça** direto no estoque da própria loja (aba Controle de Peças) |
 | `migracao_reparo_vidro.sql` | Aba **Reparo em Vidro** (todos veem; só a Paola cadastra, edita, atualiza o status e exclui) |
 | `migracao_dev_painel.sql` | **Painel do desenvolvedor**: Auditoria, Diagnóstico do sistema, Backup e dados e Erros do sistema |
+| `migracao_logs_dev.sql` | **Aba Logs (só dev)**: quem cadastrou, editou ou excluiu peças do catálogo, fornecedores, usuários, fechamentos, manetes e reparos em vidro. Rode depois do `migracao_dev_painel.sql` |
 
 </details>
 
