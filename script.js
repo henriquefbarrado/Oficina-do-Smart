@@ -164,12 +164,15 @@ ${pUnits().replace(/^<h1>[^<]*<\/h1>/,'<h3 style="margin:22px 0 10px">Peças em 
 function mntForm(id){const x=id!=null?S.mn.find(v=>v.id===id):null;
  if(x)return modal('Editar OS '+esc(x.os),[{n:'os',l:'Número da OS',v:x.os,r:1},{n:'cu',l:'Cliente',v:x.cu,r:1},{n:'sv',l:'Serviço realizado',v:x.sv,r:1},{n:'pc',l:'Peça utilizada',v:x.part},{n:'ch',l:'Valor cobrado (R$)',t:'number',v:x.ch,min:0,r:1},{n:'pv',l:'Valor pago na peça (R$)',t:'number',v:x.pc,min:0,r:1},{n:'tc',l:'Técnico',v:x.tech,r:1}],
   d=>rpc('maintenance_update',{p_id:id,p_os:d.os,p_customer:d.cu,p_service:d.sv,p_charged:+d.ch,p_technician:d.tc,p_part:d.pc,p_part_cost:+d.pv}));
- modal('Nova manutenção',[...(me.admin?[{n:'st',l:'Loja',o:lopt(),v:me.view}]:[]),{n:'os',l:'Número da OS',r:1},{n:'cu',l:'Cliente',r:1},{n:'sv',l:'Serviço realizado',r:1},
+ modal('Nova manutenção',[...(me.admin?[{n:'st',l:'Loja',o:lopt(),v:me.view!=null?me.view:(LJ().find(l=>S.units.some(u=>u.loc===l.id&&inStock(u)))||{}).id}]:[]),{n:'os',l:'Número da OS',r:1},{n:'cu',l:'Cliente',r:1},{n:'sv',l:'Serviço realizado',r:1},
   {n:'u',l:'Peça utilizada (do estoque da loja)',o:[]},{n:'pc',l:'Ou digite a peça utilizada (se não for do estoque)'},
   {n:'ch',l:'Valor cobrado (R$)',t:'number',min:0,r:1},{n:'pv',l:'Valor pago na peça (R$)',t:'number',min:0},{n:'tc',l:'Técnico',r:1}],
   d=>rpc('maintenance_new',{p_os:d.os,p_customer:d.cu,p_service:d.sv,p_charged:+d.ch,p_technician:d.tc,p_store:me.admin?+d.st:null,p_unit_id:d.u||null,p_part:d.pc,p_part_cost:d.pv!==''?+d.pv:null}));
  const f=$('#m form').elements,sid=()=>me.admin?+f.st.value:me.store,
-  fill=()=>{const us=S.units.filter(u=>u.loc===sid()&&inStock(u));f.u.innerHTML='<option value="">— Sem peça do estoque —</option>'+us.map(u=>`<option value="${esc(u.id)}">${esc(u.id+' · '+nm(u)+' · '+brl(u.cost))}</option>`).join('');f.pc.value='';f.pv.value=''};
+  fill=()=>{const us=S.units.filter(u=>u.loc===sid()&&inStock(u)),cen=S.units.filter(cAv).length;
+   f.u.innerHTML='<option value="">— '+(us.length?'Sem peça do estoque':'Nenhuma peça em estoque nesta loja')+' —</option>'+us.map(u=>`<option value="${esc(u.id)}">${esc(u.id+' · '+nm(u)+' · '+brl(u.cost))}</option>`).join('');f.pc.value='';f.pv.value='';
+   $('#mh').textContent=us.length?us.length+' peça(s) em estoque em '+sn(sid())+'.':'Não há peça em estoque em '+sn(sid())+'.'+(cen?' O Estoque Central tem '+cen+' disponível(is), mas só dá para usar peça que já está na loja'+(me.admin?': envie em Estoques → Editar → Saída para loja.':': peça ao administrador para enviar à sua loja.'):'')+(me.admin?' Se a peça está em outra loja, troque o campo Loja acima.':'')+' Ou digite a peça abaixo.'};
+ f.u.insertAdjacentHTML('afterend','<small class=mu id=mh style="display:block;margin-top:6px;line-height:1.4"></small>');
  if(me.admin)f.st.onchange=fill;
  f.u.onchange=()=>{const u=S.units.find(v=>v.id===f.u.value);f.pc.value=u?nm(u):'';f.pv.value=u?u.cost:''};
  fill()}
